@@ -31,6 +31,7 @@ After compiling Pyflame you'll get a small executable called `pyflame`. The most
 basic usage is:
 
 ```bash
+# profile a process for 1s, sampling every 1ms
 pyflame PID
 ```
 
@@ -41,11 +42,15 @@ You can also change the sample time and sampling frequency:
 pyflame -s 60 -r 0.10 PID
 ```
 
-You'll need appropriate permissions to `PTRACE_ATTACH` the process. Typically
-this means that you'll need to invoke `pyflame` as root, or as the same user as
-the process you're trying to profile. If you have errors running it as the
-correct user then you probably have `ptrace_scope` set to a value that's too
-restrictive. This is the default in Debian Jessie.
+### Ptrace Permissions Errors
+
+To run Pyflame you'll need appropriate permissions to `PTRACE_ATTACH` the
+process. Typically this means that you'll need to invoke `pyflame` as root, or
+as the same user as the process you're trying to profile. If you have errors
+running it as the correct user then you probably have `ptrace_scope` set to a
+value that's too restrictive. For instance, Debian Jessie ships with a default
+restrictive `ptrace_scope`. This will also manifest by being unable to use `gdb
+-p` as an unprivileged user by default.
 
 To see the current value:
 
