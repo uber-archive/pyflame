@@ -40,14 +40,6 @@ const char usage_str[] =
      "(default 0.001)\n"
      "  -v, --version        Show the version\n");
 
-void RunOnce(pid_t pid, unsigned long addr) {
-  std::vector<Frame> stack = GetStack(pid, addr);
-  for (auto it = stack.rbegin(); it != stack.rend(); it++) {
-    std::cout << *it << "\n";
-  }
-  std::cout << std::flush;
-}
-
 typedef std::vector<Frame> frames_t;
 
 struct FrameHash {
@@ -163,7 +155,10 @@ int main(int argc, char **argv) {
         std::cout << *last << " " << kv.second << "\n";
       }
     } else {
-      RunOnce(pid, addr);
+      std::vector<Frame> stack = GetStack(pid, addr);
+      for (auto it = stack.rbegin(); it != stack.rend(); it++) {
+        std::cout << *it << "\n";
+      }
     }
   } catch (const FatalException &exc) {
     std::cerr << exc.what() << std::endl;
