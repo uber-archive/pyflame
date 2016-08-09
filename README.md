@@ -35,6 +35,16 @@ basic usage is:
 pyflame PID
 ```
 
+The `pyflame` command will send data to stdout that is suitable for using with
+Brendan Gregg's `flamegraph.pl` command (which you can get
+[here](https://github.com/brendangregg/FlameGraph)). Therefore a typical command
+pipeline might be like this:
+
+```bash
+# assuming flamegraph.pl is in your $PATH
+pyflame 12345 | flamegraph.pl > myprofile.svg
+```
+
 You can also change the sample time and sampling frequency:
 
 ```bash
