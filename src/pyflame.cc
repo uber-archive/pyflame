@@ -37,7 +37,8 @@ const char usage_str[] =
      "  -h, --help           Show help\n"
      "  -r, --seconds=SECS   How many seconds to run for (default 1)\n"
      "  -s, --rate=RATE      Sample rate, as a fractional value of seconds "
-     "(default 0.001)\n");
+     "(default 0.001)\n"
+     "  -v, --version        Show the version\n");
 
 void RunOnce(pid_t pid, unsigned long addr) {
   std::vector<Frame> stack = GetStack(pid, addr);
