@@ -1,5 +1,5 @@
 Format: http://dep.debian.net/deps/dep5
-Upstream-Name: pymemtrace
+Upstream-Name: pyflame
 Source: <url://example.com>
 
 Files: *

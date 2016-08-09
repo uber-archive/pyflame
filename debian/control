@@ -15,6 +15,6 @@ Description: Python flamegraph tool
 Package: pyflame-dbg
 Architecture: any
 Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${pymemtrace:Version}
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${pyflame:Version}
 Recommends: python-dbg
 Description: Python flamegraph tool (debug package)
