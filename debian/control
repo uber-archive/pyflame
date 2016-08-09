@@ -1,0 +1,20 @@
+Source: pyflame
+Priority: extra
+Maintainer: Evan Klitzke <evan@uber.com>
+Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf, pkg-config, python-dev, g++
+Standards-Version: 3.9.3
+Section: libs
+X-Python-Version: >= 2.6
+
+Package: pyflame
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}, libstdc++6, python
+Description: Python flamegraph tool
+
+Package: pyflame-dbg
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${pymemtrace:Version}
+Recommends: python-dbg
+Description: Python flamegraph tool (debug package)
