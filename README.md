@@ -48,9 +48,10 @@ To run Pyflame you'll need appropriate permissions to `PTRACE_ATTACH` the
 process. Typically this means that you'll need to invoke `pyflame` as root, or
 as the same user as the process you're trying to profile. If you have errors
 running it as the correct user then you probably have `ptrace_scope` set to a
-value that's too restrictive. For instance, Debian Jessie ships with a default
-restrictive `ptrace_scope`. This will also manifest by being unable to use `gdb
--p` as an unprivileged user by default.
+value that's too restrictive.
+
+Debian Jessie ships with a default restrictive `ptrace_scope`. This will also
+manifest by being unable to use `gdb -p` as an unprivileged user by default.
 
 To see the current value:
 
@@ -58,14 +59,15 @@ To see the current value:
 sysctl kernel.yama.ptrace_scope
 ```
 
-If you see a value other than 0 you likely need to change it:
+If you see a value other than 0 you may need to change it. Note that by doing
+this you'll weaken the security of your system. Please read
+[the relevant kernel documentation](https://www.kernel.org/doc/Documentation/security/Yama.txt)
+for a comprehensive discussion of the possible settings and how they work. If
+you want to completely disable ptrace restrictions you can run:
 
 ```bash
 sudo sysctl kernel.yama.ptrace_scope=0
 ```
-
-If you'd like to know more about this feature please read
-[the relevant kernel documentation](https://www.kernel.org/doc/Documentation/security/Yama.txt).
 
 ## License
 
