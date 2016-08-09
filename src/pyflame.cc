@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
         PtraceAttach(pid);
       }
       if (empty) {
-        std::cout << "(null) " << empty << "\n";
+        std::cout << "(idle) " << empty << "\n";
       }
       // process the frames
       for (const auto &kv : buckets) {
