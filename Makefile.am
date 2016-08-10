@@ -1,5 +1,5 @@
 SUBDIRS = src
-EXTRA_DIST = autogen.sh LICENSE.txt README.md
+EXTRA_DIST = autogen.sh LICENSE README.md
 ACLOCAL_AMFLAGS = -I m4
 
 clean-local:
