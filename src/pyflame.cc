@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
         {"version", no_argument, 0, 'v'},
         {0, 0, 0, 0}};
     int option_index = 0;
-    int c = getopt_long(argc, argv, "hjr:s:v", long_options, &option_index);
+    int c = getopt_long(argc, argv, "hr:s:v", long_options, &option_index);
     if (c == -1) {
       break;
     }
