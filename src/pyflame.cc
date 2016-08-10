@@ -24,8 +24,8 @@
 
 #include "./config.h"
 #include "./exc.h"
+#include "./frame.h"
 #include "./ptrace.h"
-#include "./pyframe.h"
 
 using namespace pyflame;
 
