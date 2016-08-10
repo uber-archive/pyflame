@@ -8,10 +8,13 @@ analyze the currently-executing stack trace for a Python process.
 
 ## Installing
 
-To build Pyflame you will need a C++ compiler with C++11 support, and GNU
+To build Pyflame you will need a C++ compiler with basic C++11 support. Pyflame
+is known to compile on versions of GCC as old as GCC 4.6. You'll also need GNU
 Autotools ([GNU Autoconf](https://www.gnu.org/software/autoconf/autoconf.html)
-and [GNU Automake](https://www.gnu.org/software/automake/automake.html)). Then
-you can build it like so:
+and [GNU Automake](https://www.gnu.org/software/automake/automake.html)) if
+you're building from the git repository.
+
+From git you would compile like so:
 
 ```bash
 ./autogen.sh
