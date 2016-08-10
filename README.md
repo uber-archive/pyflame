@@ -11,7 +11,7 @@ analyze the currently-executing stack trace for a Python process.
 To build Pyflame you will need a C++ compiler with C++11 support, and GNU
 Autotools ([GNU Autoconf](https://www.gnu.org/software/autoconf/autoconf.html)
 and [GNU Automake](https://www.gnu.org/software/automake/automake.html)). Then
-you can build it with an invocation like:
+you can build it like so:
 
 ```bash
 ./autogen.sh
@@ -31,7 +31,7 @@ After compiling Pyflame you'll get a small executable called `pyflame`. The most
 basic usage is:
 
 ```bash
-# profile a process for 1s, sampling every 1ms
+# profile PID for 1s, sampling every 1ms
 pyflame PID
 ```
 
@@ -41,14 +41,14 @@ Brendan Gregg's `flamegraph.pl` command (which you can get
 pipeline might be like this:
 
 ```bash
-# assuming flamegraph.pl is in your $PATH
+# generate flame graph for pid 12345; assumes flamegraph.pl is in your $PATH
 pyflame 12345 | flamegraph.pl > myprofile.svg
 ```
 
 You can also change the sample time and sampling frequency:
 
 ```bash
-# profile for 60 seconds, sampling every 10ms
+# profile PID for 60 seconds, sampling every 10ms
 pyflame -s 60 -r 0.10 PID
 ```
 
@@ -83,8 +83,20 @@ ptrace processes with the same user id) then use:
 sudo sysctl kernel.yama.ptrace_scope=0
 ```
 
+## Python 3 Support
+
+There is very basic Python 3 support, which you can get by compiling using:
+
+```bash
+./configure --with-python=python3
+```
+
+This *should* work as long as none of your files have non-ASCII characters in
+their names. If you are interested in supporting Unicode file names please
+assist us with pull requests.
+
 ## License
 
-Pyflame is free software distributed under the terms of the
-[Apache License, version 2.0](http://www.apache.org/licenses/LICENSE-2.0). You
-should receive a copy of this license along with Pyflame.
+Pyflame is [free software](https://www.gnu.org/philosophy/free-sw.en.html)
+distributed under the terms of the
+[Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
