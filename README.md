@@ -60,22 +60,26 @@ as the same user as the process you're trying to profile. If you have errors
 running it as the correct user then you probably have `ptrace_scope` set to a
 value that's too restrictive.
 
-Debian Jessie ships with a default restrictive `ptrace_scope`. This will also
+Debian Jessie ships with `ptrace_scope` set to 1 by default, which will prevent
+unprivileged users from attaching to already running processes. This will also
 manifest by being unable to use `gdb -p` as an unprivileged user by default.
 
-To see the current value:
+To see the current value of this setting:
 
 ```bash
 sysctl kernel.yama.ptrace_scope
 ```
 
-If you see a value other than 0 you may need to change it. Note that by doing
-this you'll weaken the security of your system. Please read
+If you see a value other than 0 you may want to change it. Note that by doing
+this you'll affect the security of your system. Please read
 [the relevant kernel documentation](https://www.kernel.org/doc/Documentation/security/Yama.txt)
-for a comprehensive discussion of the possible settings and how they work. If
-you want to completely disable ptrace restrictions you can run:
+for a comprehensive discussion of the possible settings and what you're
+changing. If you want to completely disable the ptrace settings and get
+"classic" permissions (i.e. root can ptrace anything, unprivileged users can
+ptrace processes with the same user id) then use:
 
 ```bash
+# use this if you want "classic" ptrace permissions
 sudo sysctl kernel.yama.ptrace_scope=0
 ```
 
