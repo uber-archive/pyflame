@@ -25,6 +25,7 @@
 #include "./config.h"
 #include "./exc.h"
 #include "./frame.h"
+#include "./namespace.h"
 #include "./ptrace.h"
 #include "./version.h"
 
@@ -98,7 +99,8 @@ int main(int argc, char **argv) {
   }
   try {
     PtraceAttach(pid);
-    const unsigned long addr = ThreadStateAddr(pid);
+    Namespace ns(pid);
+    const unsigned long addr = ThreadStateAddr(pid, &ns);
     if (seconds) {
       const std::chrono::microseconds interval{
           static_cast<long>(sample_rate * 1000000)};

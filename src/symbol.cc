@@ -24,6 +24,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "./posix.h"
+
 namespace pyflame {
 void ELF::Close() {
   if (addr_ != nullptr) {
@@ -33,9 +35,14 @@ void ELF::Close() {
 }
 
 // mmap the file
-void ELF::Open(const std::string &target) {
+void ELF::Open(const std::string &target, Namespace *ns) {
   Close();
-  int fd = open(target.c_str(), O_RDONLY);
+  int fd;
+  if (ns != nullptr) {
+    fd = ns->Open(target.c_str());
+  } else {
+    fd = open(target.c_str(), O_RDONLY);
+  }
   if (fd == -1) {
     std::ostringstream ss;
     ss << "Failed to open target " << target << ": " << strerror(errno);
@@ -43,9 +50,7 @@ void ELF::Open(const std::string &target) {
   }
   length_ = lseek(fd, 0, SEEK_END);
   addr_ = mmap(nullptr, length_, PROT_READ, MAP_SHARED, fd, 0);
-  while (close(fd) == -1) {
-    ;
-  }
+  pyflame::Close(fd);
   if (addr_ == MAP_FAILED) {
     std::ostringstream ss;
     ss << "Failed to mmap " << target << ": " << strerror(errno);

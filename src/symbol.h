@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "./exc.h"
+#include "./namespace.h"
 
 #if (__WORDSIZE == 64)
 #define ehdr_t Elf64_Ehdr
@@ -48,7 +49,7 @@ class ELF {
   ~ELF() { Close(); }
 
   // Open a file
-  void Open(const std::string &target);
+  void Open(const std::string &target, Namespace *ns);
 
   // Close the file; normally the destructor will do this for you.
   void Close();
