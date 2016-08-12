@@ -23,6 +23,14 @@ make
 make install
 ```
 
+### Fedora
+
+The following command should install the necessary packages to build on Fedora:
+
+    sudo dnf install autoconf automake gcc-c++ python-devel
+
+### Debian
+
 If you'd like to build a Debian package there's already a `debian/` directory at
 the root of this project. We'd like to remove this, as per the
 [upstream Debian packaging guidelines](https://wiki.debian.org/UpstreamGuide).
