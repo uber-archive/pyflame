@@ -14,6 +14,11 @@ AC_PROG_INSTALL
 
 # This is commented out because it doesn't work right on Ubuntu 12.04 (Precise)
 # AX_CXX_COMPILE_STDCXX_11
+AX_CHECK_COMPILE_FLAG(["-std=c++11"],
+                      [AX_APPEND_FLAG(["-std=c++11"], [CXXFLAGS])],
+                      [AX_CHECK_COMPILE_FLAG(["-std=c++0x"],
+                                             [AX_APPEND_FLAG(["-std=c++0x"], [CXXFLAGS])],
+                                             [AC_MSG_ERROR([failed to detect C++11 support])])])
 
 # Checks for libraries.
 
