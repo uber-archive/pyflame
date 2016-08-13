@@ -35,12 +35,12 @@ void ELF::Close() {
 // mmap the file
 void ELF::Open(const std::string &target) {
   Close();
-  int fd;
-  ElfType type = DetectType(target, &fd);
-  if (type != ElfType::Elf64) {
-    throw FatalException("Currently only 64-bit ELF files are supported");
+  int fd = open(target.c_str(), O_RDONLY);
+  if (fd == -1) {
+    std::ostringstream ss;
+    ss << "Failed to open target " << target << ": " << strerror(errno);
+    throw FatalException(ss.str());
   }
-
   length_ = lseek(fd, 0, SEEK_END);
   addr_ = mmap(nullptr, length_, PROT_READ, MAP_SHARED, fd, 0);
   while (close(fd) == -1) {
@@ -50,6 +50,18 @@ void ELF::Open(const std::string &target) {
     std::ostringstream ss;
     ss << "Failed to mmap " << target << ": " << strerror(errno);
     throw FatalException(ss.str());
+  }
+
+  if (hdr()->e_ident[EI_MAG0] != ELFMAG0 ||
+      hdr()->e_ident[EI_MAG1] != ELFMAG1 ||
+      hdr()->e_ident[EI_MAG2] != ELFMAG2 ||
+      hdr()->e_ident[EI_MAG3] != ELFMAG3) {
+    std::ostringstream ss;
+    ss << "File " << target << " does not have correct ELF magic header";
+    throw FatalException(ss.str());
+  }
+  if (hdr()->e_ident[EI_CLASS] != ELFCLASS64) {
+    throw FatalException("Currently only 64-bit ELF files are supported");
   }
 }
 
@@ -110,37 +122,4 @@ unsigned long ELF::GetThreadState() {
   }
   return 0;
 }
-
-ElfType ELF::DetectType(const std::string &target, int *fd) {
-  *fd = open(target.c_str(), O_RDONLY);
-  if (*fd == -1) {
-    std::ostringstream ss;
-    ss << "Failed to open target " << target << ": " << strerror(errno);
-    throw FatalException(ss.str());
-  }
-  ElfType type = ElfType::Unknown;
-  unsigned char buf[5];
-  if (read(*fd, buf, sizeof(buf)) != sizeof(buf)) {
-    std::ostringstream ss;
-    ss << "Failed to read " << target << ": " << strerror(errno);
-    throw FatalException(ss.str());
-  };
-  if (buf[EI_MAG0] != ELFMAG0 || buf[EI_MAG1] != ELFMAG1 ||
-      buf[EI_MAG2] != ELFMAG2 || buf[EI_MAG3] != ELFMAG3) {
-    std::ostringstream ss;
-    ss << "File " << target << " does not have correct ELF magic header";
-    throw FatalException(ss.str());
-  }
-  switch (buf[EI_CLASS]) {
-    case ELFCLASS32:
-      type = ElfType::Elf32;
-      break;
-    case ELFCLASS64:
-      type = ElfType::Elf64;
-      break;
-  }
-  lseek(*fd, SEEK_SET, 0);  // rewind the fd
-  return type;
-}
-
 }  // namespace pyflame

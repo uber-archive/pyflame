@@ -24,8 +24,6 @@
 #include "./exc.h"
 
 namespace pyflame {
-// The type of ELF file. This will be used to implement 32-bit support.
-enum class ElfType { Unknown, Elf32, Elf64 };
 
 // Representation of a 64-bit ELF file.
 //
@@ -86,9 +84,5 @@ class ELF {
     const Elf64_Shdr *strings = shdr(dynstr_);
     return reinterpret_cast<const char *>(p() + strings->sh_offset + offset);
   }
-
-  // Detect the file type (32-bit or 64-bit) and return a file descriptor for
-  // the file.
-  ElfType DetectType(const std::string &target, int *fd);
 };
 }  // namespace pyflame
