@@ -16,6 +16,7 @@
 
 #include <elf.h>
 
+#include <limits.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -23,15 +24,24 @@
 
 #include "./exc.h"
 
-namespace pyflame {
+#if (__WORDSIZE == 64)
+#define ehdr_t Elf64_Ehdr
+#define shdr_t Elf64_Shdr
+#define dyn_t Elf64_Dyn
+#define sym_t Elf64_Sym
+#define ARCH_ELFCLASS ELFCLASS64
+#elif (__WORDSIZE == 32)
+#define ehdr_t Elf32_Ehdr
+#define shdr_t Elf32_Shdr
+#define dyn_t Elf32_Dyn
+#define sym_t Elf32_Sym
+#define ARCH_ELFCLASS ELFCLASS32
+#else
+static_assert(false, "unknown build environment");
+#endif
 
-// Representation of a 64-bit ELF file.
-//
-// TODO: support 32-bit ELF files. One easiest way to do this would be to have
-// this class templated on the architecture where the 64-bit version uses the
-// Elf64_* structs and the 32-bit version uses the Elf32_* structs. Then another
-// function can inspect the ELF header and tell the caller which class they
-// should use.
+namespace pyflame {
+// Representation of an ELF file.
 class ELF {
  public:
   ELF() : addr_(nullptr), length_(0), dynamic_(-1), dynstr_(-1), dynsym_(-1) {}
@@ -57,18 +67,18 @@ class ELF {
   size_t length_;
   int dynamic_, dynstr_, dynsym_;
 
-  inline const Elf64_Ehdr *hdr() const {
-    return reinterpret_cast<const Elf64_Ehdr *>(addr_);
+  inline const ehdr_t *hdr() const {
+    return reinterpret_cast<const ehdr_t *>(addr_);
   }
 
-  inline const Elf64_Shdr *shdr(int idx) const {
+  inline const shdr_t *shdr(int idx) const {
     if (idx < 0) {
       std::ostringstream ss;
       ss << "Illegal shdr index: " << idx;
       throw FatalException(ss.str());
     }
-    return reinterpret_cast<const Elf64_Shdr *>(p() + hdr()->e_shoff +
-                                                idx * hdr()->e_shentsize);
+    return reinterpret_cast<const shdr_t *>(p() + hdr()->e_shoff +
+                                            idx * hdr()->e_shentsize);
   }
 
   inline unsigned long p() const {
@@ -76,12 +86,12 @@ class ELF {
   }
 
   inline const char *strtab(int offset) const {
-    const Elf64_Shdr *strings = shdr(hdr()->e_shstrndx);
+    const shdr_t *strings = shdr(hdr()->e_shstrndx);
     return reinterpret_cast<const char *>(p() + strings->sh_offset + offset);
   }
 
   inline const char *dynstr(int offset) const {
-    const Elf64_Shdr *strings = shdr(dynstr_);
+    const shdr_t *strings = shdr(dynstr_);
     return reinterpret_cast<const char *>(p() + strings->sh_offset + offset);
   }
 };

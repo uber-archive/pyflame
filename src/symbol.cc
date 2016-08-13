@@ -60,15 +60,15 @@ void ELF::Open(const std::string &target) {
     ss << "File " << target << " does not have correct ELF magic header";
     throw FatalException(ss.str());
   }
-  if (hdr()->e_ident[EI_CLASS] != ELFCLASS64) {
-    throw FatalException("Currently only 64-bit ELF files are supported");
+  if (hdr()->e_ident[EI_CLASS] != ARCH_ELFCLASS) {
+    throw FatalException("ELF class does not match host architecture");
   }
 }
 
 void ELF::Parse() {
   // skip the first section since it must be of type SHT_NULL
   for (uint16_t i = 1; i < hdr()->e_shnum; i++) {
-    const Elf64_Shdr *s = shdr(i);
+    const shdr_t *s = shdr(i);
     switch (s->sh_type) {
       case SHT_STRTAB:
         if (strcmp(strtab(s->sh_name), ".dynstr") == 0) {
@@ -95,11 +95,11 @@ void ELF::Parse() {
 std::vector<std::string> ELF::NeededLibs() {
   // Get all of the strings
   std::vector<std::string> needed;
-  const Elf64_Shdr *s = shdr(dynamic_);
-  const Elf64_Shdr *d = shdr(dynstr_);
+  const shdr_t *s = shdr(dynamic_);
+  const shdr_t *d = shdr(dynstr_);
   for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
-    const Elf64_Dyn *dyn = reinterpret_cast<const Elf64_Dyn *>(
-        p() + s->sh_offset + i * s->sh_entsize);
+    const dyn_t *dyn =
+        reinterpret_cast<const dyn_t *>(p() + s->sh_offset + i * s->sh_entsize);
     if (dyn->d_tag == DT_NEEDED) {
       needed.push_back(
           reinterpret_cast<const char *>(p() + d->sh_offset + dyn->d_un.d_val));
@@ -109,11 +109,11 @@ std::vector<std::string> ELF::NeededLibs() {
 }
 
 unsigned long ELF::GetThreadState() {
-  const Elf64_Shdr *s = shdr(dynsym_);
-  const Elf64_Shdr *d = shdr(dynstr_);
+  const shdr_t *s = shdr(dynsym_);
+  const shdr_t *d = shdr(dynstr_);
   for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
-    const Elf64_Sym *sym = reinterpret_cast<const Elf64_Sym *>(
-        p() + s->sh_offset + i * s->sh_entsize);
+    const sym_t *sym =
+        reinterpret_cast<const sym_t *>(p() + s->sh_offset + i * s->sh_entsize);
     const char *name =
         reinterpret_cast<const char *>(p() + d->sh_offset + sym->st_name);
     if (strcmp(name, "_PyThreadState_Current") == 0) {
