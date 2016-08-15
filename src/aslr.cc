@@ -39,7 +39,7 @@ size_t LocateLibPython(pid_t pid, const std::string &hint, std::string *path) {
       if (pos == std::string::npos) {
         throw FatalException("Did not find libpython virtual memory address");
       }
-      return std::strtol(line.substr(0, pos).c_str(), nullptr, 16);
+      return std::strtoul(line.substr(0, pos).c_str(), nullptr, 16);
     }
   }
   return 0;
