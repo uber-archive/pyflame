@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import random
+import sys
 import threading
 
 
@@ -139,9 +140,11 @@ def run():
     log.info('solution = %s, len = %d', solution, solution_len)
 
 
-def run_times(times):
+def run_times(quiet, times):
     """Run Dijkstra's algorithm in a loop."""
-    print os.getpid()
+    if not quiet:
+        sys.stdout.write('%d\n' % (os.getpid(),))
+        sys.stdout.flush()
     if times <= 0:
         while True:
             run()
@@ -152,6 +155,8 @@ def run_times(times):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        help='Be quiet')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Be verbose')
     parser.add_argument('-t', '--threads', type=int, default=1,
@@ -165,11 +170,11 @@ def main():
         log.setLevel(logging.DEBUG)
 
     if args.threads == 1:
-        run_times(args.num)
+        run_times(args.quiet, args.num)
     else:
         threads = []
         for _ in xrange(args.threads):
-            t = threading.Thread(target=run_times, args=(args.num,))
+            t = threading.Thread(target=run_times, args=(args.quiet, args.num))
             t.start()
             threads.append(t)
         for i, t in enumerate(threads):
