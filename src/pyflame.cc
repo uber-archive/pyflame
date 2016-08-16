@@ -26,6 +26,7 @@
 #include "./exc.h"
 #include "./frame.h"
 #include "./ptrace.h"
+#include "./version.h"
 
 using namespace pyflame;
 
@@ -87,7 +88,8 @@ int main(int argc, char **argv) {
         seconds = std::stod(optarg);
         break;
       case 'v':
-        std::cout << PACKAGE_STRING << "\n";
+        std::cout << PACKAGE_STRING << "\n\n";
+        std::cout << kBuildNote << "\n";
         return 0;
         break;
       case '?':
