@@ -1,0 +1,15 @@
+sudo: required
+
+language: python
+python:
+  - "2.7"
+
+before_install:
+  - bash travis/install-build-deps.sh
+  - bash travis/install-pytest.sh
+
+install:
+  - make
+
+script:
+  - py.test tests/
