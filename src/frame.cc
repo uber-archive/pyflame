@@ -86,7 +86,10 @@ void FollowFrame(pid_t pid, unsigned long frame, std::vector<Frame> *stack) {
   const long co_filename =
       PtracePeek(pid, f_code + offsetof(PyCodeObject, co_filename));
   const std::string filename = PtracePeekString(pid, StringData(co_filename));
-  stack->push_back({filename, GetLine(pid, frame, f_code)});
+  const long co_name =
+      PtracePeek(pid, f_code + offsetof(PyCodeObject, co_name));
+  const std::string name = PtracePeekString(pid, StringData(co_name));
+  stack->push_back({filename, name, GetLine(pid, frame, f_code)});
 
   const long f_back = PtracePeek(pid, frame + offsetof(_frame, f_back));
   if (f_back != 0) {
@@ -118,7 +121,7 @@ unsigned long ThreadStateFromLibPython(pid_t pid,
 }  // namespace
 
 std::ostream &operator<<(std::ostream &os, const Frame &frame) {
-  os << frame.file() << ':' << frame.line();
+  os << frame.file() << ':' << frame.name() << ':' << frame.line();
   return os;
 }
 
