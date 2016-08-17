@@ -40,19 +40,6 @@ const char usage_str[] =
      "  -s, --rate=RATE      Sample rate, as a fractional value of seconds "
      "(default 0.001)\n"
      "  -v, --version        Show the version\n");
-
-typedef std::vector<Frame> frames_t;
-
-struct FrameHash {
-  size_t operator()(const frames_t &frames) const {
-    size_t hash = 0;
-    for (size_t i = 0; i < frames.size(); i++) {
-      hash ^= std::hash<size_t>()(i);
-      hash ^= std::hash<std::string>()(frames[i].file());
-    }
-    return hash;
-  }
-};
 }  // namespace
 
 int main(int argc, char **argv) {

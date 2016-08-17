@@ -51,4 +51,17 @@ unsigned long ThreadStateAddr(pid_t pid);
 
 // Get the stack. The stack will be in reverse order (most recent frame first).
 std::vector<Frame> GetStack(pid_t pid, unsigned long addr);
+
+typedef std::vector<Frame> frames_t;
+
+struct FrameHash {
+  size_t operator()(const frames_t &frames) const {
+    size_t hash = 0;
+    for (size_t i = 0; i < frames.size(); i++) {
+      hash ^= std::hash<size_t>()(i);
+      hash ^= std::hash<std::string>()(frames[i].file());
+    }
+    return hash;
+  }
+};
 }  // namespace pyflame
