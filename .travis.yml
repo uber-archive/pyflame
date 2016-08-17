@@ -13,4 +13,3 @@ install:
 
 script:
   - py.test tests/
-
