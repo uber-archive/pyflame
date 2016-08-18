@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/uber/pyflame.svg?token=PuYq6s4ssh4VyDYs6Qex&branch=master)](https://travis-ci.com/uber/pyflame)
+
 # Pyflame
 
 Pyflame is a tool for generating
