@@ -70,7 +70,7 @@ Namespace::Namespace(pid_t pid) : out_(-1), in_(-1) {
 }
 
 int Namespace::Open(const char *path) {
-  if (in_) {
+  if (in_ != -1) {
     SetNs(in_);
     int fd = open(path, O_RDONLY);
     SetNs(out_);

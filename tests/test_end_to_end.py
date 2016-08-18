@@ -23,8 +23,13 @@ def proc():
 
 def test_monitor(proc):
     """Basic test for the monitor mode."""
-    output = subprocess.check_output(['./src/pyflame', str(proc.pid)])
-    lines = output.split('\n')
+    proc = subprocess.Popen(['./src/pyflame', str(proc.pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
         assert FLAMEGRAPH_RE.match(line) is not None
