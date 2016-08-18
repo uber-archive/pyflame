@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "./namespace.h"
+
 namespace pyflame {
 
 class Frame {
@@ -47,7 +49,7 @@ class Frame {
 std::ostream &operator<<(std::ostream &os, const Frame &frame);
 
 // Locate _PyThreadState_Current
-unsigned long ThreadStateAddr(pid_t pid);
+unsigned long ThreadStateAddr(pid_t pid, Namespace *ns);
 
 // Get the stack. The stack will be in reverse order (most recent frame first).
 std::vector<Frame> GetStack(pid_t pid, unsigned long addr);

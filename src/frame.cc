@@ -28,6 +28,7 @@
 
 #include "./aslr.h"
 #include "./exc.h"
+#include "./posix.h"
 #include "./ptrace.h"
 #include "./pystring.h"
 #include "./symbol.h"
@@ -98,8 +99,8 @@ void FollowFrame(pid_t pid, unsigned long frame, std::vector<Frame> *stack) {
 }
 
 // Locate _PyThreadState_Current within libpython
-unsigned long ThreadStateFromLibPython(pid_t pid,
-                                       const std::string &libpython) {
+unsigned long ThreadStateFromLibPython(pid_t pid, const std::string &libpython,
+                                       Namespace *ns) {
   std::string elf_path;
   const size_t offset = LocateLibPython(pid, libpython, &elf_path);
   if (offset == 0) {
@@ -109,7 +110,7 @@ unsigned long ThreadStateFromLibPython(pid_t pid,
   }
 
   ELF pyelf;
-  pyelf.Open(elf_path);
+  pyelf.Open(elf_path, ns);
   pyelf.Parse();
   const unsigned long threadstate = pyelf.GetThreadState();
   if (threadstate == 0) {
@@ -125,11 +126,11 @@ std::ostream &operator<<(std::ostream &os, const Frame &frame) {
   return os;
 }
 
-unsigned long ThreadStateAddr(pid_t pid) {
+unsigned long ThreadStateAddr(pid_t pid, Namespace *ns) {
   std::ostringstream ss;
   ss << "/proc/" << pid << "/exe";
   ELF target;
-  target.Open(ss.str());
+  target.Open(ReadLink(ss.str().c_str()), ns);
   target.Parse();
 
   // There's two different cases here. The default way Python is compiled you
@@ -157,7 +158,7 @@ unsigned long ThreadStateAddr(pid_t pid) {
     }
   }
   if (!libpython.empty()) {
-    return ThreadStateFromLibPython(pid, libpython);
+    return ThreadStateFromLibPython(pid, libpython, ns);
   }
   // Appears to be statically linked, find the symbols in the binary
   unsigned long threadstate = target.GetThreadState();
@@ -166,7 +167,7 @@ unsigned long ThreadStateAddr(pid_t pid) {
     // guess that the DSO is called libpython2.7.so
     //
     // XXX: this won't work if the embedding language is Python 3
-    threadstate = ThreadStateFromLibPython(pid, "libpython2.7.so");
+    threadstate = ThreadStateFromLibPython(pid, "libpython2.7.so", ns);
   }
   return threadstate;
 }
