@@ -20,6 +20,9 @@ AX_CHECK_COMPILE_FLAG(["-std=c++11"],
                                              [AX_APPEND_FLAG(["-std=c++0x"], [CXXFLAGS])],
                                              [AC_MSG_ERROR([failed to detect C++11 support])])])
 
+AX_CHECK_COMPILE_FLAG([-Wall],
+                      [AX_APPEND_FLAG([-Wall], [CXXFLAGS])])
+
 # Checks for libraries.
 
 # Checks for header files.
