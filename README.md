@@ -113,8 +113,10 @@ This *should* work as long as none of your files have non-ASCII characters in
 their names. If you are interested in supporting Unicode file names please
 assist us with pull requests.
 
-## License
+## Legal and Licensing
 
 Pyflame is [free software](https://www.gnu.org/philosophy/free-sw.en.html)
-distributed under the terms of the
-[Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+licensed under the
+[Apache License, Version 2.0][].
+
+[Apache License, Version 2.0]: LICENSE
