@@ -12,32 +12,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import contextlib
 import pytest
 import subprocess
 import re
 
 
+IDLE_RE = re.compile(r'^\(idle\) \d+$')
 FLAMEGRAPH_RE = re.compile(r'^\S+ \d+$')
 
 
-@pytest.yield_fixture
-def proc():
+@contextlib.contextmanager
+def proc(test_file):
     # start the process and wait for it to print its pid... we explicitly do
     # this instead of using the pid attribute so we can ensure that the process
     # is initialized
-    dijkstra = subprocess.Popen(
-        ['python', './tests/dijkstra.py'], stdout=subprocess.PIPE)
-    dijkstra.stdout.readline()
+    proc = subprocess.Popen(
+        ['python', './tests/%s' % (test_file,)], stdout=subprocess.PIPE)
+    proc.stdout.readline()
 
     try:
-        yield dijkstra
+        yield proc
     finally:
-        dijkstra.kill()
+        proc.kill()
 
 
-def test_monitor(proc):
+@pytest.yield_fixture
+def dijkstra():
+    with proc('dijkstra.py') as p:
+        yield p
+
+
+@pytest.yield_fixture
+def sleeper():
+    with proc('sleeper.py') as p:
+        yield p
+
+
+def test_monitor(dijkstra):
     """Basic test for the monitor mode."""
-    proc = subprocess.Popen(['./src/pyflame', str(proc.pid)],
+    proc = subprocess.Popen(['./src/pyflame', str(dijkstra.pid)],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
     out, err = proc.communicate()
@@ -47,3 +61,21 @@ def test_monitor(proc):
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
         assert FLAMEGRAPH_RE.match(line) is not None
+
+
+def test_idle(sleeper):
+    """Basic test for idle processes."""
+    proc = subprocess.Popen(['./src/pyflame', str(sleeper.pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
+    assert lines.pop(-1) == ''  # output should end in a newline
+    has_idle = False
+    for line in lines:
+        assert FLAMEGRAPH_RE.match(line) is not None
+        if IDLE_RE.match(line):
+            has_idle = True
+    assert has_idle
