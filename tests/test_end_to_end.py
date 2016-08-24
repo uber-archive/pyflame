@@ -79,3 +79,18 @@ def test_idle(sleeper):
         if IDLE_RE.match(line):
             has_idle = True
     assert has_idle
+
+
+def test_exclude_idle(sleeper):
+    """Basic test for idle processes."""
+    proc = subprocess.Popen(['./src/pyflame', '-x', str(sleeper.pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
+    assert lines.pop(-1) == ''  # output should end in a newline
+    for line in lines:
+        assert FLAMEGRAPH_RE.match(line) is not None
+        assert not IDLE_RE.match(line)

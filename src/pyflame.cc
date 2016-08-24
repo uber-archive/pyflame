@@ -40,10 +40,12 @@ const char usage_str[] =
      "  -r, --seconds=SECS   How many seconds to run for (default 1)\n"
      "  -s, --rate=RATE      Sample rate, as a fractional value of seconds "
      "(default 0.001)\n"
-     "  -v, --version        Show the version\n");
+     "  -v, --version        Show the version\n"
+     "  -x, --exclude-idle   Exclude idle time from statistics\n");
 }  // namespace
 
 int main(int argc, char **argv) {
+  bool include_idle = true;
   double seconds = 1;
   double sample_rate = 0.001;
   for (;;) {
@@ -52,9 +54,10 @@ int main(int argc, char **argv) {
         {"rate", required_argument, 0, 'r'},
         {"seconds", required_argument, 0, 's'},
         {"version", no_argument, 0, 'v'},
+        {"exclude-idle", no_argument, 0, 'x'},
         {0, 0, 0, 0}};
     int option_index = 0;
-    int c = getopt_long(argc, argv, "hr:s:v", long_options, &option_index);
+    int c = getopt_long(argc, argv, "hr:s:vx", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -79,6 +82,9 @@ int main(int argc, char **argv) {
         std::cout << PACKAGE_STRING << "\n\n";
         std::cout << kBuildNote << "\n";
         return 0;
+        break;
+      case 'x':
+        include_idle = false;
         break;
       case '?':
         // getopt_long should already have printed an error message
@@ -105,7 +111,7 @@ int main(int argc, char **argv) {
       const std::chrono::microseconds interval{
           static_cast<long>(sample_rate * 1000000)};
       std::unordered_map<frames_t, size_t, FrameHash> buckets;
-      size_t empty = 0;
+      size_t idle = 0;
       auto end =
           std::chrono::system_clock::now() +
           std::chrono::microseconds(static_cast<long>(seconds * 1000000));
@@ -119,7 +125,9 @@ int main(int argc, char **argv) {
             it->second++;
           }
         } catch (const NonFatalException &exc) {
-          empty++;
+          if (include_idle) {
+            idle++;
+          }
         }
         auto now = std::chrono::system_clock::now();
         if (now + interval >= end) {
@@ -129,8 +137,8 @@ int main(int argc, char **argv) {
         std::this_thread::sleep_for(interval);
         PtraceAttach(pid);
       }
-      if (empty) {
-        std::cout << "(idle) " << empty << "\n";
+      if (idle) {
+        std::cout << "(idle) " << idle << "\n";
       }
       // process the frames
       for (const auto &kv : buckets) {
