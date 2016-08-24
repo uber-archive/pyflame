@@ -8,6 +8,8 @@ Pyflame works by using the
 [ptrace(2)](http://man7.org/linux/man-pages/man2/ptrace.2.html) system call to
 analyze the currently-executing stack trace for a Python process.
 
+![pyflame](https://cloud.githubusercontent.com/assets/2734/17949703/8ef7d08c-6a0b-11e6-8bbd-41f82086d862.png)
+
 ## Installing
 
 To build Pyflame you will need a C++ compiler with basic C++11 support. Pyflame
