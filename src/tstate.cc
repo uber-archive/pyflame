@@ -14,12 +14,17 @@
 
 #include "./tstate.h"
 
+#include <cstddef>
 #include <sstream>
 #include <string>
+
+// only needed for the struct offsets
+#include <Python.h>
 
 #include "./aslr.h"
 #include "./exc.h"
 #include "./posix.h"
+#include "./ptrace.h"
 #include "./symbol.h"
 
 namespace pyflame {
@@ -90,5 +95,17 @@ unsigned long ThreadStateAddr(pid_t pid, Namespace *ns) {
     threadstate = ThreadStateFromLibPython(pid, "libpython2.7.so", ns);
   }
   return threadstate;
+}
+
+unsigned long FirstFrameAddr(pid_t pid, unsigned long tstate_addr) {
+  // dereference _PyThreadState_Current
+  const long state = PtracePeek(pid, tstate_addr);
+  if (state == 0) {
+    return 0;
+  }
+
+  // dereference the frame
+  return static_cast<unsigned long>(
+      PtracePeek(pid, state + offsetof(PyThreadState, frame)));
 }
 }  // namespace pyflame

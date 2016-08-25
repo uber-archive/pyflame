@@ -31,6 +31,7 @@
 #include "./ptrace.h"
 #include "./pystring.h"
 #include "./symbol.h"
+#include "./tstate.h"
 
 // why would this not be true idk
 static_assert(sizeof(long) == sizeof(void *), "wat platform r u on");
@@ -101,19 +102,13 @@ std::ostream &operator<<(std::ostream &os, const Frame &frame) {
   return os;
 }
 
-std::vector<Frame> GetStack(pid_t pid, unsigned long addr) {
-  // dereference _PyThreadState_Current
-  const long state = PtracePeek(pid, addr);
-  if (state == 0) {
-    throw NonFatalException("No active frame for the Python interpreter.");
-  }
-
-  // dereference the current frame
-  const long frame = PtracePeek(pid, state + offsetof(PyThreadState, frame));
-
-  // get the stack trace
+std::vector<Frame> GetStack(pid_t pid, unsigned long tstate_addr) {
   std::vector<Frame> stack;
-  FollowFrame(pid, frame, &stack);
+  const unsigned long frame = FirstFrameAddr(pid, tstate_addr);
+  if (frame) {
+    // get the stack trace
+    FollowFrame(pid, frame, &stack);
+  }
   return stack;
 }
 }  // namespace pyflame

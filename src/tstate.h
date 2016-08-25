@@ -19,4 +19,7 @@
 namespace pyflame {
 // Locate _PyThreadState_Current
 unsigned long ThreadStateAddr(pid_t pid, Namespace *ns);
+
+// Locate the address of the first frame
+unsigned long FirstFrameAddr(pid_t pid, unsigned long tstate_addr);
 }
