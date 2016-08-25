@@ -1,4 +1,5 @@
-Makefile
-src/pyflame
+*.svg
 .cache/
+Makefile
 __pycache__/
+src/pyflame

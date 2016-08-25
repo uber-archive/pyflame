@@ -27,6 +27,7 @@
 #include "./frame.h"
 #include "./namespace.h"
 #include "./ptrace.h"
+#include "./tstate.h"
 #include "./version.h"
 
 using namespace pyflame;
