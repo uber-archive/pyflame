@@ -49,7 +49,7 @@ class Frame {
 std::ostream &operator<<(std::ostream &os, const Frame &frame);
 
 // Get the stack. The stack will be in reverse order (most recent frame first).
-std::vector<Frame> GetStack(pid_t pid, unsigned long addr);
+std::vector<Frame> GetStack(pid_t pid, unsigned long frame_addr);
 
 typedef std::vector<Frame> frames_t;
 

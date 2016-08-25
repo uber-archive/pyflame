@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
   try {
     PtraceAttach(pid);
     Namespace ns(pid);
-    const unsigned long addr = ThreadStateAddr(pid, &ns);
+    const unsigned long tstate_addr = ThreadStateAddr(pid, &ns);
     if (seconds) {
       const std::chrono::microseconds interval{
           static_cast<long>(sample_rate * 1000000)};
@@ -117,17 +117,18 @@ int main(int argc, char **argv) {
           std::chrono::system_clock::now() +
           std::chrono::microseconds(static_cast<long>(seconds * 1000000));
       for (;;) {
-        try {
-          frames_t frames = GetStack(pid, addr);
+        const unsigned long frame_addr = FirstFrameAddr(pid, tstate_addr);
+        if (frame_addr == 0) {
+          if (include_idle) {
+            idle++;
+          }
+        } else {
+          frames_t frames = GetStack(pid, frame_addr);
           auto it = buckets.find(frames);
           if (it == buckets.end()) {
             buckets.insert(it, {frames, 1});
           } else {
             it->second++;
-          }
-        } catch (const NonFatalException &exc) {
-          if (include_idle) {
-            idle++;
           }
         }
         auto now = std::chrono::system_clock::now();
@@ -155,17 +156,19 @@ int main(int argc, char **argv) {
         std::cout << *last << " " << kv.second << "\n";
       }
     } else {
-      std::vector<Frame> stack = GetStack(pid, addr);
-      for (auto it = stack.rbegin(); it != stack.rend(); it++) {
-        std::cout << *it << "\n";
+      const unsigned long frame_addr = FirstFrameAddr(pid, tstate_addr);
+      if (frame_addr) {
+        std::vector<Frame> stack = GetStack(pid, frame_addr);
+        for (auto it = stack.rbegin(); it != stack.rend(); it++) {
+          std::cout << *it << "\n";
+        }
+      } else {
+        std::cout << "(idle)\n";
       }
     }
   } catch (const FatalException &exc) {
     std::cerr << exc.what() << std::endl;
     return 1;
-  } catch (const NonFatalException &exc) {
-    std::cerr << exc.what() << std::endl;
-    return 0;
   } catch (const std::exception &exc) {
     std::cerr << exc.what() << std::endl;
     return 1;

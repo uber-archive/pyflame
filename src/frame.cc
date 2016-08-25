@@ -102,13 +102,9 @@ std::ostream &operator<<(std::ostream &os, const Frame &frame) {
   return os;
 }
 
-std::vector<Frame> GetStack(pid_t pid, unsigned long tstate_addr) {
+std::vector<Frame> GetStack(pid_t pid, unsigned long frame_addr) {
   std::vector<Frame> stack;
-  const unsigned long frame = FirstFrameAddr(pid, tstate_addr);
-  if (frame) {
-    // get the stack trace
-    FollowFrame(pid, frame, &stack);
-  }
+  FollowFrame(pid, frame_addr, &stack);
   return stack;
 }
 }  // namespace pyflame

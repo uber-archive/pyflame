@@ -18,12 +18,6 @@
 #include <string>
 
 namespace pyflame {
-class NonFatalException : public std::runtime_error {
- public:
-  explicit NonFatalException(const std::string &what_arg)
-      : std::runtime_error(what_arg) {}
-};
-
 class FatalException : public std::runtime_error {
  public:
   explicit FatalException(const std::string &what_arg)
