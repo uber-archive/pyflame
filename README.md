@@ -72,7 +72,18 @@ You can also change the sample time and sampling frequency:
 pyflame -s 60 -r 0.10 PID
 ```
 
-### Ptrace Permissions Errors
+## FAQ
+
+### What Is "(idle)" Time?
+
+From time to time the Python interpreter will have nothing to do other than wait
+for I/O to complete. This will typically happen when the Python interpreter is
+waiting for network operations to finish. When that happens Pyflame will report
+the time as "idle".
+
+If you don't want to include this time you can use the invocation `pyflame -x`.
+
+### What Are These Ptrace Permissions Errors?
 
 To run Pyflame you'll need appropriate permissions to `PTRACE_ATTACH` the
 process. Typically this means that you'll need to invoke `pyflame` as root, or
