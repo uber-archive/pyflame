@@ -37,7 +37,7 @@ unsigned long ThreadStateFromLibPython(pid_t pid, const std::string &libpython,
   if (offset == 0) {
     std::ostringstream ss;
     ss << "Failed to locate libpython named " << libpython;
-    FatalException(ss.str());
+    throw FatalException(ss.str());
   }
 
   ELF pyelf;

@@ -45,7 +45,7 @@ void ELF::Open(const std::string &target, Namespace *ns) {
   }
   if (fd == -1) {
     std::ostringstream ss;
-    ss << "Failed to open target " << target << ": " << strerror(errno);
+    ss << "Failed to open ELF file " << target << ": " << strerror(errno);
     throw FatalException(ss.str());
   }
   length_ = lseek(fd, 0, SEEK_END);
