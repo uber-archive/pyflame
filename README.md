@@ -38,7 +38,7 @@ The following command should install the necessary packages to build on Fedora:
 The following command should install the necessary packages to build on Debian
 (or Ubuntu):
 
-    sudo apt-get install autotools-dev g++ pkg-config python-dev
+    sudo apt-get install autoconf autotools-dev g++ pkg-config python-dev
 
 If you'd like to build a Debian package there's already a `debian/` directory at
 the root of this project. We'd like to remove this, as per the
