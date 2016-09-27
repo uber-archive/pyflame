@@ -2,11 +2,15 @@
 
 # Pyflame
 
-Pyflame is a tool for generating
-[flame graphs](https://github.com/brendangregg/FlameGraph) for Python processes.
-Pyflame works by using the
-[ptrace(2)](http://man7.org/linux/man-pages/man2/ptrace.2.html) system call to
-analyze the currently-executing stack trace for a Python process.
+Pyflame is a tool for
+generating [flame graphs](https://github.com/brendangregg/FlameGraph) for Python
+processes. Pyflame is different from existing Python profilers because it
+doesn't require explicit instrumentation -- it will work with any running Python
+process! Pyflame works by using
+the [ptrace(2)](http://man7.org/linux/man-pages/man2/ptrace.2.html) system call
+to analyze the currently-executing stack trace for a Python process.
+
+Read the Uber Engineering blog post about Pyflame [here](http://eng.uber.com/pyflame/).
 
 ![pyflame](https://cloud.githubusercontent.com/assets/2734/17949703/8ef7d08c-6a0b-11e6-8bbd-41f82086d862.png)
 
