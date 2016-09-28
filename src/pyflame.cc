@@ -38,8 +38,8 @@ const char usage_str[] =
      "\n"
      "General Options:\n"
      "  -h, --help           Show help\n"
-     "  -r, --seconds=SECS   How many seconds to run for (default 1)\n"
-     "  -s, --rate=RATE      Sample rate, as a fractional value of seconds "
+     "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
+     "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
      "(default 0.001)\n"
      "  -v, --version        Show the version\n"
      "  -x, --exclude-idle   Exclude idle time from statistics\n");
