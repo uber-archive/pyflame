@@ -166,9 +166,6 @@ int main(int argc, char **argv) {
         std::cout << "(idle)\n";
       }
     }
-  } catch (const FatalException &exc) {
-    std::cerr << exc.what() << std::endl;
-    return 1;
   } catch (const std::exception &exc) {
     std::cerr << exc.what() << std::endl;
     return 1;
