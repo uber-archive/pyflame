@@ -20,6 +20,11 @@ import subprocess
 
 IDLE_RE = re.compile(r'^\(idle\) \d+$')
 FLAMEGRAPH_RE = re.compile(r'^.+ \d+$')
+TS_IDLE_RE = re.compile(r'\(idle\)')
+# Matches strings of the form
+# './tests/sleeper.py:<module>:31;./tests/sleeper.py:main:26;'
+TS_FLAMEGRAPH_RE = re.compile(r'[^[^\d]+\d+;]*')
+TS_RE = re.compile(r'\d+')
 
 
 @contextlib.contextmanager
@@ -232,3 +237,35 @@ def test_permission_error(pid):
     assert not out
     assert err.startswith('Failed to attach to PID')
     assert proc.returncode == 1
+
+
+def test_include_ts(sleeper):
+    """Basic test for timestamp processes."""
+    proc = subprocess.Popen(['./src/pyflame', '-T', str(sleeper.pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            universal_newlines=True)
+    out, err = proc.communicate()
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
+    assert lines.pop(-1) == ''  # output should end in a newline
+    for line in lines:
+        assert (TS_FLAMEGRAPH_RE.match(line) or
+                TS_RE.match(line) or TS_IDLE_RE.match(line))
+
+
+def test_include_ts_exclude_idle(sleeper):
+    """Basic test for timestamp processes."""
+    proc = subprocess.Popen(['./src/pyflame', '-T', '-x',  str(sleeper.pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            universal_newlines=True)
+    out, err = proc.communicate()
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
+    assert lines.pop(-1) == ''  # output should end in a newline
+    for line in lines:
+        assert not TS_IDLE_RE.match(line)
+        assert (TS_FLAMEGRAPH_RE.match(line) or TS_RE.match(line))
