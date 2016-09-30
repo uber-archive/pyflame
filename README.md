@@ -130,6 +130,30 @@ This *should* work as long as none of your files have non-ASCII characters in
 their names. If you are interested in supporting Unicode file names please
 assist us with pull requests.
 
+## Hacking
+
+This section will explain the Pyflame code for people who are interested in
+contributing source code patches.
+
+The code style in Pyflame (mostly) conforms to
+the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
+Additionally, all of the source code is formatted
+with [clang-format](http://clang.llvm.org/docs/ClangFormat.html). There's a
+`.clang-format` file checked into the root of this repository which will make
+`clang-format` do the right thing.
+
+The Linux-specific code is be mostly restricted to the files `src/aslr.*`,
+`src/namespace.*`, and `src/ptrace.*`. If you want to port Pyflame to another
+Unix you will probably only need to modify these files. In principle you can
+probably port Pyflame to macOS (née OS X) if you modify `src/symbol.*` to work
+with [Mach-O](https://en.wikipedia.org/wiki/Mach-O) executables, but this is
+probably pretty challenging.
+
+If you have [pytest](http://doc.pytest.org/en/latest/) installed (perhaps in a
+virtualenv) you can run some basic end-to-end tests like this:
+
+    py.test tests/
+
 ## Legal and Licensing
 
 Pyflame is [free software](https://www.gnu.org/philosophy/free-sw.en.html)
