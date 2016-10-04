@@ -49,6 +49,10 @@ the root of this project. We'd like to remove this, as per the
 [upstream Debian packaging guidelines](https://wiki.debian.org/UpstreamGuide).
 If you can help get this project packaged in Debian please let us know.
 
+### Arch Linux
+
+You can install pyflame from [AUR](https://aur.archlinux.org/packages/pyflame-git/).
+
 ## Usage
 
 After compiling Pyflame you'll get a small executable called `pyflame`. The most
