@@ -29,12 +29,12 @@ void PtraceAttach(pid_t pid) {
   if (ptrace(PTRACE_ATTACH, pid, 0, 0)) {
     std::ostringstream ss;
     ss << "Failed to attach to PID " << pid << ": " << strerror(errno);
-    throw FatalException(ss.str());
+    throw PtraceException(ss.str());
   }
   if (wait(nullptr) == -1) {
     std::ostringstream ss;
     ss << "Failed to wait on PID " << pid << ": " << strerror(errno);
-    throw FatalException(ss.str());
+    throw PtraceException(ss.str());
   }
 }
 
@@ -42,7 +42,7 @@ void PtraceDetach(pid_t pid) {
   if (ptrace(PTRACE_DETACH, pid, 0, 0)) {
     std::ostringstream ss;
     ss << "Failed to detach PID " << pid << ": " << strerror(errno);
-    throw FatalException(ss.str());
+    throw PtraceException(ss.str());
   }
 }
 
@@ -53,7 +53,7 @@ long PtracePeek(pid_t pid, unsigned long addr) {
     std::ostringstream ss;
     ss << "Failed to PTRACE_PEEKDATA at " << reinterpret_cast<void *>(addr)
        << ": " << strerror(errno);
-    throw FatalException(ss.str());
+    throw PtraceException(ss.str());
   }
   return data;
 }

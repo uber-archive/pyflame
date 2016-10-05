@@ -43,6 +43,23 @@ const char usage_str[] =
      "(default 0.001)\n"
      "  -v, --version        Show the version\n"
      "  -x, --exclude-idle   Exclude idle time from statistics\n");
+
+typedef std::unordered_map<frames_t, size_t, FrameHash> buckets_t;
+
+void PrintBuckets(const buckets_t &buckets) {
+  for (const auto &kv : buckets) {
+    if (kv.first.empty()) {
+      std::cerr << "fatal error\n";
+      return;
+    }
+    auto last = kv.first.rend();
+    last--;
+    for (auto it = kv.first.rbegin(); it != last; ++it) {
+      std::cout << *it << ";";
+    }
+    std::cout << *last << " " << kv.second << "\n";
+  }
+}
 }  // namespace
 
 int main(int argc, char **argv) {
@@ -104,6 +121,7 @@ int main(int argc, char **argv) {
     std::cerr << "PID " << pid << " is out of valid PID range.\n";
     return 1;
   }
+  buckets_t buckets;
   try {
     PtraceAttach(pid);
     Namespace ns(pid);
@@ -111,7 +129,6 @@ int main(int argc, char **argv) {
     if (seconds) {
       const std::chrono::microseconds interval{
           static_cast<long>(sample_rate * 1000000)};
-      std::unordered_map<frames_t, size_t, FrameHash> buckets;
       size_t idle = 0;
       auto end =
           std::chrono::system_clock::now() +
@@ -142,19 +159,7 @@ int main(int argc, char **argv) {
       if (idle) {
         std::cout << "(idle) " << idle << "\n";
       }
-      // process the frames
-      for (const auto &kv : buckets) {
-        if (kv.first.empty()) {
-          std::cerr << "uh oh\n";
-          return 1;
-        }
-        auto last = kv.first.rend();
-        last--;
-        for (auto it = kv.first.rbegin(); it != last; ++it) {
-          std::cout << *it << ";";
-        }
-        std::cout << *last << " " << kv.second << "\n";
-      }
+      PrintBuckets(buckets);
     } else {
       const unsigned long frame_addr = FirstFrameAddr(pid, tstate_addr);
       if (frame_addr) {
@@ -165,6 +170,15 @@ int main(int argc, char **argv) {
       } else {
         std::cout << "(idle)\n";
       }
+    }
+  } catch (const PtraceException &exc) {
+    // If the process terminates early then we just print the buckets up until
+    // that point in time.
+    if (!buckets.empty()) {
+      PrintBuckets(buckets);
+    } else {
+      std::cerr << exc.what() << std::endl;
+      return 1;
     }
   } catch (const std::exception &exc) {
     std::cerr << exc.what() << std::endl;

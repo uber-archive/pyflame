@@ -49,6 +49,12 @@ def sleeper():
         yield p
 
 
+@pytest.yield_fixture
+def exit_early():
+    with proc('exit_early.py') as p:
+        yield p
+
+
 def test_monitor(dijkstra):
     """Basic test for the monitor mode."""
     proc = subprocess.Popen(['./src/pyflame', str(dijkstra.pid)],
@@ -94,3 +100,15 @@ def test_exclude_idle(sleeper):
     for line in lines:
         assert FLAMEGRAPH_RE.match(line) is not None
         assert not IDLE_RE.match(line)
+
+def test_exit_early(exit_early):
+    proc = subprocess.Popen(['./src/pyflame', '-s', '10', str(exit_early.pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
+    assert lines.pop(-1) == ''  # output should end in a newline
+    for line in lines:
+        assert FLAMEGRAPH_RE.match(line) or IDLE_RE.match(line)

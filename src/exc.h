@@ -23,4 +23,10 @@ class FatalException : public std::runtime_error {
   explicit FatalException(const std::string &what_arg)
       : std::runtime_error(what_arg) {}
 };
+
+class PtraceException : public std::runtime_error {
+ public:
+  explicit PtraceException(const std::string &what_arg)
+      : std::runtime_error(what_arg) {}
+};
 }  // namespace pyflame
