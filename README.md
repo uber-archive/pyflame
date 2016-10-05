@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/uber/pyflame.svg?token=PuYq6s4ssh4VyDYs6Qex&branch=master)](https://travis-ci.com/uber/pyflame)
+[![Build Status](https://api.travis-ci.org/uber/pyflame.svg)](https://travis-ci.org/uber/pyflame)
 
 # Pyflame
 
