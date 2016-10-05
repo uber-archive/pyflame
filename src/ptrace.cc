@@ -90,6 +90,6 @@ std::unique_ptr<uint8_t[]> PtracePeekBytes(pid_t pid, unsigned long addr,
     memmove(bytes.get() + off, &val, sizeof(val));
     off += sizeof(val);
   }
-  return std::move(bytes);
+  return bytes;
 }
 }  // namespace pyflame
