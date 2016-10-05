@@ -43,12 +43,24 @@ Namespace::Namespace(pid_t pid) : out_(-1), in_(-1) {
   // Since Linux 3.8 symbolic links are used.
   if (S_ISLNK(out_st.st_mode)) {
     char our_name[PATH_MAX];
-    our_name[0] = '\0';
-    readlink(kOurMnt, our_name, sizeof(our_name));
+    ssize_t ourlen = readlink(kOurMnt, our_name, sizeof(our_name));
+    if (ourlen < 0) {
+        std::ostringstream ss;
+        ss << "Failed to readlink " << kOurMnt << ": " << strerror(errno);
+        throw FatalException(ss.str());
+    }
+    our_name[ourlen] = '\0';
 
     char their_name[PATH_MAX];
-    their_name[0] = '\0';
-    readlink(their_mnt.c_str(), their_name, sizeof(their_name));
+    ssize_t theirlen = readlink(their_mnt.c_str(), their_name, 
+                                            sizeof(their_name));
+    if (theirlen < 0) {
+        std::ostringstream ss;
+        ss << "Failed to readlink " << their_mnt.c_str() << ": " 
+           << strerror(errno);
+        throw FatalException(ss.str());
+    }
+    their_name[theirlen] = '\0';
 
     if (strcmp(our_name, their_name) != 0) {
       out_ = OpenRdonly(kOurMnt);
