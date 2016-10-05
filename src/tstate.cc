@@ -75,6 +75,12 @@ unsigned long ThreadStateAddr(pid_t pid, Namespace *ns) {
   // libpython2.7.so, and if it does the libpython variable will be filled with
   // the full soname. That determines where we need to look to find our symbol
   // table.
+
+  unsigned long threadstate = target.GetThreadState();
+  if (threadstate != 0) {
+    return threadstate;
+  }
+
   std::string libpython;
   for (const auto &lib : target.NeededLibs()) {
     if (lib.find("libpython") != std::string::npos) {
@@ -85,16 +91,11 @@ unsigned long ThreadStateAddr(pid_t pid, Namespace *ns) {
   if (!libpython.empty()) {
     return ThreadStateFromLibPython(pid, libpython, ns);
   }
-  // Appears to be statically linked, find the symbols in the binary
-  unsigned long threadstate = target.GetThreadState();
-  if (threadstate == 0) {
-    // A process like uwsgi may use dlopen() to load libpython... let's just
-    // guess that the DSO is called libpython2.7.so
-    //
-    // XXX: this won't work if the embedding language is Python 3
-    threadstate = ThreadStateFromLibPython(pid, "libpython2.7.so", ns);
-  }
-  return threadstate;
+  // A process like uwsgi may use dlopen() to load libpython... let's just guess
+  // that the DSO is called libpython2.7.so
+  //
+  // XXX: this won't work if the embedding language is Python 3
+  return ThreadStateFromLibPython(pid, "libpython2.7.so", ns);
 }
 
 unsigned long FirstFrameAddr(pid_t pid, unsigned long tstate_addr) {
