@@ -80,6 +80,25 @@ You can also change the sample time and sampling frequency:
 pyflame -s 60 -r 0.10 PID
 ```
 
+### Trace Mode
+
+Sometimes you want to trace a process from start to finish. An example would be
+tracing the run of a test suite. Pyflame supports this use case. To use it, you
+invoke Pyflame like this:
+
+    pyflame [regular options] -t command arg1 arg2...
+
+Frequently the value of `command` will actually be `python`, but it could be
+something else like `uwsgi` or `py.test`. For instance, here's how Pyflame can
+be used to trace its own test suite (a.k.a. "pyflameception"):
+
+    pyflame -t py.test tests/
+
+Beware that when using the trace mode the stdout/stderr of the pyflame process
+and the traced process will be mixed. This means if the traced process sends
+data to stdout you may need to filter it somehow before sending the output to
+`flamegraph.pl`.
+
 ## FAQ
 
 ### What Is "(idle)" Time?

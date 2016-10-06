@@ -23,13 +23,13 @@ FLAMEGRAPH_RE = re.compile(r'^\S+ \d+$')
 
 
 @contextlib.contextmanager
-def proc(test_file):
+def proc(argv, wait_for_pid=True):
     # start the process and wait for it to print its pid... we explicitly do
     # this instead of using the pid attribute so we can ensure that the process
     # is initialized
-    proc = subprocess.Popen(
-        ['python', './tests/%s' % (test_file,)], stdout=subprocess.PIPE)
-    proc.stdout.readline()
+    proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
+    if wait_for_pid:
+        proc.stdout.readline()
 
     try:
         yield proc
@@ -37,21 +37,31 @@ def proc(test_file):
         proc.kill()
 
 
+def python_proc(test_file):
+    return proc(['python', './tests/%s' % (test_file,)])
+
+
 @pytest.yield_fixture
 def dijkstra():
-    with proc('dijkstra.py') as p:
+    with python_proc('dijkstra.py') as p:
         yield p
 
 
 @pytest.yield_fixture
 def sleeper():
-    with proc('sleeper.py') as p:
+    with python_proc('sleeper.py') as p:
         yield p
 
 
 @pytest.yield_fixture
 def exit_early():
-    with proc('exit_early.py') as p:
+    with python_proc('exit_early.py') as p:
+        yield p
+
+
+@pytest.yield_fixture
+def not_python():
+    with proc(['./tests/sleep.sh'], wait_for_pid=False) as p:
         yield p
 
 
@@ -101,6 +111,7 @@ def test_exclude_idle(sleeper):
         assert FLAMEGRAPH_RE.match(line) is not None
         assert not IDLE_RE.match(line)
 
+
 def test_exit_early(exit_early):
     proc = subprocess.Popen(['./src/pyflame', '-s', '10', str(exit_early.pid)],
                             stdout=subprocess.PIPE,
@@ -112,3 +123,100 @@ def test_exit_early(exit_early):
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
         assert FLAMEGRAPH_RE.match(line) or IDLE_RE.match(line)
+
+
+def test_sample_not_python(not_python):
+    proc = subprocess.Popen(['./src/pyflame', str(not_python.pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not out
+    assert err.startswith('Failed to locate libpython')
+    assert proc.returncode == 1
+
+
+def test_trace():
+    proc = subprocess.Popen(['./src/pyflame', '-t',
+                             'python', 'tests/exit_early.py', '-s'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
+    assert lines.pop(-1) == ''  # output should end in a newline
+    for line in lines:
+        assert FLAMEGRAPH_RE.match(line) or IDLE_RE.match(line)
+
+
+def test_trace_not_python():
+    proc = subprocess.Popen(['./src/pyflame', '-t', './tests/sleep.sh'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not out
+    assert err.startswith('Failed to locate libpython')
+    assert proc.returncode == 1
+
+
+def test_pyflame_a_pyflame():
+    proc = subprocess.Popen(['./src/pyflame', '-t', './src/pyflame'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not out
+    assert err.startswith('You tried to pyflame a pyflame')
+    assert proc.returncode == 1
+
+
+def test_pyflame_nonexistent_file():
+    proc = subprocess.Popen(['./src/pyflame', '-t', '/no/such/file'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not out
+    assert 'Child process exited with status' in err
+    assert proc.returncode == 1
+
+
+def test_trace_no_arg():
+    proc = subprocess.Popen(['./src/pyflame', '-t'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not out
+    assert err.startswith('Usage: ')
+    assert proc.returncode == 1
+
+
+def test_sample_no_arg():
+    proc = subprocess.Popen(['./src/pyflame'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not out
+    assert err.startswith('Usage: ')
+    assert proc.returncode == 1
+
+
+def test_sample_extra_args():
+    proc = subprocess.Popen(['./src/pyflame', 'foo', 'bar'],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not out
+    assert err.startswith('Usage: ')
+    assert proc.returncode == 1
+
+
+@pytest.mark.parametrize('pid', [(1,), (0,)])
+def test_permission_error(pid):
+    # pid 1 = EPERM
+    # pid 0 = ESRCH
+    proc = subprocess.Popen(['./src/pyflame', str(pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    assert not out
+    assert err.startswith('Failed to attach to PID')
+    assert proc.returncode == 1
