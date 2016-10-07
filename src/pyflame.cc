@@ -91,7 +91,6 @@ int main(int argc, char **argv) {
     if (c == -1) {
       break;
     }
-    bool break_from_loop = false;
     switch (c) {
       case 0:
         if (long_options[option_index].flag != 0) {
@@ -112,7 +111,7 @@ int main(int argc, char **argv) {
       case 't':
         trace = true;
         seconds = -1;
-        break_from_loop = true;  // double break
+        goto finish_arg_parse;
         break;
       case 'v':
         std::cout << PACKAGE_STRING << "\n\n";
@@ -128,10 +127,8 @@ int main(int argc, char **argv) {
       default:
         abort();
     }
-    if (break_from_loop) {
-      break;
-    }
   }
+finish_arg_parse:
   const std::chrono::microseconds interval{
       static_cast<long>(sample_rate * 1000000)};
   pid_t pid;
