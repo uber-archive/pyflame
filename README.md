@@ -180,10 +180,9 @@ probably port Pyflame to macOS (née OS X) if you modify `src/symbol.*` to work
 with [Mach-O](https://en.wikipedia.org/wiki/Mach-O) executables, but this is
 probably pretty challenging.
 
-If you have [pytest](http://doc.pytest.org/en/latest/) installed (perhaps in a
-virtualenv) you can run some basic end-to-end tests like this:
+You can run the test suite locally like this:
 
-    py.test tests/
+    make test
 
 ## Legal and Licensing
 
