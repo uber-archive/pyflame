@@ -4,3 +4,6 @@ ACLOCAL_AMFLAGS = -I m4
 
 clean-local:
 	rm -f core.* pyflame
+
+test:
+	bash runtests.sh
