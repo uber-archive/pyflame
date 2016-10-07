@@ -12,6 +12,9 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_INSTALL
 
+# Fail early if the user tries to build on OS X
+AC_CHECK_HEADERS([linux/ptrace.h], [], [AC_MSG_ERROR([Pyflame only supports Linux hosts])])
+
 # This is commented out because it doesn't work right on Ubuntu 12.04 (Precise)
 # AX_CXX_COMPILE_STDCXX_11
 AX_CHECK_COMPILE_FLAG(["-std=c++11"],
