@@ -151,15 +151,15 @@ uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files.
 
 ## Python 3 Support
 
-There is very basic Python 3 support, which you can get by compiling using:
+Pyflame will work with Python 3 as long as your file names contain only ASCII
+characters (which will be the case for most people). To build with Python 3
+support, compile using:
 
 ```bash
 ./configure --with-python=python3
 ```
 
-This *should* work as long as none of your files have non-ASCII characters in
-their names. If you are interested in supporting Unicode file names please
-assist us with pull requests.
+The Travis CI test suite is also configured to test Pyflame under Python 3.
 
 ## Hacking
 
