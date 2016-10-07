@@ -69,7 +69,8 @@ def test_monitor(dijkstra):
     """Basic test for the monitor mode."""
     proc = subprocess.Popen(['./src/pyflame', str(dijkstra.pid)],
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+                            stderr=subprocess.PIPE,
+                            universal_newlines=True)
     out, err = proc.communicate()
     assert not err
     assert proc.returncode == 0
@@ -83,7 +84,8 @@ def test_idle(sleeper):
     """Basic test for idle processes."""
     proc = subprocess.Popen(['./src/pyflame', str(sleeper.pid)],
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+                            stderr=subprocess.PIPE,
+                            universal_newlines=True)
     out, err = proc.communicate()
     assert not err
     assert proc.returncode == 0
@@ -101,7 +103,8 @@ def test_exclude_idle(sleeper):
     """Basic test for idle processes."""
     proc = subprocess.Popen(['./src/pyflame', '-x', str(sleeper.pid)],
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+                            stderr=subprocess.PIPE,
+                            universal_newlines=True)
     out, err = proc.communicate()
     assert not err
     assert proc.returncode == 0

@@ -23,6 +23,12 @@ import threading
 log = logging.getLogger('dijkstra')
 
 
+try:
+    range = xrange
+except NameError:
+    pass
+
+
 class Graph(object):
     """Representation of a sparse graph."""
 
@@ -36,7 +42,7 @@ class Graph(object):
     @classmethod
     def generate(cls, width, height, count):
         graph = cls(width, height)
-        for _ in xrange(count):
+        for _ in range(count):
             while True:
                 x, y = graph.random_unfilled()
                 if (x, y) not in graph:
@@ -163,7 +169,7 @@ def run_times(quiet, times):
         while True:
             run()
     else:
-        for _ in xrange(times):
+        for _ in range(times):
             run()
 
 
@@ -187,7 +193,7 @@ def main():
         run_times(args.quiet, args.num)
     else:
         threads = []
-        for _ in xrange(args.threads):
+        for _ in range(args.threads):
             t = threading.Thread(target=run_times, args=(args.quiet, args.num))
             t.start()
             threads.append(t)
