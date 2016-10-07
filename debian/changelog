@@ -1,3 +1,9 @@
+pyflame (1.1) unstable; urgency=medium
+
+  * Lots of updates
+
+ -- Evan Klitzke <evan@azrael>  Fri, 07 Oct 2016 09:44:26 -0700
+
 pyflame (1.0) unstable; urgency=medium
 
   * Initial release.
