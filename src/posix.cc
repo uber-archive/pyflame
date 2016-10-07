@@ -76,6 +76,7 @@ std::string ReadLink(const char *path) {
     ss << "Failed to read symlink " << path << ": " << strerror(errno);
     throw FatalException(ss.str());
   }
+  buf[nbytes] = '\0';
   return {buf, static_cast<std::string::size_type>(nbytes)};
 }
 }  // namespace pyflame
