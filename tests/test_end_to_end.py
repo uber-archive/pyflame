@@ -134,7 +134,7 @@ def test_sample_not_python(not_python):
                             stderr=subprocess.PIPE)
     out, err = proc.communicate()
     assert not out
-    assert err.startswith('Failed to locate libpython')
+    assert err.startswith(b'Failed to locate libpython')
     assert proc.returncode == 1
 
 
@@ -158,7 +158,7 @@ def test_trace_not_python():
                             stderr=subprocess.PIPE)
     out, err = proc.communicate()
     assert not out
-    assert err.startswith('Failed to locate libpython')
+    assert err.startswith(b'Failed to locate libpython')
     assert proc.returncode == 1
 
 
@@ -168,7 +168,7 @@ def test_pyflame_a_pyflame():
                             stderr=subprocess.PIPE)
     out, err = proc.communicate()
     assert not out
-    assert err.startswith('You tried to pyflame a pyflame')
+    assert err.startswith(b'You tried to pyflame a pyflame')
     assert proc.returncode == 1
 
 
@@ -178,7 +178,7 @@ def test_pyflame_nonexistent_file():
                             stderr=subprocess.PIPE)
     out, err = proc.communicate()
     assert not out
-    assert 'Child process exited with status' in err
+    assert b'Child process exited with status' in err
     assert proc.returncode == 1
 
 
@@ -188,7 +188,7 @@ def test_trace_no_arg():
                             stderr=subprocess.PIPE)
     out, err = proc.communicate()
     assert not out
-    assert err.startswith('Usage: ')
+    assert err.startswith(b'Usage: ')
     assert proc.returncode == 1
 
 
@@ -198,7 +198,7 @@ def test_sample_no_arg():
                             stderr=subprocess.PIPE)
     out, err = proc.communicate()
     assert not out
-    assert err.startswith('Usage: ')
+    assert err.startswith(b'Usage: ')
     assert proc.returncode == 1
 
 
@@ -208,7 +208,7 @@ def test_sample_extra_args():
                             stderr=subprocess.PIPE)
     out, err = proc.communicate()
     assert not out
-    assert err.startswith('Usage: ')
+    assert err.startswith(b'Usage: ')
     assert proc.returncode == 1
 
 
@@ -221,5 +221,5 @@ def test_permission_error(pid):
                             stderr=subprocess.PIPE)
     out, err = proc.communicate()
     assert not out
-    assert err.startswith('Failed to attach to PID')
+    assert err.startswith(b'Failed to attach to PID')
     assert proc.returncode == 1
