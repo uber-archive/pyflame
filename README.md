@@ -141,6 +141,14 @@ ptrace processes with the same user id) then use:
 sudo sysctl kernel.yama.ptrace_scope=0
 ```
 
+### Are BSD / OS X / macOS Supported?
+
+No, these aren't supported. Someone who is proficient with low-level C
+programming can probably get BSD to work, as described in issue #3. It is
+probably *extremely* difficult to adapt this code to work on OS X/macOS since
+the current code assumes that the host
+uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files.
+
 ## Python 3 Support
 
 There is very basic Python 3 support, which you can get by compiling using:
