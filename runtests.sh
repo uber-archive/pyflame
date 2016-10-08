@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 ENVDIR="test_env"
 
 if [ -z "$PYTHONVERSION" ]; then
