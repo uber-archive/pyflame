@@ -99,6 +99,14 @@ and the traced process will be mixed. This means if the traced process sends
 data to stdout you may need to filter it somehow before sending the output to
 `flamegraph.pl`.
 
+### Timestamp ("Flame Chart") Mode
+
+Pyflame can also generate data with timestamps which can be used to
+generate ["flame charts"](https://addyosmani.com/blog/devtools-flame-charts/)
+that can be viewed in Chrome. This is controlled with the `-T` option.
+
+**TODO**: Document how to load these in a browser.
+
 ## FAQ
 
 ### What Is "(idle)" Time?
