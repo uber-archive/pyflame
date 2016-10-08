@@ -14,7 +14,7 @@ trap "rm -rf ${ENVDIR}" EXIT
 
 virtualenv -p "$PYTHONVERSION" "${ENVDIR}"
 . "${ENVDIR}/bin/activate"
-pip install --upgrade pip
-pip install pytest
+pip --no-cache-dir install --upgrade pip
+pip --no-cache-dir install pytest
 py.test tests/
 exit $?
