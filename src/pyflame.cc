@@ -59,7 +59,7 @@ void PrintFrames(const std::vector<FrameTS> &call_stacks, size_t idle) {
   }
   // Put the call stacks into buckets
   buckets_t buckets;
-  for (auto &call_stack : call_stacks) {
+  for (const auto &call_stack : call_stacks) {
     auto bucket = buckets.find(call_stack.frames);
     if (bucket == buckets.end()) {
       buckets.insert(bucket, {call_stack.frames, 1});
@@ -84,7 +84,7 @@ void PrintFrames(const std::vector<FrameTS> &call_stacks, size_t idle) {
 
 // Prints all stack traces with timestamps
 void PrintFramesTS(const std::vector<FrameTS> &call_stacks) {
-  for (auto &call_stack : call_stacks) {
+  for (const auto &call_stack : call_stacks) {
     std::cout << std::chrono::duration_cast<std::chrono::microseconds>(
                      call_stack.ts.time_since_epoch())
                      .count()
