@@ -1,7 +1,7 @@
 Source: pyflame
 Priority: extra
 Maintainer: Evan Klitzke <evan@uber.com>
-Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf, pkg-config, python-dev, g++, python-virtualenv, virtualenv
+Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf, pkg-config, python-dev, g++
 Standards-Version: 3.9.3
 Section: libs
 X-Python-Version: >= 2.6
