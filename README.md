@@ -26,7 +26,7 @@ From git you would compile like so:
 
 ```bash
 ./autogen.sh
-./configure      # plus any options like --prefix
+./configure      # Plus any options like --prefix.
 make
 make install
 ```
@@ -59,7 +59,7 @@ After compiling Pyflame you'll get a small executable called `pyflame`. The most
 basic usage is:
 
 ```bash
-# profile PID for 1s, sampling every 1ms
+# Profile PID for 1s, sampling every 1ms.
 pyflame PID
 ```
 
@@ -69,14 +69,14 @@ Brendan Gregg's `flamegraph.pl` command (which you can get
 pipeline might be like this:
 
 ```bash
-# generate flame graph for pid 12345; assumes flamegraph.pl is in your $PATH
+# Generate flame graph for pid 12345; assumes flamegraph.pl is in your $PATH.
 pyflame 12345 | flamegraph.pl > myprofile.svg
 ```
 
 You can also change the sample time and sampling frequency:
 
 ```bash
-# profile PID for 60 seconds, sampling every 10ms
+# Profile PID for 60 seconds, sampling every 10ms.
 pyflame -s 60 -r 0.10 PID
 ```
 
@@ -123,8 +123,9 @@ If you don't want to include this time you can use the invocation `pyflame -x`.
 The short version is that the `ptrace(2)` system call is locked down by default
 in certain situations. In order to use ptrace two conditions need to be met:
 
- * You must have the `SYS_PTRACE` capability (which is denied by default within
-   Docker images).
+ * You must have the
+   [`SYS_PTRACE` capability](http://man7.org/linux/man-pages/man7/capabilities.7.html) (which
+   is denied by default within Docker images).
  * The kernel must not have `kernel.yama.ptrace_scope` set to a value that is
    too restrictive.
 
@@ -133,10 +134,8 @@ expected.
 
 #### Ptrace Errors Within Docker Containers
 
-By default Docker images do not have
-the
-[`SYS_PTRACE` capability](http://man7.org/linux/man-pages/man7/capabilities.7.html).
-When you invoke `docker run` try using this option:
+By default Docker images do not have the `SYS_PTRACE`. When you invoke `docker
+run` try using this option:
 
 ```bash
 docker run --cap-add SYS_PTRACE ...
