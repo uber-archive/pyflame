@@ -35,14 +35,20 @@ make install
 
 The following command should install the necessary packages to build on Fedora:
 
-    sudo dnf install autoconf automake gcc-c++ python-devel
+```bash
+# Install build dependencies on Fedora.
+sudo dnf install autoconf automake gcc-c++ python-devel
+```
 
 ### Debian
 
 The following command should install the necessary packages to build on Debian
 (or Ubuntu):
 
-    sudo apt-get install autoconf autotools-dev g++ pkg-config python-dev
+```bash
+# Install build dependencies on Debian or Ubuntu.
+sudo apt-get install autoconf autotools-dev g++ pkg-config python-dev
+```
 
 If you'd like to build a Debian package there's already a `debian/` directory at
 the root of this project. We'd like to remove this, as per the
@@ -86,13 +92,19 @@ Sometimes you want to trace a process from start to finish. An example would be
 tracing the run of a test suite. Pyflame supports this use case. To use it, you
 invoke Pyflame like this:
 
-    pyflame [regular options] -t command arg1 arg2...
+```bash
+# Trace a given command until completion.
+pyflame [regular pyflame options] -t command arg1 arg2...
+```
 
 Frequently the value of `command` will actually be `python`, but it could be
 something else like `uwsgi` or `py.test`. For instance, here's how Pyflame can
-be used to trace its own test suite (a.k.a. "pyflameception"):
+be used to trace its own test suite:
 
-    pyflame -t py.test tests/
+```bash
+# Trace the Pyflame test suite, a.k.a. pyflameception!
+pyflame -t py.test tests/
+```
 
 Beware that when using the trace mode the stdout/stderr of the pyflame process
 and the traced process will be mixed. This means if the traced process sends
@@ -138,6 +150,7 @@ By default Docker images do not have the `SYS_PTRACE`. When you invoke `docker
 run` try using this option:
 
 ```bash
+# Allows processes within the Docker container to use ptrace.
 docker run --cap-add SYS_PTRACE ...
 ```
 
@@ -167,6 +180,7 @@ unprivileged users from attaching to already running processes.
 To see the current value of this setting:
 
 ```bash
+# Prints the current value for the ptrace_scope setting.
 sysctl kernel.yama.ptrace_scope
 ```
 
@@ -198,6 +212,7 @@ characters (which will be the case for most people). To build with Python 3
 support, compile using:
 
 ```bash
+# Configures the build process to use the Python 3 header files.
 ./configure --with-python=python3
 ```
 
@@ -224,7 +239,10 @@ probably pretty challenging.
 
 You can run the test suite locally like this:
 
-    make test
+```bash
+# Run the Pyflame test suite.
+make test
+```
 
 ## Legal and Licensing
 
