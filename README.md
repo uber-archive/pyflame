@@ -5,12 +5,13 @@
 Pyflame is a tool for
 generating [flame graphs](https://github.com/brendangregg/FlameGraph) for Python
 processes. Pyflame is different from existing Python profilers because it
-doesn't require explicit instrumentation -- it will work with any running Python
+doesn't require explicit instrumentation: it will work with any running Python
 process! Pyflame works by using
 the [ptrace(2)](http://man7.org/linux/man-pages/man2/ptrace.2.html) system call
 to analyze the currently-executing stack trace for a Python process.
 
-Read the Uber Engineering blog post about Pyflame [here](http://eng.uber.com/pyflame/).
+Learn more by reading
+[the Uber Engineering blog post about Pyflame](http://eng.uber.com/pyflame/).
 
 ![pyflame](https://cloud.githubusercontent.com/assets/2734/17949703/8ef7d08c-6a0b-11e6-8bbd-41f82086d862.png)
 
@@ -20,9 +21,9 @@ To build Pyflame you will need a C++ compiler with basic C++11 support. Pyflame
 is known to compile on versions of GCC as old as GCC 4.6. You'll also need GNU
 Autotools ([GNU Autoconf](https://www.gnu.org/software/autoconf/autoconf.html)
 and [GNU Automake](https://www.gnu.org/software/automake/automake.html)) if
-you're building from the git repository.
+you're building from the Git repository.
 
-From git you would compile like so:
+From Git you would compile like so:
 
 ```bash
 ./autogen.sh
@@ -61,7 +62,8 @@ You can install pyflame from [AUR](https://aur.archlinux.org/packages/pyflame-gi
 
 ## Usage
 
-After compiling Pyflame you'll get a small executable called `pyflame`. The most
+After compiling Pyflame you'll get a small executable called `pyflame` (which
+will be in the `src/` directory if you haven't run `make install`). The most
 basic usage is:
 
 ```bash
@@ -70,9 +72,9 @@ pyflame PID
 ```
 
 The `pyflame` command will send data to stdout that is suitable for using with
-Brendan Gregg's `flamegraph.pl` command (which you can get
-[here](https://github.com/brendangregg/FlameGraph)). Therefore a typical command
-pipeline might be like this:
+Brendan Gregg's `flamegraph.pl` tool (which you can
+get [here](https://github.com/brendangregg/FlameGraph)). Therefore a typical
+command pipeline might be like this:
 
 ```bash
 # Generate flame graph for pid 12345; assumes flamegraph.pl is in your $PATH.
@@ -117,7 +119,7 @@ Pyflame can also generate data with timestamps which can be used to
 generate ["flame charts"](https://addyosmani.com/blog/devtools-flame-charts/)
 that can be viewed in Chrome. This is controlled with the `-T` option.
 
-**TODO**: Document how to load these in a browser.
+**TODO:** Document how to load these in a browser.
 
 ## FAQ
 
@@ -125,7 +127,7 @@ that can be viewed in Chrome. This is controlled with the `-T` option.
 
 From time to time the Python interpreter will have nothing to do other than wait
 for I/O to complete. This will typically happen when the Python interpreter is
-waiting for network operations to finish. When that happens Pyflame will report
+waiting for network operations to finish. In this scenario Pyflame will report
 the time as "idle".
 
 If you don't want to include this time you can use the invocation `pyflame -x`.
@@ -146,8 +148,8 @@ expected.
 
 #### Ptrace Errors Within Docker Containers
 
-By default Docker images do not have the `SYS_PTRACE`. When you invoke `docker
-run` try using this option:
+By default Docker images do not have the `SYS_PTRACE` capability. When you
+invoke `docker run` try using the `--cap-add SYS_PTRACE` option:
 
 ```bash
 # Allows processes within the Docker container to use ptrace.
@@ -201,9 +203,10 @@ sudo sysctl kernel.yama.ptrace_scope=0
 
 No, these aren't supported. Someone who is proficient with low-level C
 programming can probably get BSD to work, as described in issue #3. It is
-probably *extremely* difficult to adapt this code to work on OS X/macOS since
-the current code assumes that the host
-uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files.
+probably much more difficult to adapt this code to work on OS X/macOS since the
+current code assumes that the host
+uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files
+as the executable file format for the Python interpreter.
 
 ## Python 3 Support
 
@@ -232,10 +235,7 @@ with [clang-format](http://clang.llvm.org/docs/ClangFormat.html). There's a
 
 The Linux-specific code is be mostly restricted to the files `src/aslr.*`,
 `src/namespace.*`, and `src/ptrace.*`. If you want to port Pyflame to another
-Unix you will probably only need to modify these files. In principle you can
-probably port Pyflame to macOS (née OS X) if you modify `src/symbol.*` to work
-with [Mach-O](https://en.wikipedia.org/wiki/Mach-O) executables, but this is
-probably pretty challenging.
+Unix you will probably only need to modify these files.
 
 You can run the test suite locally like this:
 
