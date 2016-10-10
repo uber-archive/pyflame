@@ -120,15 +120,50 @@ If you don't want to include this time you can use the invocation `pyflame -x`.
 
 ### What Are These Ptrace Permissions Errors?
 
-To run Pyflame you'll need appropriate permissions to `PTRACE_ATTACH` the
-process. Typically this means that you'll need to invoke `pyflame` as root, or
-as the same user as the process you're trying to profile. If you have errors
-running it as the correct user then you probably have `ptrace_scope` set to a
-value that's too restrictive.
+The short version is that the `ptrace(2)` system call is locked down by default
+in certain situations. In order to use ptrace two conditions need to be met:
+
+ * You must have the `SYS_PTRACE` capability (which is denied by default within
+   Docker images).
+ * The kernel must not have `kernel.yama.ptrace_scope` set to a value that is
+   too restrictive.
+
+In both scenarios you'll also find that `strace` and `gdb` do not work as
+expected.
+
+#### Ptrace Errors Within Docker Containers
+
+By default Docker images do not have
+the
+[`SYS_PTRACE` capability](http://man7.org/linux/man-pages/man7/capabilities.7.html).
+When you invoke `docker run` try using this option:
+
+```bash
+docker run --cap-add SYS_PTRACE ...
+```
+
+You can also use [capsh(1)](http://man7.org/linux/man-pages/man1/capsh.1.html)
+to list your current capabilities:
+
+```bash
+# You should see cap_sys_ptrace in the "Bounding set".
+capsh --print
+```
+
+Further note that by design you do not need to run Pyflame from within a Docker
+container. If you have sufficient permissions (i.e. you are root, or the same
+UID as the Docker process) Pyflame can be run from outside of the container and
+inspect a process inside the container. That said, Pyflame will certainly work
+within containers if that's how you want to use it.
+
+#### Ptrace Errors Outside Docker Containers Or When Not Using Docker
+
+If you're not in a Docker container, or you're not using Docker at all, ptrace
+permissions errors are likely related to you having too restrictive a value set
+for the `kernel.yama.ptrace_scope` sysfs knob.
 
 Debian Jessie ships with `ptrace_scope` set to 1 by default, which will prevent
-unprivileged users from attaching to already running processes. This will also
-manifest by being unable to use `gdb -p` as an unprivileged user by default.
+unprivileged users from attaching to already running processes.
 
 To see the current value of this setting:
 
@@ -145,7 +180,7 @@ changing. If you want to completely disable the ptrace settings and get
 ptrace processes with the same user id) then use:
 
 ```bash
-# use this if you want "classic" ptrace permissions
+# Use this if you want "classic" ptrace permissions.
 sudo sysctl kernel.yama.ptrace_scope=0
 ```
 
