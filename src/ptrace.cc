@@ -14,6 +14,7 @@
 
 #include "./ptrace.h"
 
+#include <cerrno>
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
