@@ -132,10 +132,20 @@ the time as "idle".
 
 If you don't want to include this time you can use the invocation `pyflame -x`.
 
+### Are BSD / OS X / macOS Supported?
+
+No, these aren't supported. Someone who is proficient with low-level C
+programming can probably get BSD to work, as described in issue #3. It is
+probably much more difficult to adapt this code to work on OS X/macOS since the
+current code assumes that the host
+uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files
+as the executable file format for the Python interpreter.
+
 ### What Are These Ptrace Permissions Errors?
 
-The short version is that the `ptrace(2)` system call is locked down by default
-in certain situations. In order to use ptrace two conditions need to be met:
+Because it's so powerful, the `ptrace(2)` system call is locked down by default
+in various situations by different Linux distributions. In order to use ptrace
+these conditions must be met:
 
  * You must have the
    [`SYS_PTRACE` capability](http://man7.org/linux/man-pages/man7/capabilities.7.html) (which
@@ -199,14 +209,23 @@ ptrace processes with the same user id) then use:
 sudo sysctl kernel.yama.ptrace_scope=0
 ```
 
-### Are BSD / OS X / macOS Supported?
+#### Ptrace With SELinux
 
-No, these aren't supported. Someone who is proficient with low-level C
-programming can probably get BSD to work, as described in issue #3. It is
-probably much more difficult to adapt this code to work on OS X/macOS since the
-current code assumes that the host
-uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files
-as the executable file format for the Python interpreter.
+If you're using SELinux,
+[you may have problems with ptrace](https://fedoraproject.org/wiki/Features/SELinuxDenyPtrace).
+To check if ptrace is disabled:
+
+```bash
+# Check if SELinux is denying ptrace.
+getsebool deny_ptrace
+```
+
+If you'd like to enable it:
+
+```bash
+# Enable ptrace under SELinux.
+setsebool -P deny_ptrace 0
+```
 
 ## Python 3 Support
 
