@@ -1,0 +1,124 @@
+import sys
+import json
+
+""" Generate JSON for visualizing Flame Charts using Chrome CPU Profiler
+This takes input from Pyflame which is of the format
+timestamp_1
+callstack_1
+...
+timestamp_n
+callstack_n
+
+With each callstack is of below format
+file_path:function_name:line_no;...file_path:function_name:line_no;
+
+Then converts them to JSON format which can be visualized as Flame Charts using
+Chrome CPU profiler
+
+USAGE: cat pyflame.out | python flamechartjson.py > flame_chart.cpuprofile
+You can also pipe pyflame output directly.
+Note: Chrome CPU profiler expects file with extension ".cpuprofile"
+
+"""
+
+
+class FCJson(object):
+
+    def __init__(self):
+        self.child_id = 1
+        self.prof = {}
+
+        # init head
+        self.prof['head'] = {}
+        self.prof['head']['functionName'] = "(root)"
+        self.prof['head']['scriptId'] = "0"
+        self.prof['head']['url'] = ""
+        self.prof['head']['hitCount'] = 0
+        self.prof['head']['children'] = []
+
+        # init rest
+        self.prof['startTime'] = 0.0
+        self.prof['endTime'] = 0.5
+        self.prof['samples'] = []
+        self.prof['timestamps'] = []
+
+    def create_cs(self, cs, orig_parent):
+        is_first = True
+        parent = None
+        # Do for each of the stack frames in the callstack
+        for frame in cs:
+            if frame == '':
+                continue
+
+            if is_first:
+                # update the original parent
+                orig_parent['functionName'] = frame
+                parent = orig_parent
+                is_first = False
+                continue
+
+            # store the stack frame
+            child = {}
+            child['id'] = self.child_id
+            child['scriptId'] = 0
+            child['url'] = ""
+            child['hitCount'] = 1
+            child['functionName'] = frame
+            child['children'] = []
+
+            parent['children'] = []
+            parent['children'].append(child)
+            parent = child
+
+    def create_child(self, ts, cs):
+        # Creates child json object for each callstack
+        child = {}
+        self.prof['samples'].append(self.child_id)
+        self.prof['timestamps'].append(ts)
+
+        child['id'] = self.child_id
+        child['scriptId'] = 0
+        child['url'] = ""
+        child['hitCount'] = 1
+        child['children'] = []
+
+        self.create_cs(cs.strip().split(';'), child)
+
+        self.prof['samples'].append(0)
+        self.prof['timestamps'].append(ts+1000)
+
+        self.prof['head']['children'].append(child)
+
+    def start(self):
+        is_first_ln = True
+        for line in sys.stdin:
+            # 1st line should be timestamp & 2nd line callstack
+            if is_first_ln:
+                ts = int(line)
+            else:
+                cs = line
+
+            if is_first_ln is False:
+                if cs is None:
+                    break
+
+                is_first_ln = True
+                self.create_child(ts, cs)
+                self.child_id += 1
+            else:
+                is_first_ln = False
+
+        # add dummy ids to display the last callstack
+        self.prof['timestamps'].append(self.prof['timestamps'][-1] + 1000)
+        self.prof['samples'].append(self.child_id)
+
+        # update the start & end time based on the timestamps
+        time_diff = self.prof['timestamps'][-1] - self.prof['timestamps'][0]
+        self.prof['endTime'] = float(time_diff)/1000000
+
+        print(json.dumps(self.prof))
+
+
+if __name__ == "__main__":
+    fc = FCJson()
+    fc.start()

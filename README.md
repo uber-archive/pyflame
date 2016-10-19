@@ -119,7 +119,15 @@ Pyflame can also generate data with timestamps which can be used to
 generate ["flame charts"](https://addyosmani.com/blog/devtools-flame-charts/)
 that can be viewed in Chrome. This is controlled with the `-T` option.
 
-**TODO:** Document how to load these in a browser.
+Use flamechartjson.py python script in utils to generate the json format required for
+viewing Flame Charts using Chrome CPU profiler.
+
+```bash
+Usage: cat <pyflame_output_file> | python flamechartjson.py > <fc_output>.cpuprofile
+(or) pyflame [regular pyflame options] | python flamechartjson.py > <fc_output>.cpuprofile
+```
+
+Then load the resulting .cpuprofile file from chrome CPU profiler to view Flame Chart.
 
 ## FAQ
 
