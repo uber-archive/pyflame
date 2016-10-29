@@ -17,9 +17,10 @@ file_path:function_name:line_no;...file_path:function_name:line_no;
 Then converts them to JSON format which can be visualized as Flame Charts using
 Chrome CPU profiler
 
-USAGE: cat pyflame.out | python flamechartjson.py > flame_chart.cpuprofile
+USAGE: cat pyflame.out | flame-chart-json > flame_chart.cpuprofile
 You can also pipe pyflame output directly.
-Note: Chrome CPU profiler expects file with extension ".cpuprofile"
+Note: Chrome CPU profiler expects file with extension ".cpuprofile". This format
+is supported on Chrome Version 54.0.2840.71
 
 """
 
@@ -27,71 +28,88 @@ Note: Chrome CPU profiler expects file with extension ".cpuprofile"
 class FCJson(object):
 
     def __init__(self):
-        self.child_id = 1
+        self.node_id = 1
         self.prof = {}
+        self.prev_ts = 0
+        self.delta_ts = 2000
+        self.IDLE_NODE_ID = 2
 
-        # init head
-        self.prof['head'] = {}
-        self.prof['head']['functionName'] = "(root)"
-        self.prof['head']['scriptId'] = "0"
-        self.prof['head']['url'] = ""
-        self.prof['head']['hitCount'] = 0
-        self.prof['head']['children'] = []
+        # init root
+        self.prof['nodes'] = []
+        node = {}
+        self.fill_node(node, "(root)")
+        node['children'] = []
+        self.prof['nodes'].append(node)
+
+        # init idle node
+        idle_node = {}
+        self.fill_node(idle_node, "(idle)")
+        idle_node['children'] = []
+        self.prof['nodes'].append(idle_node)
+        self.prof['nodes'][0]['children'].append(self.node_id - 1)
 
         # init rest
-        self.prof['startTime'] = 0.0
-        self.prof['endTime'] = 0.5
+        self.prof['startTime'] = 0
+        self.prof['endTime'] = 5000
         self.prof['samples'] = []
-        self.prof['timestamps'] = []
+        self.prof['timeDeltas'] = []
 
-    def create_cs(self, cs, orig_parent):
-        is_first = True
-        parent = None
+    def fill_node(self, node, func_name, fill_child_id=False):
+        node['id'] = self.node_id
+        node['callFrame'] = {}
+        node['callFrame']['functionName'] = func_name
+        node['callFrame']['scriptId'] = "0"
+        node['callFrame']['url'] = ""
+        node['hitCount'] = 1
+        self.node_id += 1
+        if fill_child_id is True:
+            node['children'] = []
+            node['children'].append(self.node_id)
+
+    def create_cs(self, cs):
+        add_child = True
+        cs_len = len(cs)
         # Do for each of the stack frames in the callstack
-        for frame in cs:
+        for i, frame in enumerate(cs):
+            # idle case can be optimized if required in future
             if frame == '':
                 continue
 
-            if is_first:
-                # update the original parent
-                orig_parent['functionName'] = frame
-                parent = orig_parent
-                is_first = False
-                continue
+            # Store the stack frame
+            node = {}
+            if (i >= cs_len - 2):
+                add_child = False
 
-            # store the stack frame
-            child = {}
-            child['id'] = self.child_id
-            child['scriptId'] = 0
-            child['url'] = ""
-            child['hitCount'] = 1
-            child['functionName'] = frame
-            child['children'] = []
+            self.fill_node(node, frame, add_child)
 
-            parent['children'] = []
-            parent['children'].append(child)
-            parent = child
+            # Add the node to prof
+            self.prof['nodes'].append(node)
 
-    def create_child(self, ts, cs):
-        # Creates child json object for each callstack
-        child = {}
-        self.prof['samples'].append(self.child_id)
-        self.prof['timestamps'].append(ts)
+    def create_node(self, ts, cs):
+        prev_node_id = self.node_id
 
-        child['id'] = self.child_id
-        child['scriptId'] = 0
-        child['url'] = ""
-        child['hitCount'] = 1
-        child['children'] = []
+        self.create_cs(cs.strip().split(';'))
 
-        self.create_cs(cs.strip().split(';'), child)
+        self.prof['samples'].append(self.node_id - 1)
+        if self.prev_ts is not 0:
+            self.prof['timeDeltas'].append(ts-self.prev_ts-1000)
+        else:
+            self.prof['timeDeltas'].append(0)
 
-        self.prof['samples'].append(0)
-        self.prof['timestamps'].append(ts+1000)
+        # Idle is made as the root of all the callstacks so that we display the
+        # flame chart correctly. I did not find a better way to do this
+        self.prof['samples'].append(self.IDLE_NODE_ID)
+        self.prof['timeDeltas'].append(1000)
 
-        self.prof['head']['children'].append(child)
+        self.prev_ts = ts
+        # add the node_id of the first frame of cs to the children of root &
+        # idle nodes.
+        self.prof['nodes'][0]['children'].append(prev_node_id)
+        self.prof['nodes'][1]['children'].append(prev_node_id)
 
     def start(self):
+        first_ts = 0
+        last_ts = 0
         is_first_ln = True
         for line in sys.stdin:
             # 1st line should be timestamp & 2nd line callstack
@@ -100,26 +118,26 @@ class FCJson(object):
             else:
                 cs = line
 
+            # Keep track of timestamps
+            if first_ts == 0:
+                first_ts = ts
+            last_ts = ts
+
             if is_first_ln is False:
                 if cs is None:
                     break
 
                 is_first_ln = True
-                self.create_child(ts, cs)
-                self.child_id += 1
+                self.create_node(ts, cs)
+                self.delta_ts += 1000
             else:
                 is_first_ln = False
 
-        # add dummy ids to display the last callstack
-        self.prof['timestamps'].append(self.prof['timestamps'][-1] + 1000)
-        self.prof['samples'].append(self.child_id)
-
-        # update the start & end time based on the timestamps
-        time_diff = self.prof['timestamps'][-1] - self.prof['timestamps'][0]
-        self.prof['endTime'] = float(time_diff)/1000000
+        # update the end time based on the timestamps, and reduce it by half
+        # because Chrome is doubling the endTime while displaying the flamechart
+        self.prof['endTime'] = (last_ts - first_ts)/2 + 1000
 
         print(json.dumps(self.prof))
-
 
 if __name__ == "__main__":
     fc = FCJson()
