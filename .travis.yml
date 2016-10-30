@@ -6,14 +6,6 @@ matrix:
   include:
     - compiler: gcc
       python: "2.7"
-      dist: precise
-      addons:
-        apt:
-          packages:
-            - python-dev
-      env: PYTHONVERSION=python2
-    - compiler: gcc
-      python: "2.7"
       dist: trusty
       addons:
         apt:
@@ -38,11 +30,9 @@ matrix:
       env: PYTHONVERSION=python3
 
 script:
-  - python --version
-  - python3 --version
   - sudo sysctl kernel.yama.ptrace_scope=0
   - unset PYTHON_CFLAGS
   - ./autogen.sh
-  - if [ "$PYTHONVERSION" = python3 ]; then ./configure --with-python=python3; else ./configure; fi
+  - ./configure
   - make
   - make test

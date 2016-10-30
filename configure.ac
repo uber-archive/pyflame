@@ -11,6 +11,9 @@ AM_INIT_AUTOMAKE([dist-bzip2 foreign subdir-objects -Wall -Werror])
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_INSTALL
+AM_PROG_AR
+
+LT_INIT
 
 # Fail early if the user tries to build on OS X
 AC_CHECK_HEADERS([linux/ptrace.h], [], [AC_MSG_ERROR([Pyflame only supports Linux hosts])])
@@ -29,19 +32,24 @@ AX_CHECK_COMPILE_FLAG([-Wall],
 # Checks for libraries.
 
 # Checks for header files.
+AC_CHECK_HEADERS([fcntl.h limits.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 # AC_CHECK_HEADER_STDBOOL
 
 # Checks for library functions.
+AC_FUNC_FORK
+AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
+AC_FUNC_MMAP
+AC_CHECK_FUNCS([memmove munmap strerror strtol strtoul])
 
-AC_ARG_WITH([python],
-            [AS_HELP_STRING([--with-python], [specify python or python3 @<:@default=python@:>@])],
-            [],
-            [with_python="python"])
+PKG_CHECK_MODULES([PY2], [python], [enable_py2="yes"], [AC_MSG_WARN([Building without Python 2 support])])
+AM_CONDITIONAL([ENABLE_PY2], [test x"$enable_py2" = xyes])
+AM_COND_IF([ENABLE_PY2], [AC_DEFINE([ENABLE_PY2], [1], [Python2 is enabled])])
 
-PKG_CHECK_MODULES([PYTHON], ["$with_python"])
-AC_SUBST([PYTHON])
+PKG_CHECK_MODULES([PY3], [python3], [enable_py3="yes"], [AC_MSG_WARN([Building without Python 3 support])])
+AM_CONDITIONAL([ENABLE_PY3], [test x"$enable_py3" = xyes])
+AM_COND_IF([ENABLE_PY3], [AC_DEFINE([ENABLE_PY3], [1], [Python3 is enabled])])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])

@@ -17,7 +17,8 @@
 #include <sys/types.h>
 
 #include <chrono>
-#include <iostream>
+#include <functional>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -48,9 +49,6 @@ class Frame {
 };
 
 std::ostream &operator<<(std::ostream &os, const Frame &frame);
-
-// Get the stack. The stack will be in reverse order (most recent frame first).
-std::vector<Frame> GetStack(pid_t pid, unsigned long frame_addr);
 
 typedef std::vector<Frame> frames_t;
 

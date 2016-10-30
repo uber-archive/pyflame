@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#define PYFLAME_PY_VERSION 3
 
-// This abstracts the string representation for py2/py3
-namespace pyflame {
-unsigned long StringSize(unsigned long addr);
-unsigned long StringData(unsigned long addr);
-}  // namespace pyflame
+#include "./frob.cc"

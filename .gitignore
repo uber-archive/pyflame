@@ -1,5 +1,10 @@
+*.a
+*.la
+*.lo
+*.o
 *.svg
 .cache/
 Makefile
 __pycache__/
+libtool
 src/pyflame
