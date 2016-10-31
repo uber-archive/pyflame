@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.org/uber/pyflame.svg)](https://travis-ci.org/uber/pyflame)
+[![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame)
 
 # Pyflame: A Ptracing Profiler For Python
 
