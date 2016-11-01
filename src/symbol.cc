@@ -113,7 +113,9 @@ std::vector<std::string> ELF::NeededLibs() {
   return needed;
 }
 
-unsigned long ELF::GetThreadState() {
+unsigned long ELF::GetThreadState(PyVersion *version) {
+  bool have_version = false;
+  unsigned long addr = 0;
   const shdr_t *s = shdr(dynsym_);
   const shdr_t *d = shdr(dynstr_);
   for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
@@ -121,10 +123,23 @@ unsigned long ELF::GetThreadState() {
         reinterpret_cast<const sym_t *>(p() + s->sh_offset + i * s->sh_entsize);
     const char *name =
         reinterpret_cast<const char *>(p() + d->sh_offset + sym->st_name);
-    if (strcmp(name, "_PyThreadState_Current") == 0) {
-      return static_cast<unsigned long>(sym->st_value);
+    if (!addr && strcmp(name, "_PyThreadState_Current") == 0) {
+      addr = static_cast<unsigned long>(sym->st_value);
+    } else if (!have_version) {
+      if (strcmp(name, "PyString_Type") == 0) {
+        // if we find PyString_Type, it's python 2
+        have_version = true;
+        *version = PyVersion::Py2;
+      } else if (strcmp(name, "PyBytes_Type") == 0) {
+        // if we find PyBytes_Type, it's python 3
+        have_version = true;
+        *version = PyVersion::Py3;
+      }
+    }
+    if (have_version && addr) {
+      break;
     }
   }
-  return 0;
+  return addr;
 }
 }  // namespace pyflame

@@ -38,7 +38,7 @@ The following command should install the necessary packages to build on Fedora:
 
 ```bash
 # Install build dependencies on Fedora.
-sudo dnf install autoconf automake gcc-c++ python-devel
+sudo dnf install autoconf automake gcc-c++ python-devel libtool
 ```
 
 ### Debian
@@ -237,16 +237,15 @@ setsebool -P deny_ptrace 0
 
 ## Python 3 Support
 
-Pyflame will work with Python 3 as long as your file names contain only ASCII
-characters (which will be the case for most people). To build with Python 3
-support, compile using:
+This mostly works: if you have the Python 3 headers installed on your system,
+the configure script should detect the presence of Python 3 and use it. Please
+report any bugs related to Python 3 detection if you find them (particularly if
+you have Python 3 headers installed, but the build system isn't finding them).
 
-```bash
-# Configures the build process to use the Python 3 header files.
-./configure --with-python=python3
-```
-
-The Travis CI test suite is also configured to test Pyflame under Python 3.
+There is one known
+bug:
+[Pyflame can only decode ASCII filenames in Python 3](https://github.com/uber/pyflame/issues/2).
+The issue has more details, if you want to help fix it.
 
 ## Hacking
 

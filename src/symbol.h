@@ -42,6 +42,10 @@ static_assert(false, "unknown build environment");
 #endif
 
 namespace pyflame {
+
+// The Python interpreter version
+enum class PyVersion { Unknown = 0, Py2 = 2, Py3 = 3 };
+
 // Representation of an ELF file.
 class ELF {
  public:
@@ -60,8 +64,8 @@ class ELF {
   // Find the DT_NEEDED fields. This is similar to the ldd(1) command.
   std::vector<std::string> NeededLibs();
 
-  // Get the address of _PyThreadState_Current
-  unsigned long GetThreadState();
+  // Get the address of _PyThreadState_Current, and the Python version
+  unsigned long GetThreadState(PyVersion *version);
 
  private:
   void *addr_;

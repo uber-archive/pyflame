@@ -28,10 +28,14 @@
 #include "./config.h"
 #include "./exc.h"
 #include "./frame.h"
-#include "./namespace.h"
 #include "./ptrace.h"
-#include "./tstate.h"
+#include "./pyfrob.h"
 #include "./version.h"
+
+// FIXME: this logic should be moved to configure.ac
+#if !defined(ENABLE_PY2) && !defined(ENABLE_PY3)
+static_assert(false, "Need Python2 or Python3 support to build");
+#endif
 
 using namespace pyflame;
 
@@ -238,21 +242,23 @@ finish_arg_parse:
       return 1;
     }
   }
+
   std::vector<FrameTS> call_stacks;
   size_t idle = 0;
   try {
     PtraceAttach(pid);
-    Namespace ns(pid);
-    const unsigned long tstate_addr = ThreadStateAddr(pid, &ns);
+    PyFrob frobber(pid);
+    frobber.DetectPython();
+
     const std::chrono::microseconds interval{
         static_cast<long>(sample_rate * 1000000)};
     bool check_end = seconds >= 0;
     auto end = std::chrono::system_clock::now() +
                std::chrono::microseconds(static_cast<long>(seconds * 1000000));
     for (;;) {
-      const unsigned long frame_addr = FirstFrameAddr(pid, tstate_addr);
       auto now = std::chrono::system_clock::now();
-      if (frame_addr == 0) {
+      frames_t frames = frobber.GetStack();
+      if (frames.empty()) {
         if (include_idle) {
           idle++;
           // Time stamp empty call stacks only if required. Since lots of time
@@ -262,7 +268,6 @@ finish_arg_parse:
           }
         }
       } else {
-        frames_t frames = GetStack(pid, frame_addr);
         call_stacks.push_back({now, frames});
       }
       if ((check_end) && (now + interval >= end)) {

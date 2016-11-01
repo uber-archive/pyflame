@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "./tstate.h"
+#include "./pyfrob.h"
 
-#include <cstddef>
-#include <sstream>
-#include <string>
-
-// only needed for the struct offsets
-#include <Python.h>
+#include <ostream>
 
 #include "./aslr.h"
+#include "./config.h"
 #include "./exc.h"
+#include "./namespace.h"
 #include "./posix.h"
-#include "./ptrace.h"
 #include "./symbol.h"
+
+#define FROB_FUNCS                                             \
+  unsigned long FirstFrameAddr(pid_t pid, unsigned long addr); \
+  std::vector<Frame> GetStack(pid_t pid, unsigned long addr);
 
 namespace pyflame {
 namespace {
 // locate _PyThreadState_Current within libpython
 unsigned long ThreadStateFromLibPython(pid_t pid, const std::string &libpython,
-                                       Namespace *ns) {
+                                       Namespace *ns, PyVersion *version) {
   std::string elf_path;
   const size_t offset = LocateLibPython(pid, libpython, &elf_path);
   if (offset == 0) {
@@ -43,15 +43,14 @@ unsigned long ThreadStateFromLibPython(pid_t pid, const std::string &libpython,
   ELF pyelf;
   pyelf.Open(elf_path, ns);
   pyelf.Parse();
-  const unsigned long threadstate = pyelf.GetThreadState();
+  const unsigned long threadstate = pyelf.GetThreadState(version);
   if (threadstate == 0) {
     throw FatalException("Failed to locate _PyThreadState_Current");
   }
   return threadstate + offset;
 }
-}  // namespace
 
-unsigned long ThreadStateAddr(pid_t pid, Namespace *ns) {
+unsigned long ThreadStateAddr(pid_t pid, Namespace *ns, PyVersion *version) {
   std::ostringstream ss;
   ss << "/proc/" << pid << "/exe";
   ELF target;
@@ -76,7 +75,7 @@ unsigned long ThreadStateAddr(pid_t pid, Namespace *ns) {
   // the full soname. That determines where we need to look to find our symbol
   // table.
 
-  unsigned long threadstate = target.GetThreadState();
+  unsigned long threadstate = target.GetThreadState(version);
   if (threadstate != 0) {
     return threadstate;
   }
@@ -89,24 +88,65 @@ unsigned long ThreadStateAddr(pid_t pid, Namespace *ns) {
     }
   }
   if (!libpython.empty()) {
-    return ThreadStateFromLibPython(pid, libpython, ns);
+    return ThreadStateFromLibPython(pid, libpython, ns, version);
   }
   // A process like uwsgi may use dlopen() to load libpython... let's just guess
   // that the DSO is called libpython2.7.so
   //
   // XXX: this won't work if the embedding language is Python 3
-  return ThreadStateFromLibPython(pid, "libpython2.7.so", ns);
+  return ThreadStateFromLibPython(pid, "libpython2.7.so", ns, version);
+}
+}  // namespace
+
+#ifdef ENABLE_PY2
+namespace py2 {
+FROB_FUNCS
+}
+#endif
+
+#ifdef ENABLE_PY3
+namespace py3 {
+FROB_FUNCS
+}
+#endif
+
+void PyFrob::DetectPython() {
+  Namespace ns(pid_);
+  bool matched = false;
+  PyVersion version = PyVersion::Unknown;
+  thread_state_addr_ = ThreadStateAddr(pid_, &ns, &version);
+
+  switch (version) {
+    case PyVersion::Unknown:
+      break;  // to appease -Wall
+    case PyVersion::Py2:
+#ifdef ENABLE_PY2
+      first_frame_addr_ = py2::FirstFrameAddr;
+      get_stack_ = py2::GetStack;
+      matched = true;
+#endif
+      break;
+    case PyVersion::Py3:
+#ifdef ENABLE_PY3
+      first_frame_addr_ = py3::FirstFrameAddr;
+      get_stack_ = py3::GetStack;
+      matched = true;
+#endif
+      break;
+  }
+  if (!matched) {
+    std::ostringstream os;
+    os << "Target is Python " << static_cast<int>(version)
+       << ", which is not supported by this pyflame build.";
+    throw FatalException(os.str());
+  }
 }
 
-unsigned long FirstFrameAddr(pid_t pid, unsigned long tstate_addr) {
-  // dereference _PyThreadState_Current
-  const long state = PtracePeek(pid, tstate_addr);
-  if (state == 0) {
-    return 0;
+std::vector<Frame> PyFrob::GetStack() {
+  unsigned long frame_addr = first_frame_addr_(pid_, thread_state_addr_);
+  if (frame_addr == 0) {
+    return {};
   }
-
-  // dereference the frame
-  return static_cast<unsigned long>(
-      PtracePeek(pid, state + offsetof(PyThreadState, frame)));
+  return get_stack_(pid_, frame_addr);
 }
 }  // namespace pyflame

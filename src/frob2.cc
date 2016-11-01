@@ -12,14 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#define PYFLAME_PY_VERSION 2
 
-#include "./namespace.h"
-
-namespace pyflame {
-// Locate _PyThreadState_Current
-unsigned long ThreadStateAddr(pid_t pid, Namespace *ns);
-
-// Locate the address of the first frame
-unsigned long FirstFrameAddr(pid_t pid, unsigned long tstate_addr);
-}
+#include "./frob.cc"
