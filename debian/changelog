@@ -1,3 +1,9 @@
+pyflame (1.2.0) unstable; urgency=medium
+
+  * Get newest 1.2.0 tag
+
+ -- Evan Klitzke <evan@localhost>  Tue, 01 Nov 2016 14:33:36 -0700
+
 pyflame (1.1) unstable; urgency=medium
 
   * Lots of updates
