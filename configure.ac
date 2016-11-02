@@ -1,5 +1,5 @@
 AC_PREREQ([2.68])
-AC_INIT([pyflame], [1.2.0], [evan@uber.com])
+AC_INIT([pyflame], [1.2.1], [evan@uber.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])

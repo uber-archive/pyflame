@@ -1,3 +1,10 @@
+pyflame (1.2.1) unstable; urgency=medium
+
+  * New newest 1.2.1 tag
+  * Various changes to the test suite
+
+ -- Evan Klitzke <evan@localhost>  Tue, 01 Nov 2016 22:14:32 -0700
+
 pyflame (1.2.0) unstable; urgency=medium
 
   * Get newest 1.2.0 tag
