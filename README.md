@@ -48,7 +48,7 @@ The following command should install the necessary packages to build on Debian
 
 ```bash
 # Install build dependencies on Debian or Ubuntu.
-sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev
+sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev libtool
 ```
 
 If you'd like to build a Debian package there's already a `debian/` directory at
