@@ -113,9 +113,9 @@ std::vector<std::string> ELF::NeededLibs() {
   return needed;
 }
 
-unsigned long ELF::GetThreadState(PyVersion *version) {
+PyAddresses ELF::GetAddresses(PyVersion *version) {
   bool have_version = false;
-  unsigned long addr = 0;
+  PyAddresses addrs;
   const shdr_t *s = shdr(dynsym_);
   const shdr_t *d = shdr(dynstr_);
   for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
@@ -123,8 +123,10 @@ unsigned long ELF::GetThreadState(PyVersion *version) {
         reinterpret_cast<const sym_t *>(p() + s->sh_offset + i * s->sh_entsize);
     const char *name =
         reinterpret_cast<const char *>(p() + d->sh_offset + sym->st_name);
-    if (!addr && strcmp(name, "_PyThreadState_Current") == 0) {
-      addr = static_cast<unsigned long>(sym->st_value);
+    if (!addrs.tstate_addr && strcmp(name, "_PyThreadState_Current") == 0) {
+      addrs.tstate_addr = static_cast<unsigned long>(sym->st_value);
+    } else if (!addrs.interp_head_addr && strcmp(name, "interp_head") == 0) {
+      addrs.interp_head_addr = static_cast<unsigned long>(sym->st_value);
     } else if (!have_version) {
       if (strcmp(name, "PyString_Type") == 0) {
         // if we find PyString_Type, it's python 2
@@ -136,10 +138,10 @@ unsigned long ELF::GetThreadState(PyVersion *version) {
         *version = PyVersion::Py3;
       }
     }
-    if (have_version && addr) {
+    if (have_version && addrs.tstate_addr && addrs.interp_head_addr) {
       break;
     }
   }
-  return addr;
+  return addrs;
 }
 }  // namespace pyflame

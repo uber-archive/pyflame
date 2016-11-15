@@ -46,6 +46,25 @@ namespace pyflame {
 // The Python interpreter version
 enum class PyVersion { Unknown = 0, Py2 = 2, Py3 = 3 };
 
+// Symbols
+struct PyAddresses {
+  unsigned long tstate_addr;
+  unsigned long interp_head_addr;
+
+  PyAddresses() : tstate_addr(0), interp_head_addr(0) {}
+
+  PyAddresses operator+(const unsigned long base) const {
+    PyAddresses res;
+    res.tstate_addr      = this->tstate_addr      == 0 ? 0 : this->tstate_addr      + base;
+    res.interp_head_addr = this->interp_head_addr == 0 ? 0 : this->interp_head_addr + base;
+    return res;
+  }
+
+  bool is_valid() const {
+    return this->tstate_addr != 0;
+  }
+};
+
 // Representation of an ELF file.
 class ELF {
  public:
@@ -64,8 +83,8 @@ class ELF {
   // Find the DT_NEEDED fields. This is similar to the ldd(1) command.
   std::vector<std::string> NeededLibs();
 
-  // Get the address of _PyThreadState_Current, and the Python version
-  unsigned long GetThreadState(PyVersion *version);
+  // Get the address of _PyThreadState_Current & interp_head, and the Python version
+  PyAddresses GetAddresses(PyVersion *version);
 
  private:
   void *addr_;
