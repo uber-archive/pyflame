@@ -8,3 +8,14 @@ Makefile
 __pycache__/
 libtool
 src/pyflame
+*.m4
+*.in
+autom4te.cache/
+build-aux/
+*.log
+config.status
+configure
+.deps/
+*~
+src/stamp-h1
+src/config.h
