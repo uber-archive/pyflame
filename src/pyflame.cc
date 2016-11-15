@@ -259,6 +259,9 @@ finish_arg_parse:
     for (;;) {
       auto now = std::chrono::system_clock::now();
       std::vector<Thread> threads = frobber.GetThreads();
+      /*for (const auto &thread : threads) {
+        std::cout << thread << std::endl;
+      }*/
       auto current = std::find_if(threads.begin(), threads.end(), [](Thread& thread) -> bool { return thread.is_current(); });
       if (current == threads.end()) {
         if (include_idle) {

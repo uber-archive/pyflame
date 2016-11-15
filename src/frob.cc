@@ -131,8 +131,9 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs) {
   if (tstate != 0) {
     istate = static_cast<unsigned long>(
       PtracePeek(pid, tstate + offsetof(PyThreadState, interp)));
-  // Secondly try to get it via the static interp_head symbol, if we managed to find it
-  // (interp_head is not strictly speaking part of the public API so it might go missing!)
+  // Secondly try to get it via the static interp_head symbol, if we managed to find it:
+  //  - interp_head is not strictly speaking part of the public API so it might get removed!
+  //  - interp_head is not part of the dynamic symbol table, so e.g. strip will drop it
   } else if (addrs.interp_head_addr != 0) {
     istate = static_cast<unsigned long>(
       PtracePeek(pid, addrs.interp_head_addr));
@@ -148,8 +149,7 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs) {
     const unsigned long chain_tstate = static_cast<unsigned long>(PtracePeek(pid, chain_next_addr));  
     if (chain_tstate == 0) break;
 
-    const long id = static_cast<long>(
-      PtracePeek(pid, chain_tstate + offsetof(PyThreadState, thread_id)));
+    const long id = PtracePeek(pid, chain_tstate + offsetof(PyThreadState, thread_id));
     const bool is_current = chain_tstate == addrs.tstate_addr;
 
     // dereference the frame
@@ -157,7 +157,9 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs) {
       PtracePeek(pid, chain_tstate + offsetof(PyThreadState, frame)));
 
     std::vector<Frame> stack;
-    FollowFrame(pid, frame_addr, &stack);
+    if (frame_addr != 0) {
+      FollowFrame(pid, frame_addr, &stack);
+    }
 
     threads.push_back(Thread(id, is_current, stack));
 

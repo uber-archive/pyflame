@@ -68,7 +68,7 @@ struct PyAddresses {
 // Representation of an ELF file.
 class ELF {
  public:
-  ELF() : addr_(nullptr), length_(0), dynamic_(-1), dynstr_(-1), dynsym_(-1) {}
+  ELF() : addr_(nullptr), length_(0), dynamic_(-1), dynstr_(-1), dynsym_(-1), strtab_(-1), symtab_(-1) {}
   ~ELF() { Close(); }
 
   // Open a file
@@ -89,7 +89,7 @@ class ELF {
  private:
   void *addr_;
   size_t length_;
-  int dynamic_, dynstr_, dynsym_;
+  int dynamic_, dynstr_, dynsym_, strtab_, symtab_;
 
   inline const ehdr_t *hdr() const {
     return reinterpret_cast<const ehdr_t *>(addr_);
@@ -118,5 +118,7 @@ class ELF {
     const shdr_t *strings = shdr(dynstr_);
     return reinterpret_cast<const char *>(p() + strings->sh_offset + offset);
   }
+
+  void WalkTable(int sym, int str, bool &have_version, PyVersion *version, PyAddresses &addrs);
 };
 }  // namespace pyflame
