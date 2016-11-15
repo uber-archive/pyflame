@@ -24,14 +24,13 @@
 #include "./symbol.h"
 
 #define FROB_FUNCS                                             \
-  unsigned long FirstFrameAddr(pid_t pid, unsigned long addr); \
-  std::vector<Frame> GetStack(pid_t pid, unsigned long addr);
+  std::vector<Thread> GetThreads(pid_t pid, PyAddresses addr);
 
 namespace pyflame {
 namespace {
-// locate _PyThreadState_Current within libpython
-unsigned long ThreadStateFromLibPython(pid_t pid, const std::string &libpython,
-                                       Namespace *ns, PyVersion *version) {
+// locate within libpython
+PyAddresses AddressesFromLibPython(pid_t pid, const std::string &libpython,
+                                   Namespace *ns, PyVersion *version) {
   std::string elf_path;
   const size_t offset = LocateLibPython(pid, libpython, &elf_path);
   if (offset == 0) {
@@ -43,14 +42,14 @@ unsigned long ThreadStateFromLibPython(pid_t pid, const std::string &libpython,
   ELF pyelf;
   pyelf.Open(elf_path, ns);
   pyelf.Parse();
-  const unsigned long threadstate = pyelf.GetThreadState(version);
-  if (threadstate == 0) {
-    throw FatalException("Failed to locate _PyThreadState_Current");
+  const PyAddresses addrs = pyelf.GetAddresses(version);
+  if (!addrs.is_valid()) {
+    throw FatalException("Failed to locate addresses");
   }
-  return threadstate + offset;
+  return addrs + offset;
 }
 
-unsigned long ThreadStateAddr(pid_t pid, Namespace *ns, PyVersion *version) {
+PyAddresses Addrs(pid_t pid, Namespace *ns, PyVersion *version) {
   std::ostringstream ss;
   ss << "/proc/" << pid << "/exe";
   ELF target;
@@ -75,9 +74,9 @@ unsigned long ThreadStateAddr(pid_t pid, Namespace *ns, PyVersion *version) {
   // the full soname. That determines where we need to look to find our symbol
   // table.
 
-  unsigned long threadstate = target.GetThreadState(version);
-  if (threadstate != 0) {
-    return threadstate;
+  PyAddresses addrs = target.GetAddresses(version);
+  if (addrs.is_valid()) {
+    return addrs;
   }
 
   std::string libpython;
@@ -88,13 +87,13 @@ unsigned long ThreadStateAddr(pid_t pid, Namespace *ns, PyVersion *version) {
     }
   }
   if (!libpython.empty()) {
-    return ThreadStateFromLibPython(pid, libpython, ns, version);
+    return AddressesFromLibPython(pid, libpython, ns, version);
   }
   // A process like uwsgi may use dlopen() to load libpython... let's just guess
   // that the DSO is called libpython2.7.so
   //
   // XXX: this won't work if the embedding language is Python 3
-  return ThreadStateFromLibPython(pid, "libpython2.7.so", ns, version);
+  return AddressesFromLibPython(pid, "libpython2.7.so", ns, version);
 }
 }  // namespace
 
@@ -114,22 +113,20 @@ void PyFrob::DetectPython() {
   Namespace ns(pid_);
   bool matched = false;
   PyVersion version = PyVersion::Unknown;
-  thread_state_addr_ = ThreadStateAddr(pid_, &ns, &version);
+  addrs_ = Addrs(pid_, &ns, &version);
 
   switch (version) {
     case PyVersion::Unknown:
       break;  // to appease -Wall
     case PyVersion::Py2:
 #ifdef ENABLE_PY2
-      first_frame_addr_ = py2::FirstFrameAddr;
-      get_stack_ = py2::GetStack;
+      get_threads_ = py2::GetThreads;
       matched = true;
 #endif
       break;
     case PyVersion::Py3:
 #ifdef ENABLE_PY3
-      first_frame_addr_ = py3::FirstFrameAddr;
-      get_stack_ = py3::GetStack;
+      get_threads_ = py3::GetThreads;
       matched = true;
 #endif
       break;
@@ -142,11 +139,7 @@ void PyFrob::DetectPython() {
   }
 }
 
-std::vector<Frame> PyFrob::GetStack() {
-  unsigned long frame_addr = first_frame_addr_(pid_, thread_state_addr_);
-  if (frame_addr == 0) {
-    return {};
-  }
-  return get_stack_(pid_, frame_addr);
+std::vector<Thread> PyFrob::GetThreads() {
+  return get_threads_(pid_, addrs_);
 }
 }  // namespace pyflame

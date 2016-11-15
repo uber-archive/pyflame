@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <fstream>
 #include <limits>
+#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -31,6 +32,7 @@
 #include <unicodeobject.h>
 #endif
 
+#include "./symbol.h"
 #include "./config.h"
 #include "./exc.h"
 #include "./ptrace.h"
@@ -63,18 +65,6 @@ unsigned long StringData(unsigned long addr) {
 #else
 static_assert(false, "uh oh, bad PYFLAME_PY_VERSION");
 #endif
-
-unsigned long FirstFrameAddr(pid_t pid, unsigned long tstate_addr) {
-  // dereference _PyThreadState_Current
-  const long state = PtracePeek(pid, tstate_addr);
-  if (state == 0) {
-    return 0;
-  }
-
-  // dereference the frame
-  return static_cast<unsigned long>(
-      PtracePeek(pid, state + offsetof(PyThreadState, frame)));
-}
 
 // Extract the line number from the code object. Python uses a compressed table
 // data structure to store line numbers. See:
@@ -136,10 +126,51 @@ void FollowFrame(pid_t pid, unsigned long frame, std::vector<Frame> *stack) {
   }
 }
 
-std::vector<Frame> GetStack(pid_t pid, unsigned long frame_addr) {
-  std::vector<Frame> stack;
-  FollowFrame(pid, frame_addr, &stack);
-  return stack;
+std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs) {
+  unsigned long istate = 0;
+
+  // First try to get interpreter state via dereferencing _PyThreadState_Current.
+  // This won't work if the main thread doesn't hold the GIL (_Current will be null).
+  const long tstate = PtracePeek(pid, addrs.tstate_addr);
+  if (tstate != 0) {
+    istate = static_cast<unsigned long>(
+      PtracePeek(pid, tstate + offsetof(PyThreadState, interp)));
+  // Secondly try to get it via the static interp_head symbol, if we managed to find it:
+  //  - interp_head is not strictly speaking part of the public API so it might get removed!
+  //  - interp_head is not part of the dynamic symbol table, so e.g. strip will drop it
+  } else if (addrs.interp_head_addr != 0) {
+    istate = static_cast<unsigned long>(
+      PtracePeek(pid, addrs.interp_head_addr));
+  }
+
+  if (istate == 0) {
+    return {};
+  }
+
+  std::vector<Thread> threads;
+  unsigned long chain_next_addr = istate + offsetof(PyInterpreterState, tstate_head);
+  do {
+    const unsigned long chain_tstate = static_cast<unsigned long>(PtracePeek(pid, chain_next_addr));
+    if (chain_tstate == 0) break;
+
+    const long id = PtracePeek(pid, chain_tstate + offsetof(PyThreadState, thread_id));
+    const bool is_current = chain_tstate == addrs.tstate_addr;
+
+    // dereference the frame
+    const unsigned long frame_addr = static_cast<unsigned long>(
+      PtracePeek(pid, chain_tstate + offsetof(PyThreadState, frame)));
+
+    std::vector<Frame> stack;
+    if (frame_addr != 0) {
+      FollowFrame(pid, frame_addr, &stack);
+    }
+
+    threads.push_back(Thread(id, is_current, stack));
+
+    chain_next_addr = chain_tstate + offsetof(PyThreadState, next);
+  } while (1);
+
+  return threads;
 }
 }  // namespace py2/py3
 }  // namespace pyflame

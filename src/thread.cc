@@ -12,33 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
-
-#include "./symbol.h"
 #include "./thread.h"
 
-// This abstracts the representation of py2/py3
 namespace pyflame {
-
-// Get the threads. Each thread stack will be in reverse order (most recent frame first).
-typedef std::vector<Thread> (*get_threads_t)(pid_t, PyAddresses);
-
-// Frobber to get python stack stuff; this encapsulates all of the Python
-// interpreter logic.
-class PyFrob {
- public:
-  PyFrob(pid_t pid) : pid_(pid), addrs_() {}
-
-  // Must be called before GetThreads() to detect the Python version
-  void DetectPython();
-
-  // Get the current frame list.
-  std::vector<Thread> GetThreads();
-
- private:
-  pid_t pid_;
-  PyAddresses addrs_;
-  get_threads_t get_threads_;
-};
-
+std::ostream &operator<<(std::ostream &os, const Thread &thread) {
+  os << thread.id() << ':' << std::endl;
+  for (const auto &frame : thread.frames()) {
+  	os << frame << std::endl;
+  }
+  return os;
+}
 }  // namespace pyflame

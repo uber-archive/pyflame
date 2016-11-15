@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -27,7 +28,7 @@
 
 #include "./config.h"
 #include "./exc.h"
-#include "./frame.h"
+#include "./thread.h"
 #include "./ptrace.h"
 #include "./pyfrob.h"
 #include "./version.h"
@@ -270,8 +271,12 @@ finish_arg_parse:
                std::chrono::microseconds(static_cast<long>(seconds * 1000000));
     for (;;) {
       auto now = std::chrono::system_clock::now();
-      frames_t frames = frobber.GetStack();
-      if (frames.empty()) {
+      std::vector<Thread> threads = frobber.GetThreads();
+      /*for (const auto &thread : threads) {
+        std::cout << thread << std::endl;
+      }*/
+      auto current = std::find_if(threads.begin(), threads.end(), [](Thread& thread) -> bool { return thread.is_current(); });
+      if (current == threads.end()) {
         if (include_idle) {
           idle++;
           // Time stamp empty call stacks only if required. Since lots of time
@@ -281,8 +286,9 @@ finish_arg_parse:
           }
         }
       } else {
-        call_stacks.push_back({now, frames});
+        call_stacks.push_back({now, current->frames()});
       }
+
       if ((check_end) && (now + interval >= end)) {
         break;
       }
