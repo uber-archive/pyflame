@@ -39,7 +39,16 @@ Namespace::Namespace(pid_t pid) : out_(-1), in_(-1) {
   const std::string their_mnt = os.str();
 
   struct stat out_st;
-  Lstat(kOurMnt, &out_st);
+
+  // In the case of no namespace support (ie ancient boxen), still make an attempt to work
+  if (lstat(kOurMnt, &out_st) < 0) {
+    std::ostringstream ss;
+    ss << "Failed to lstat path " << path << ": " << strerror(errno);
+    std::cerr ss.str();
+    out_ = in_ = -1;
+    return;
+  }
+
   // Since Linux 3.8 symbolic links are used.
   if (S_ISLNK(out_st.st_mode)) {
     char our_name[PATH_MAX];
