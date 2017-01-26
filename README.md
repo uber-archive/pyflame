@@ -32,7 +32,7 @@ make
 make install
 ```
 
-### Fedora
+### Fedora (from source)
 
 The following command should install the necessary packages to build on Fedora:
 
@@ -41,20 +41,32 @@ The following command should install the necessary packages to build on Fedora:
 sudo dnf install autoconf automake gcc-c++ python-devel libtool
 ```
 
-### Debian
+### Debian/Ubuntu (from source)
 
-The following command should install the necessary packages to build on Debian
-(or Ubuntu):
+The following command should install the necessary packages to build on Debian-like distros:
 
 ```bash
 # Install build dependencies on Debian or Ubuntu.
 sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev libtool
 ```
 
+### Ubuntu (from PPA)
+
+The community has setup a PPA for all current Ubuntu releases: https://launchpad.net/~trevorjay
+
+```bash
+sudo apt-add-repository ppa:trevorjay/pyflame
+sudo apt-get update
+sudo apt-get install pyflame
+```
+
+### Packaging
+
 If you'd like to build a Debian package there's already a `debian/` directory at
 the root of this project. We'd like to remove this, as per the
 [upstream Debian packaging guidelines](https://wiki.debian.org/UpstreamGuide).
 If you can help get this project packaged in Debian please let us know.
+
 
 ### Arch Linux
 
