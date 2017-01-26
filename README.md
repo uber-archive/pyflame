@@ -17,13 +17,35 @@ Learn more by reading
 
 ## Installing
 
+Pick your poison. Build from source or if available install a prebuilt release.
+
+### Building from source
+
 To build Pyflame you will need a C++ compiler with basic C++11 support. Pyflame
 is known to compile on versions of GCC as old as GCC 4.6. You'll also need GNU
 Autotools ([GNU Autoconf](https://www.gnu.org/software/autoconf/autoconf.html)
 and [GNU Automake](https://www.gnu.org/software/automake/automake.html)) if
 you're building from the Git repository.
 
-From Git you would compile like so:
+#### Install build-time dependencies
+
+* Fedora
+
+```bash
+# Install build dependencies on Fedora.
+sudo dnf install autoconf automake gcc-c++ python-devel libtool
+```
+
+* Debian/Ubuntu
+
+```bash
+# Install build dependencies on Debian or Ubuntu.
+sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev libtool
+```
+
+#### Compilation
+
+From git you would then compile like so:
 
 ```bash
 ./autogen.sh
@@ -32,27 +54,17 @@ make
 make install
 ```
 
-### Fedora (from source)
+If you'd like to build a Debian package there's already a `debian/` directory at
+the root of this project. We'd like to remove this, as per the
+[upstream Debian packaging guidelines](https://wiki.debian.org/UpstreamGuide).
+If you can help get this project packaged in Debian please let us know.
 
-The following command should install the necessary packages to build on Fedora:
+### Installing a pre-built package
 
-```bash
-# Install build dependencies on Fedora.
-sudo dnf install autoconf automake gcc-c++ python-devel libtool
-```
+#### Ubuntu PPA
 
-### Debian/Ubuntu (from source)
-
-The following command should install the necessary packages to build on Debian-like distros:
-
-```bash
-# Install build dependencies on Debian or Ubuntu.
-sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev libtool
-```
-
-### Ubuntu (from PPA)
-
-The community has setup a PPA for all current Ubuntu releases: https://launchpad.net/~trevorjay
+The community has setup a PPA for all current Ubuntu releases:
+[PPA](https://launchpad.net/~trevorjay/+archive/ubuntu/pyflame).
 
 ```bash
 sudo apt-add-repository ppa:trevorjay/pyflame
@@ -60,15 +72,7 @@ sudo apt-get update
 sudo apt-get install pyflame
 ```
 
-### Packaging
-
-If you'd like to build a Debian package there's already a `debian/` directory at
-the root of this project. We'd like to remove this, as per the
-[upstream Debian packaging guidelines](https://wiki.debian.org/UpstreamGuide).
-If you can help get this project packaged in Debian please let us know.
-
-
-### Arch Linux
+#### Arch Linux
 
 You can install pyflame from [AUR](https://aur.archlinux.org/packages/pyflame-git/).
 
