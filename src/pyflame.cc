@@ -28,9 +28,9 @@
 
 #include "./config.h"
 #include "./exc.h"
-#include "./thread.h"
 #include "./ptrace.h"
 #include "./pyfrob.h"
+#include "./thread.h"
 #include "./version.h"
 
 // FIXME: this logic should be moved to configure.ac
@@ -272,21 +272,20 @@ finish_arg_parse:
     for (;;) {
       auto now = std::chrono::system_clock::now();
       std::vector<Thread> threads = frobber.GetThreads();
-      /*for (const auto &thread : threads) {
-        std::cout << thread << std::endl;
-      }*/
-      auto current = std::find_if(threads.begin(), threads.end(), [](Thread& thread) -> bool { return thread.is_current(); });
-      if (current == threads.end()) {
-        if (include_idle) {
-          idle++;
-          // Time stamp empty call stacks only if required. Since lots of time
-          // the process will be idle, this is a good optimization to have
-          if (include_ts) {
-            call_stacks.push_back({now, {}});
-          }
+
+      // Only true for non-GIL stacks that we couldn't find a way to profile
+      // Currently this means stripped builds on non-AMD64 archs
+      if (threads.empty() && include_idle) {
+        idle++;
+        // Time stamp empty call stacks only if required. Since lots of time
+        // the process will be idle, this is a good optimization to have
+        if (include_ts) {
+          call_stacks.push_back({now, {}});
         }
-      } else {
-        call_stacks.push_back({now, current->frames()});
+      }
+
+      for (const auto &thread : threads) {
+        call_stacks.push_back({now, thread.frames()});
       }
 
       if ((check_end) && (now + interval >= end)) {

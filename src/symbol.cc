@@ -80,7 +80,7 @@ void ELF::Parse() {
           dynstr_ = i;
         } else if (strcmp(strtab(s->sh_name), ".strtab") == 0) {
           strtab_ = i;
-        } 
+        }
         break;
       case SHT_DYNSYM:
         dynsym_ = i;
@@ -118,14 +118,16 @@ std::vector<std::string> ELF::NeededLibs() {
   return needed;
 }
 
-void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version, PyAddresses &addrs) {
+void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version,
+                    PyAddresses &addrs) {
   const shdr_t *s = shdr(sym);
   const shdr_t *d = shdr(str);
   for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
-    if (have_version && addrs.tstate_addr && addrs.interp_head_addr) {
+    if (have_version && addrs.tstate_addr && addrs.interp_head_addr &&
+        addrs.interp_head_fn_addr) {
       break;
     }
-    
+
     const sym_t *sym =
         reinterpret_cast<const sym_t *>(p() + s->sh_offset + i * s->sh_entsize);
     const char *name =
@@ -134,6 +136,9 @@ void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version, Py
       addrs.tstate_addr = static_cast<unsigned long>(sym->st_value);
     } else if (!addrs.interp_head_addr && strcmp(name, "interp_head") == 0) {
       addrs.interp_head_addr = static_cast<unsigned long>(sym->st_value);
+    } else if (!addrs.interp_head_addr &&
+               strcmp(name, "PyInterpreterState_Head") == 0) {
+      addrs.interp_head_fn_addr = static_cast<unsigned long>(sym->st_value);
     } else if (!have_version) {
       if (strcmp(name, "PyString_Type") == 0) {
         // if we find PyString_Type, it's python 2
@@ -155,6 +160,7 @@ PyAddresses ELF::GetAddresses(PyVersion *version) {
   if (symtab_ >= 0 && strtab_ >= 0) {
     WalkTable(symtab_, strtab_, have_version, version, addrs);
   }
+  if (hdr()->e_type == ET_DYN) addrs.pie = true;
   return addrs;
 }
 }  // namespace pyflame

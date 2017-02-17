@@ -21,10 +21,10 @@
 #include "./exc.h"
 #include "./namespace.h"
 #include "./posix.h"
+#include "./ptrace.h"
 #include "./symbol.h"
 
-#define FROB_FUNCS                                             \
-  std::vector<Thread> GetThreads(pid_t pid, PyAddresses addr);
+#define FROB_FUNCS std::vector<Thread> GetThreads(pid_t pid, PyAddresses addr);
 
 namespace pyflame {
 namespace {
@@ -53,7 +53,8 @@ PyAddresses Addrs(pid_t pid, Namespace *ns, PyVersion *version) {
   std::ostringstream ss;
   ss << "/proc/" << pid << "/exe";
   ELF target;
-  target.Open(ReadLink(ss.str().c_str()), ns);
+  std::string exe = ReadLink(ss.str().c_str());
+  target.Open(exe, ns);
   target.Parse();
 
   // There's two different cases here. The default way Python is compiled you
@@ -76,7 +77,14 @@ PyAddresses Addrs(pid_t pid, Namespace *ns, PyVersion *version) {
 
   PyAddresses addrs = target.GetAddresses(version);
   if (addrs.is_valid()) {
-    return addrs;
+    if (addrs.pie) {
+      // If Python executable is PIE, add offsets
+      std::string elf_path;
+      const size_t offset = LocateLibPython(pid, exe, &elf_path);
+      return addrs + offset;
+    } else {
+      return addrs;
+    }
   }
 
   std::string libpython;
@@ -114,6 +122,16 @@ void PyFrob::DetectPython() {
   bool matched = false;
   PyVersion version = PyVersion::Unknown;
   addrs_ = Addrs(pid_, &ns, &version);
+#ifdef __amd64__
+  // If we didn't find the interp_head address, but we did find the public
+  // PyInterpreterState_Head
+  // function, use evil non-portable ptrace tricks to call the function
+  if (addrs_.interp_head_addr == 0 && addrs_.interp_head_hint == 0 &&
+      addrs_.interp_head_fn_addr != 0) {
+    addrs_.interp_head_hint =
+        PtraceCallFunction(pid_, addrs_.interp_head_fn_addr);
+  }
+#endif
 
   switch (version) {
     case PyVersion::Unknown:
@@ -139,7 +157,5 @@ void PyFrob::DetectPython() {
   }
 }
 
-std::vector<Thread> PyFrob::GetThreads() {
-  return get_threads_(pid_, addrs_);
-}
+std::vector<Thread> PyFrob::GetThreads() { return get_threads_(pid_, addrs_); }
 }  // namespace pyflame

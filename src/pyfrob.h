@@ -20,7 +20,8 @@
 // This abstracts the representation of py2/py3
 namespace pyflame {
 
-// Get the threads. Each thread stack will be in reverse order (most recent frame first).
+// Get the threads. Each thread stack will be in reverse order (most recent
+// frame first).
 typedef std::vector<Thread> (*get_threads_t)(pid_t, PyAddresses);
 
 // Frobber to get python stack stuff; this encapsulates all of the Python
