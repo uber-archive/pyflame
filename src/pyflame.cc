@@ -259,21 +259,18 @@ finish_arg_parse:
     for (;;) {
       auto now = std::chrono::system_clock::now();
       std::vector<Thread> threads = frobber.GetThreads();
-      /*for (const auto &thread : threads) {
-        std::cout << thread << std::endl;
-      }*/
-      auto current = std::find_if(threads.begin(), threads.end(), [](Thread& thread) -> bool { return thread.is_current(); });
-      if (current == threads.end()) {
-        if (include_idle) {
-          idle++;
-          // Time stamp empty call stacks only if required. Since lots of time
-          // the process will be idle, this is a good optimization to have
-          if (include_ts) {
-            call_stacks.push_back({now, {}});
-          }
-        }
-      } else {
-        call_stacks.push_back({now, current->frames()});
+
+      if (threads.empty() && include_idle) {
+            idle++;
+            // Time stamp empty call stacks only if required. Since lots of time
+            // the process will be idle, this is a good optimization to have
+            if (include_ts) {
+              call_stacks.push_back({now, {}});
+            }
+      }
+
+      for (const auto &thread : threads) {
+        call_stacks.push_back({now, thread.frames()});
       }
 
       if ((check_end) && (now + interval >= end)) {

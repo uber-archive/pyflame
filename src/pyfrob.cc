@@ -53,7 +53,8 @@ PyAddresses Addrs(pid_t pid, Namespace *ns, PyVersion *version) {
   std::ostringstream ss;
   ss << "/proc/" << pid << "/exe";
   ELF target;
-  target.Open(ReadLink(ss.str().c_str()), ns);
+  auto exe = ReadLink(ss.str().c_str());
+  target.Open(exe, ns);
   target.Parse();
 
   // There's two different cases here. The default way Python is compiled you
@@ -76,7 +77,9 @@ PyAddresses Addrs(pid_t pid, Namespace *ns, PyVersion *version) {
 
   PyAddresses addrs = target.GetAddresses(version);
   if (addrs.is_valid()) {
-    return addrs;
+    std::string elf_path;
+    const size_t offset = LocateLibPython(pid, exe, &elf_path);
+    return addrs + offset;
   }
 
   std::string libpython;
