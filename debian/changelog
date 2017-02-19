@@ -1,3 +1,10 @@
+pyflame (1.2.2) unstable; urgency=medium
+
+  * Support Python 3.2
+  * Add a -o/--output flag
+
+ -- Evan Klitzke <evan@localhost>  Sat, 18 Feb 2017 18:36:07 -0800
+
 pyflame (1.2.1) unstable; urgency=medium
 
   * New newest 1.2.1 tag
