@@ -22,6 +22,7 @@
 #include "./namespace.h"
 #include "./posix.h"
 #include "./symbol.h"
+#include "./ptrace.h"
 
 #define FROB_FUNCS                                             \
   std::vector<Thread> GetThreads(pid_t pid, PyAddresses addr);
@@ -117,6 +118,13 @@ void PyFrob::DetectPython() {
   bool matched = false;
   PyVersion version = PyVersion::Unknown;
   addrs_ = Addrs(pid_, &ns, &version);
+#ifdef __amd64__
+  // If we didn't find the interp_head address, but we did find the public PyInterpreterState_Head
+  // function, use evil non-portable ptrace tricks to call the function
+  if (addrs_.interp_head_addr == 0 && addrs_.interp_head_hint == 0 && addrs_.interp_head_fn_addr != 0) {
+    addrs_.interp_head_hint = PtraceCallFunction(pid_, addrs_.interp_head_fn_addr);
+  }
+#endif
 
   switch (version) {
     case PyVersion::Unknown:

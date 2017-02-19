@@ -36,4 +36,9 @@ std::string PtracePeekString(pid_t pid, unsigned long addr);
 // peek some number of bytes
 std::unique_ptr<uint8_t[]> PtracePeekBytes(pid_t pid, unsigned long addr,
                                            size_t nbytes);
+
+#ifdef __amd64__
+// call a function pointer
+long PtraceCallFunction(pid_t pid, unsigned long addr);
+#endif
 }  // namespace pyflame

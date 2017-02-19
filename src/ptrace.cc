@@ -21,6 +21,7 @@
 #include <utility>
 
 #include <sys/ptrace.h>
+#include <sys/user.h>
 #include <sys/wait.h>
 
 #include "./exc.h"
@@ -47,6 +48,33 @@ void PtraceDetach(pid_t pid) {
   }
 }
 
+struct user_regs_struct PtraceGetRegs(pid_t pid) {
+  struct user_regs_struct regs;
+  if (ptrace(PTRACE_GETREGS, pid, 0, &regs)) {
+    std::ostringstream ss;
+    ss << "Failed to PTRACE_GETREGS: " << strerror(errno);
+    throw PtraceException("Failed to PTRACE_GETREGS");
+  }
+  return regs;
+}
+
+void PtraceSetRegs(pid_t pid, struct user_regs_struct regs) {
+  if (ptrace(PTRACE_SETREGS, pid, 0, &regs)) {
+    std::ostringstream ss;
+    ss << "Failed to PTRACE_SETREGS: " << strerror(errno);
+    throw PtraceException(ss.str());
+  }
+}
+
+void PtracePoke(pid_t pid, unsigned long addr, long data) {
+  if (ptrace(PTRACE_POKEDATA, pid, addr, (void*) data)) {
+    std::ostringstream ss;
+    ss << "Failed to PTRACE_POKEDATA at " << reinterpret_cast<void *>(addr)
+       << ": " << strerror(errno);
+    throw PtraceException(ss.str());
+  }
+}
+
 long PtracePeek(pid_t pid, unsigned long addr) {
   errno = 0;
   const long data = ptrace(PTRACE_PEEKDATA, pid, addr, 0);
@@ -58,6 +86,35 @@ long PtracePeek(pid_t pid, unsigned long addr) {
   }
   return data;
 }
+
+void do_wait() {
+  int status;
+  if (wait(&status) == -1) {
+    throw PtraceException("Failed to PTRACE_CONT");
+  }
+  if (WIFSTOPPED(status)) {
+    if (WSTOPSIG(status) != SIGTRAP) {
+      std::ostringstream ss;
+      ss << "Failed to PTRACE_CONT - unexpectedly got status  " << strsignal(status);
+      throw PtraceException(ss.str());
+    }
+  } else {
+    std::ostringstream ss;
+    ss << "Failed to PTRACE_CONT - unexpectedly got status  " << status;
+    throw PtraceException(ss.str());
+  }
+}
+
+void PtraceCont(pid_t pid) {
+  ptrace(PTRACE_CONT, pid, 0, 0);
+  do_wait();
+}
+
+void PtraceSingleStep(pid_t pid) {
+  ptrace(PTRACE_SINGLESTEP, pid, 0, 0);
+  do_wait();
+}
+
 
 std::string PtracePeekString(pid_t pid, unsigned long addr) {
   std::ostringstream dump;
@@ -93,4 +150,30 @@ std::unique_ptr<uint8_t[]> PtracePeekBytes(pid_t pid, unsigned long addr,
   }
   return bytes;
 }
+
+#ifdef __amd64__
+long PtraceCallFunction(pid_t pid, unsigned long addr) {
+  struct user_regs_struct oldregs = PtraceGetRegs(pid);
+  long old_code = PtracePeek(pid, oldregs.rip);
+  long new_code;
+  uint8_t* new_code_bytes = (uint8_t*) &new_code;
+  new_code_bytes[0] = 0xff; // CALL
+  new_code_bytes[1] = 0xd0; // rax
+  new_code_bytes[2] = 0xcc; // TRAP
+  new_code_bytes[3] = 0xff; // JMP
+  new_code_bytes[4] = 0xe0; // rax
+  struct user_regs_struct newregs = oldregs;
+  newregs.rax = addr;
+  PtraceSetRegs(pid, newregs);
+  PtracePoke(pid, oldregs.rip, new_code);
+  PtraceCont(pid);
+  newregs = PtraceGetRegs(pid);
+  long result = newregs.rax;
+  newregs.rax = oldregs.rip;
+  PtraceSingleStep(pid);
+  PtraceSetRegs(pid, oldregs);
+  PtracePoke(pid, oldregs.rip, old_code);
+  return result;
+};
+#endif
 }  // namespace pyflame

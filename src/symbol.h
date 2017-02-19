@@ -50,13 +50,16 @@ enum class PyVersion { Unknown = 0, Py2 = 2, Py3 = 3 };
 struct PyAddresses {
   unsigned long tstate_addr;
   unsigned long interp_head_addr;
+  unsigned long interp_head_fn_addr;
+  unsigned long interp_head_hint;
 
-  PyAddresses() : tstate_addr(0), interp_head_addr(0) {}
+  PyAddresses() : tstate_addr(0), interp_head_addr(0), interp_head_fn_addr(0), interp_head_hint(0) {}
 
   PyAddresses operator+(const unsigned long base) const {
     PyAddresses res;
-    res.tstate_addr      = this->tstate_addr      == 0 ? 0 : this->tstate_addr      + base;
-    res.interp_head_addr = this->interp_head_addr == 0 ? 0 : this->interp_head_addr + base;
+    res.tstate_addr         = this->tstate_addr         == 0 ? 0 : this->tstate_addr         + base;
+    res.interp_head_addr    = this->interp_head_addr    == 0 ? 0 : this->interp_head_addr    + base;
+    res.interp_head_fn_addr = this->interp_head_fn_addr == 0 ? 0 : this->interp_head_fn_addr + base;
     return res;
   }
 
