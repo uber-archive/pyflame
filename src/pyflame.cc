@@ -49,6 +49,7 @@ const char usage_str[] =
      "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
      "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
      "(default 0.001)\n"
+     "  -o, --outpout=PATH   Output to file path\n"
      "  -t, --trace          Trace a child process\n"
      "  -T, --timestamp      Include timestamps for each stacktrace\n"
      "  -v, --version        Show the version\n"
@@ -57,9 +58,10 @@ const char usage_str[] =
 typedef std::unordered_map<frames_t, size_t, FrameHash> buckets_t;
 
 // Prints all stack traces
-void PrintFrames(const std::vector<FrameTS> &call_stacks, size_t idle) {
+void PrintFrames(std::ostream &out, const std::vector<FrameTS> &call_stacks,
+                 size_t idle) {
   if (idle) {
-    std::cout << "(idle) " << idle << "\n";
+    out << "(idle) " << idle << "\n";
   }
   // Put the call stacks into buckets
   buckets_t buckets;
@@ -80,30 +82,30 @@ void PrintFrames(const std::vector<FrameTS> &call_stacks, size_t idle) {
     auto last = kv.first.rend();
     last--;
     for (auto it = kv.first.rbegin(); it != last; ++it) {
-      std::cout << *it << ";";
+      out << *it << ";";
     }
-    std::cout << *last << " " << kv.second << "\n";
+    out << *last << " " << kv.second << "\n";
   }
 }
 
 // Prints all stack traces with timestamps
-void PrintFramesTS(const std::vector<FrameTS> &call_stacks) {
+void PrintFramesTS(std::ostream &out, const std::vector<FrameTS> &call_stacks) {
   for (const auto &call_stack : call_stacks) {
-    std::cout << std::chrono::duration_cast<std::chrono::microseconds>(
-                     call_stack.ts.time_since_epoch())
-                     .count()
-              << "\n";
+    out << std::chrono::duration_cast<std::chrono::microseconds>(
+               call_stack.ts.time_since_epoch())
+               .count()
+        << "\n";
     // Handle idle
     if (call_stack.frames.empty()) {
-      std::cout << "(idle)\n";
+      out << "(idle)\n";
       continue;
     }
     // Print the call stack
     for (auto it = call_stack.frames.rbegin(); it != call_stack.frames.rend();
          ++it) {
-      std::cout << *it << ";";
+      out << *it << ";";
     }
-    std::cout << "\n";
+    out << "\n";
   }
 }
 
@@ -118,18 +120,20 @@ int main(int argc, char **argv) {
   bool include_ts = false;
   double seconds = 1;
   double sample_rate = 0.001;
+  std::ofstream output_file;
   for (;;) {
     static struct option long_options[] = {
         {"help", no_argument, 0, 'h'},
         {"rate", required_argument, 0, 'r'},
         {"seconds", required_argument, 0, 's'},
+        {"output", required_argument, 0, 'o'},
         {"trace", no_argument, 0, 't'},
         {"timestamp", no_argument, 0, 'T'},
         {"version", no_argument, 0, 'v'},
         {"exclude-idle", no_argument, 0, 'x'},
         {0, 0, 0, 0}};
     int option_index = 0;
-    int c = getopt_long(argc, argv, "hr:s:tTvx", long_options, &option_index);
+    int c = getopt_long(argc, argv, "hr:s:tTvxo:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -166,6 +170,13 @@ int main(int argc, char **argv) {
       case 'x':
         include_idle = false;
         break;
+      case 'o':
+        output_file.open(optarg, std::ios::out | std::ios::trunc);
+        if (!output_file.is_open()) {
+          std::cerr << "cannot open file \"" << optarg << "\" as output\n";
+          return 1;
+        }
+        break;
       case '?':
         // getopt_long should already have printed an error message
         break;
@@ -177,6 +188,8 @@ finish_arg_parse:
   const std::chrono::microseconds interval{
       static_cast<long>(sample_rate * 1000000)};
   pid_t pid;
+  std::ostream *output = &std::cout;
+  if (output_file.is_open()) output = &output_file;
   if (trace) {
     if (optind == argc) {
       std::cerr << usage_str;
@@ -278,18 +291,18 @@ finish_arg_parse:
       PtraceAttach(pid);
     }
     if (!include_ts) {
-      PrintFrames(call_stacks, idle);
+      PrintFrames(*output, call_stacks, idle);
     } else {
-      PrintFramesTS(call_stacks);
+      PrintFramesTS(*output, call_stacks);
     }
   } catch (const PtraceException &exc) {
     // If the process terminates early then we just print the stack traces up
     // until that point in time.
     if (!call_stacks.empty() || idle) {
       if (!include_ts) {
-        PrintFrames(call_stacks, idle);
+        PrintFrames(*output, call_stacks, idle);
       } else {
-        PrintFramesTS(call_stacks);
+        PrintFramesTS(*output, call_stacks);
       }
     } else {
       std::cerr << exc.what() << std::endl;
