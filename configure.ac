@@ -43,7 +43,7 @@ AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([memmove munmap strerror strtol strtoul])
 
-PKG_CHECK_MODULES([PY2], [python], [enable_py2="yes"], [AC_MSG_WARN([Building without Python 2 support])])
+PKG_CHECK_MODULES([PY2], [python2], [enable_py2="yes"], [AC_MSG_WARN([Building without Python 2 support])])
 AM_CONDITIONAL([ENABLE_PY2], [test x"$enable_py2" = xyes])
 AM_COND_IF([ENABLE_PY2], [AC_DEFINE([ENABLE_PY2], [1], [Python2 is enabled])])
 
