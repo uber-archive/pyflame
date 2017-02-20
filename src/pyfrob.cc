@@ -78,9 +78,14 @@ PyAddresses Addrs(pid_t pid, Namespace *ns, PyVersion *version) {
 
   PyAddresses addrs = target.GetAddresses(version);
   if (addrs.is_valid()) {
-    std::string elf_path;
-    const size_t offset = LocateLibPython(pid, exe, &elf_path);
-    return addrs + offset;
+    if (addrs.pie) {
+      // If Python executable is PIE, add offsets
+      std::string elf_path;
+      const size_t offset = LocateLibPython(pid, exe, &elf_path);
+      return addrs + offset;
+    } else {
+      return addrs;
+    }
   }
 
   std::string libpython;

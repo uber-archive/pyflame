@@ -157,6 +157,7 @@ PyAddresses ELF::GetAddresses(PyVersion *version) {
   if (symtab_ >= 0 && strtab_ >= 0) {
     WalkTable(symtab_, strtab_, have_version, version, addrs);
   }
+  if (hdr()->e_type == ET_DYN) addrs.pie = true;
   return addrs;
 }
 }  // namespace pyflame

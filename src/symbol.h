@@ -52,8 +52,9 @@ struct PyAddresses {
   unsigned long interp_head_addr;
   unsigned long interp_head_fn_addr;
   unsigned long interp_head_hint;
+  bool pie;
 
-  PyAddresses() : tstate_addr(0), interp_head_addr(0), interp_head_fn_addr(0), interp_head_hint(0) {}
+  PyAddresses() : tstate_addr(0), interp_head_addr(0), interp_head_fn_addr(0), interp_head_hint(0), pie(false) {}
 
   PyAddresses operator+(const unsigned long base) const {
     PyAddresses res;
