@@ -17,7 +17,8 @@ Learn more by reading
 
 ## Installing
 
-Pick your poison. Build from source or if available install a prebuilt release.
+You can build Pyflame from source, or install a pre-built release for your
+distro.
 
 ### Building from source
 
@@ -133,17 +134,20 @@ data to stdout you may need to filter it somehow before sending the output to
 
 Pyflame can also generate data with timestamps which can be used to
 generate ["flame charts"](https://addyosmani.com/blog/devtools-flame-charts/)
-that can be viewed in Chrome. This is controlled with the `-T` option.
+that can be viewed in Chrome. These are a type of inverted flamegraph that can
+more readable in some cases. Output in this data format is controlled with the
+`-T` option.
 
 Use `utils/flame-chart-json` to generate the JSON data required for viewing
 Flame Charts using the Chrome CPU profiler.
 
-```bash
+```
 Usage: cat <pyflame_output_file> | flame-chart-json > <fc_output>.cpuprofile
 (or) pyflame [regular pyflame options] | flame-chart-json > <fc_output>.cpuprofile
 ```
 
-Then load the resulting .cpuprofile file from chrome CPU profiler to view Flame Chart.
+Then load the resulting `.cpuprofile` file into the Chrome CPU profiler to view
+flame chart.
 
 ## FAQ
 
@@ -160,8 +164,8 @@ If you don't want to include this time you can use the invocation `pyflame -x`.
 
 No, these aren't supported. Someone who is proficient with low-level C
 programming can probably get BSD to work, as described in issue #3. It is
-probably much more difficult to adapt this code to work on OS X/macOS since the
-current code assumes that the host
+probably much more difficult (although not impossible) to adapt this code to
+work on OS X/macOS, since the current code assumes that the host
 uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files
 as the executable file format for the Python interpreter.
 
@@ -277,7 +281,7 @@ with [clang-format](http://clang.llvm.org/docs/ClangFormat.html). There's a
 
 The Linux-specific code is be mostly restricted to the files `src/aslr.*`,
 `src/namespace.*`, and `src/ptrace.*`. If you want to port Pyflame to another
-Unix you will probably only need to modify these files.
+Unix, you will probably only need to modify these files.
 
 You can run the test suite locally like this:
 
