@@ -53,7 +53,7 @@ PyAddresses Addrs(pid_t pid, Namespace *ns, PyVersion *version) {
   std::ostringstream ss;
   ss << "/proc/" << pid << "/exe";
   ELF target;
-  auto exe = ReadLink(ss.str().c_str());
+  std::string exe = ReadLink(ss.str().c_str());
   target.Open(exe, ns);
   target.Parse();
 
