@@ -118,11 +118,13 @@ std::vector<std::string> ELF::NeededLibs() {
   return needed;
 }
 
-void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version, PyAddresses &addrs) {
+void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version,
+                    PyAddresses &addrs) {
   const shdr_t *s = shdr(sym);
   const shdr_t *d = shdr(str);
   for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
-    if (have_version && addrs.tstate_addr && addrs.interp_head_addr && addrs.interp_head_fn_addr) {
+    if (have_version && addrs.tstate_addr && addrs.interp_head_addr &&
+        addrs.interp_head_fn_addr) {
       break;
     }
 
@@ -134,7 +136,8 @@ void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version, Py
       addrs.tstate_addr = static_cast<unsigned long>(sym->st_value);
     } else if (!addrs.interp_head_addr && strcmp(name, "interp_head") == 0) {
       addrs.interp_head_addr = static_cast<unsigned long>(sym->st_value);
-    } else if (!addrs.interp_head_addr && strcmp(name, "PyInterpreterState_Head") == 0) {
+    } else if (!addrs.interp_head_addr &&
+               strcmp(name, "PyInterpreterState_Head") == 0) {
       addrs.interp_head_fn_addr = static_cast<unsigned long>(sym->st_value);
     } else if (!have_version) {
       if (strcmp(name, "PyString_Type") == 0) {

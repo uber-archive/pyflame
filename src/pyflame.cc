@@ -28,9 +28,9 @@
 
 #include "./config.h"
 #include "./exc.h"
-#include "./thread.h"
 #include "./ptrace.h"
 #include "./pyfrob.h"
+#include "./thread.h"
 #include "./version.h"
 
 // FIXME: this logic should be moved to configure.ac
@@ -261,12 +261,12 @@ finish_arg_parse:
       std::vector<Thread> threads = frobber.GetThreads();
 
       if (threads.empty() && include_idle) {
-            idle++;
-            // Time stamp empty call stacks only if required. Since lots of time
-            // the process will be idle, this is a good optimization to have
-            if (include_ts) {
-              call_stacks.push_back({now, {}});
-            }
+        idle++;
+        // Time stamp empty call stacks only if required. Since lots of time
+        // the process will be idle, this is a good optimization to have
+        if (include_ts) {
+          call_stacks.push_back({now, {}});
+        }
       }
 
       for (const auto &thread : threads) {

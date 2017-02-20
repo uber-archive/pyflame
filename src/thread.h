@@ -30,7 +30,9 @@ class Thread {
  public:
   Thread() = delete;
   Thread(const Thread &other)
-      : id_(other.id_), is_current_(other.is_current_), frames_(other.frames_) {}
+      : id_(other.id_),
+        is_current_(other.is_current_),
+        frames_(other.frames_) {}
   Thread(const long id, const bool is_current, const std::vector<Frame> frames)
       : id_(id), is_current_(is_current), frames_(frames) {}
 
@@ -39,7 +41,8 @@ class Thread {
   inline const std::vector<Frame> &frames() const { return frames_; }
 
   inline bool operator==(const Thread &other) const {
-    return id_ == other.id_ && is_current_ == other.is_current_ && frames_ == other.frames_;
+    return id_ == other.id_ && is_current_ == other.is_current_ &&
+           frames_ == other.frames_;
   }
 
  private:

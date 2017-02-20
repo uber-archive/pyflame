@@ -67,7 +67,7 @@ void PtraceSetRegs(pid_t pid, struct user_regs_struct regs) {
 }
 
 void PtracePoke(pid_t pid, unsigned long addr, long data) {
-  if (ptrace(PTRACE_POKEDATA, pid, addr, (void*) data)) {
+  if (ptrace(PTRACE_POKEDATA, pid, addr, (void *)data)) {
     std::ostringstream ss;
     ss << "Failed to PTRACE_POKEDATA at " << reinterpret_cast<void *>(addr)
        << ": " << strerror(errno);
@@ -95,7 +95,8 @@ void do_wait() {
   if (WIFSTOPPED(status)) {
     if (WSTOPSIG(status) != SIGTRAP) {
       std::ostringstream ss;
-      ss << "Failed to PTRACE_CONT - unexpectedly got status  " << strsignal(status);
+      ss << "Failed to PTRACE_CONT - unexpectedly got status  "
+         << strsignal(status);
       throw PtraceException(ss.str());
     }
   } else {
@@ -114,7 +115,6 @@ void PtraceSingleStep(pid_t pid) {
   ptrace(PTRACE_SINGLESTEP, pid, 0, 0);
   do_wait();
 }
-
 
 std::string PtracePeekString(pid_t pid, unsigned long addr) {
   std::ostringstream dump;
@@ -156,12 +156,12 @@ long PtraceCallFunction(pid_t pid, unsigned long addr) {
   struct user_regs_struct oldregs = PtraceGetRegs(pid);
   long old_code = PtracePeek(pid, oldregs.rip);
   long new_code;
-  uint8_t* new_code_bytes = (uint8_t*) &new_code;
-  new_code_bytes[0] = 0xff; // CALL
-  new_code_bytes[1] = 0xd0; // rax
-  new_code_bytes[2] = 0xcc; // TRAP
-  new_code_bytes[3] = 0xff; // JMP
-  new_code_bytes[4] = 0xe0; // rax
+  uint8_t *new_code_bytes = (uint8_t *)&new_code;
+  new_code_bytes[0] = 0xff;  // CALL
+  new_code_bytes[1] = 0xd0;  // rax
+  new_code_bytes[2] = 0xcc;  // TRAP
+  new_code_bytes[3] = 0xff;  // JMP
+  new_code_bytes[4] = 0xe0;  // rax
   struct user_regs_struct newregs = oldregs;
   newregs.rax = addr;
   PtraceSetRegs(pid, newregs);
