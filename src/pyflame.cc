@@ -260,6 +260,8 @@ finish_arg_parse:
       auto now = std::chrono::system_clock::now();
       std::vector<Thread> threads = frobber.GetThreads();
 
+      // Only true for non-GIL stacks that we couldn't find a way to profile
+      // Currently this means stripped builds on non-AMD64 archs
       if (threads.empty() && include_idle) {
         idle++;
         // Time stamp empty call stacks only if required. Since lots of time

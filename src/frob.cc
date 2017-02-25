@@ -172,9 +172,9 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs) {
     std::vector<Frame> stack;
     if (frame_addr != 0) {
       FollowFrame(pid, frame_addr, &stack);
+      threads.push_back(Thread(id, is_current, stack));
     }
 
-    threads.push_back(Thread(id, is_current, stack));
 
     chain_next_addr = chain_tstate + offsetof(PyThreadState, next);
   } while (1);

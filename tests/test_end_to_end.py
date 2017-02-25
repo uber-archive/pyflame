@@ -94,8 +94,8 @@ def test_monitor(dijkstra):
         assert FLAMEGRAPH_RE.match(line) is not None
 
 
-def test_idle(sleeper):
-    """Basic test for idle processes."""
+def test_non_gil(sleeper):
+    """Basic test for non-GIL/native code processes."""
     proc = subprocess.Popen(['./src/pyflame', str(sleeper.pid)],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
@@ -105,12 +105,8 @@ def test_idle(sleeper):
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    has_idle = False
     for line in lines:
         assert FLAMEGRAPH_RE.match(line) is not None
-        if IDLE_RE.match(line):
-            has_idle = True
-    assert has_idle
 
 
 def test_exclude_idle(sleeper):
