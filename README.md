@@ -17,13 +17,36 @@ Learn more by reading
 
 ## Installing
 
+You can build Pyflame from source, or install a pre-built release for your
+distro.
+
+### Building from source
+
 To build Pyflame you will need a C++ compiler with basic C++11 support. Pyflame
 is known to compile on versions of GCC as old as GCC 4.6. You'll also need GNU
 Autotools ([GNU Autoconf](https://www.gnu.org/software/autoconf/autoconf.html)
 and [GNU Automake](https://www.gnu.org/software/automake/automake.html)) if
 you're building from the Git repository.
 
-From Git you would compile like so:
+#### Install build-time dependencies
+
+* Fedora
+
+```bash
+# Install build dependencies on Fedora.
+sudo dnf install autoconf automake gcc-c++ python-devel libtool
+```
+
+* Debian/Ubuntu
+
+```bash
+# Install build dependencies on Debian or Ubuntu.
+sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev libtool
+```
+
+#### Compilation
+
+From git you would then compile like so:
 
 ```bash
 ./autogen.sh
@@ -32,31 +55,25 @@ make
 make install
 ```
 
-### Fedora
-
-The following command should install the necessary packages to build on Fedora:
-
-```bash
-# Install build dependencies on Fedora.
-sudo dnf install autoconf automake gcc-c++ python-devel libtool
-```
-
-### Debian
-
-The following command should install the necessary packages to build on Debian
-(or Ubuntu):
-
-```bash
-# Install build dependencies on Debian or Ubuntu.
-sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev libtool
-```
-
 If you'd like to build a Debian package there's already a `debian/` directory at
 the root of this project. We'd like to remove this, as per the
 [upstream Debian packaging guidelines](https://wiki.debian.org/UpstreamGuide).
 If you can help get this project packaged in Debian please let us know.
 
-### Arch Linux
+### Installing a pre-built package
+
+#### Ubuntu PPA
+
+The community has setup a PPA for all current Ubuntu releases:
+[PPA](https://launchpad.net/~trevorjay/+archive/ubuntu/pyflame).
+
+```bash
+sudo apt-add-repository ppa:trevorjay/pyflame
+sudo apt-get update
+sudo apt-get install pyflame
+```
+
+#### Arch Linux
 
 You can install pyflame from [AUR](https://aur.archlinux.org/packages/pyflame-git/).
 
@@ -117,17 +134,20 @@ data to stdout you may need to filter it somehow before sending the output to
 
 Pyflame can also generate data with timestamps which can be used to
 generate ["flame charts"](https://addyosmani.com/blog/devtools-flame-charts/)
-that can be viewed in Chrome. This is controlled with the `-T` option.
+that can be viewed in Chrome. These are a type of inverted flamegraph that can
+more readable in some cases. Output in this data format is controlled with the
+`-T` option.
 
 Use `utils/flame-chart-json` to generate the JSON data required for viewing
 Flame Charts using the Chrome CPU profiler.
 
-```bash
+```
 Usage: cat <pyflame_output_file> | flame-chart-json > <fc_output>.cpuprofile
 (or) pyflame [regular pyflame options] | flame-chart-json > <fc_output>.cpuprofile
 ```
 
-Then load the resulting .cpuprofile file from chrome CPU profiler to view Flame Chart.
+Then load the resulting `.cpuprofile` file into the Chrome CPU profiler to view
+flame chart.
 
 ## FAQ
 
@@ -144,8 +164,8 @@ If you don't want to include this time you can use the invocation `pyflame -x`.
 
 No, these aren't supported. Someone who is proficient with low-level C
 programming can probably get BSD to work, as described in issue #3. It is
-probably much more difficult to adapt this code to work on OS X/macOS since the
-current code assumes that the host
+probably much more difficult (although not impossible) to adapt this code to
+work on OS X/macOS, since the current code assumes that the host
 uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files
 as the executable file format for the Python interpreter.
 
@@ -261,7 +281,7 @@ with [clang-format](http://clang.llvm.org/docs/ClangFormat.html). There's a
 
 The Linux-specific code is be mostly restricted to the files `src/aslr.*`,
 `src/namespace.*`, and `src/ptrace.*`. If you want to port Pyflame to another
-Unix you will probably only need to modify these files.
+Unix, you will probably only need to modify these files.
 
 You can run the test suite locally like this:
 

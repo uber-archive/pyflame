@@ -28,6 +28,10 @@
 #include <Python.h>
 #include <frameobject.h>
 
+#if PYFLAME_PY_VERSION == 3
+#include <unicodeobject.h>
+#endif
+
 #include "./config.h"
 #include "./exc.h"
 #include "./ptrace.h"
