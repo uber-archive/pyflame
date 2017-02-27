@@ -25,6 +25,8 @@ TS_IDLE_RE = re.compile(r'\(idle\)')
 # './tests/sleeper.py:<module>:31;./tests/sleeper.py:main:26;'
 TS_FLAMEGRAPH_RE = re.compile(r'[^[^\d]+\d+;]*')
 TS_RE = re.compile(r'\d+')
+SLEEP_A_RE = re.compile(r'.*:sleep_a:.*')
+SLEEP_B_RE = re.compile(r'.*:sleep_b:.*')
 
 
 @contextlib.contextmanager
@@ -55,6 +57,12 @@ def dijkstra():
 @pytest.yield_fixture
 def sleeper():
     with python_proc('sleeper.py') as p:
+        yield p
+
+
+@pytest.yield_fixture
+def threaded_sleeper():
+    with python_proc('threaded_sleeper.py') as p:
         yield p
 
 
@@ -94,8 +102,8 @@ def test_monitor(dijkstra):
         assert FLAMEGRAPH_RE.match(line) is not None
 
 
-def test_idle(sleeper):
-    """Basic test for idle processes."""
+def test_non_gil(sleeper):
+    """Basic test for non-GIL/native code processes."""
     proc = subprocess.Popen(['./src/pyflame', str(sleeper.pid)],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
@@ -105,12 +113,30 @@ def test_idle(sleeper):
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    has_idle = False
     for line in lines:
         assert FLAMEGRAPH_RE.match(line) is not None
-        if IDLE_RE.match(line):
-            has_idle = True
-    assert has_idle
+
+
+def test_threaded(threaded_sleeper):
+    """Basic test for non-GIL/native code processes."""
+    proc = subprocess.Popen(['./src/pyflame', str(threaded_sleeper.pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            universal_newlines=True)
+    out, err = communicate(proc)
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
+    assert lines.pop(-1) == ''  # output should end in a newline
+    has_sleep_a = False
+    has_sleep_b = False
+    for line in lines:
+        if SLEEP_A_RE.match(line):
+            has_sleep_a = True
+        if SLEEP_B_RE.match(line):
+            has_sleep_b = True
+    assert has_sleep_a
+    assert has_sleep_b
 
 
 def test_exclude_idle(sleeper):
