@@ -41,7 +41,7 @@ sudo dnf install autoconf automake gcc-c++ python-devel libtool
 
 ```bash
 # Install build dependencies on Debian or Ubuntu.
-sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev libtool
+sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev libtool make
 ```
 
 #### Compilation
