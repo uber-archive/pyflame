@@ -40,7 +40,8 @@ Namespace::Namespace(pid_t pid) : out_(-1), in_(-1) {
 
   struct stat out_st;
 
-  // In the case of no namespace support (ie ancient boxen), still make an attempt to work
+  // In the case of no namespace support (ie ancient boxen), still make an
+  // attempt to work
   if (lstat(kOurMnt, &out_st) < 0) {
     std::cerr << "Failed to lstat path " << kOurMnt << ": " << strerror(errno);
     out_ = in_ = -1;

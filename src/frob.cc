@@ -32,11 +32,11 @@
 #include <unicodeobject.h>
 #endif
 
-#include "./symbol.h"
 #include "./config.h"
 #include "./exc.h"
 #include "./ptrace.h"
 #include "./pyfrob.h"
+#include "./symbol.h"
 #include "./symbol.h"
 
 // why would this not be true idk
@@ -131,9 +131,8 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs) {
   unsigned long istate = 0;
 
   // First try to get interpreter state via dereferencing
-  // _PyThreadState_Current.
-  // This won't work if the main thread doesn't hold the GIL (_Current will be
-  // null).
+  // _PyThreadState_Current. This won't work if the main thread doesn't hold
+  // the GIL (_Current will be null).
   const long tstate = PtracePeek(pid, addrs.tstate_addr);
   if (tstate != 0) {
     istate = static_cast<unsigned long>(
@@ -141,16 +140,15 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs) {
     // Secondly try to get it via the static interp_head symbol, if we managed
     // to find it:
     //  - interp_head is not strictly speaking part of the public API so it
-    //  might get removed!
+    //    might get removed!
     //  - interp_head is not part of the dynamic symbol table, so e.g. strip
-    //  will drop it
+    //    will drop it
   } else if (addrs.interp_head_addr != 0) {
     istate =
         static_cast<unsigned long>(PtracePeek(pid, addrs.interp_head_addr));
   } else if (addrs.interp_head_hint != 0) {
     // Finally. check if we have already put a hint into interp_head_hint -
-    // currently
-    // this can only happen if we called PyInterpreterState_Head.
+    // currently this can only happen if we called PyInterpreterState_Head.
     istate = addrs.interp_head_hint;
   }
 
@@ -179,7 +177,6 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs) {
       FollowFrame(pid, frame_addr, &stack);
       threads.push_back(Thread(id, is_current, stack));
     }
-
 
     chain_next_addr = chain_tstate + offsetof(PyThreadState, next);
   } while (1);

@@ -14,6 +14,7 @@
 
 #include "./ptrace.h"
 
+#include <dirent.h>
 #include <cerrno>
 #include <cstring>
 #include <fstream>
@@ -21,6 +22,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 #include <sys/mman.h>
 #include <sys/ptrace.h>
@@ -183,22 +185,52 @@ static unsigned long AllocPage(pid_t pid) {
   return result;
 }
 
+static std::vector<pid_t> ListThreads(pid_t pid) {
+  std::vector<pid_t> result;
+  std::ostringstream dirname;
+  dirname << "/proc/" << pid << "/task";
+  DIR *dir = opendir(dirname.str().c_str());
+  if (dir == nullptr) {
+    throw PtraceException("Failed to list threads");
+  }
+  dirent *entry;
+  while ((entry = readdir(dir)) != nullptr) {
+    std::string name = entry->d_name;
+    if (name != "." && name != "..") {
+      result.push_back(static_cast<pid_t>(std::stoi(name)));
+    }
+  }
+  return result;
+}
+
+static void PauseChildThreads(pid_t pid) {
+  for (auto tid : ListThreads(pid)) {
+    if (tid != pid) PtraceAttach(tid);
+  }
+}
+
+static void ResumeChildThreads(pid_t pid) {
+  for (auto tid : ListThreads(pid)) {
+    if (tid != pid) PtraceDetach(tid);
+  }
+}
+
 long PtraceCallFunction(pid_t pid, unsigned long addr) {
   if (probe_ == 0) {
+    PauseChildThreads(pid);
     probe_ = AllocPage(pid);
+    ResumeChildThreads(pid);
     if (probe_ == (unsigned long)MAP_FAILED) {
       return -1;
     }
 
-    std::cerr << "probe point is at " << reinterpret_cast<void *>(probe_)
-              << "\n";
+    // std::cerr << "probe point is at " << reinterpret_cast<void *>(probe_)
+    //           << "\n";
     long code = 0;
     uint8_t *new_code_bytes = (uint8_t *)&code;
     new_code_bytes[0] = 0xff;  // CALL
     new_code_bytes[1] = 0xd0;  // rax
     new_code_bytes[2] = 0xcc;  // TRAP
-    new_code_bytes[3] = 0xff;  // JMP
-    new_code_bytes[4] = 0xe0;  // rax
     PtracePoke(pid, probe_, code);
   }
 
@@ -211,11 +243,8 @@ long PtraceCallFunction(pid_t pid, unsigned long addr) {
   PtraceCont(pid);
 
   newregs = PtraceGetRegs(pid);
-  long result = newregs.rax;
-  newregs.rax = oldregs.rip;
-  PtraceSingleStep(pid);
   PtraceSetRegs(pid, oldregs);
-  return result;
+  return newregs.rax;
 };
 #endif
 }  // namespace pyflame

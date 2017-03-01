@@ -153,10 +153,9 @@ flame chart.
 
 ### What Is "(idle)" Time?
 
-From time to time the Python interpreter will have nothing to do other than wait
-for I/O to complete. This will typically happen when the Python interpreter is
-waiting for network operations to finish. In this scenario Pyflame will report
-the time as "idle".
+On some platforms Pyflame can't profile code that doesn't hold the Global
+Interpreter Lock (such as I/O and native libraries like NumPy). In this case
+Pyflame will report the time as "idle".
 
 If you don't want to include this time you can use the invocation `pyflame -x`.
 
@@ -254,6 +253,11 @@ If you'd like to enable it:
 # Enable ptrace under SELinux.
 setsebool -P deny_ptrace 0
 ```
+
+### Does Pyflame support multithreaded applications?
+
+Yes, Pyflame now supports multithreaded applications. The profiles from all
+threads are merged in the output. 
 
 ## Python 3 Support
 
