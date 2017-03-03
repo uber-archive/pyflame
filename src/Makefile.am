@@ -9,7 +9,7 @@
 # flags and frob3.cc is compiled with python3 flags.
 
 bin_PROGRAMS = pyflame
-pyflame_SOURCES = aslr.cc frame.cc namespace.cc posix.cc ptrace.cc pyflame.cc pyfrob.cc symbol.cc
+pyflame_SOURCES = aslr.cc frame.cc thread.cc namespace.cc posix.cc ptrace.cc pyflame.cc pyfrob.cc symbol.cc
 pyflame_LDADD =
 
 noinst_LTLIBRARIES =

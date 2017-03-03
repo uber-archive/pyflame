@@ -78,6 +78,8 @@ void ELF::Parse() {
       case SHT_STRTAB:
         if (strcmp(strtab(s->sh_name), ".dynstr") == 0) {
           dynstr_ = i;
+        } else if (strcmp(strtab(s->sh_name), ".strtab") == 0) {
+          strtab_ = i;
         }
         break;
       case SHT_DYNSYM:
@@ -85,6 +87,9 @@ void ELF::Parse() {
         break;
       case SHT_DYNAMIC:
         dynamic_ = i;
+        break;
+      case SHT_SYMTAB:
+        symtab_ = i;
         break;
     }
   }
@@ -113,18 +118,27 @@ std::vector<std::string> ELF::NeededLibs() {
   return needed;
 }
 
-unsigned long ELF::GetThreadState(PyVersion *version) {
-  bool have_version = false;
-  unsigned long addr = 0;
-  const shdr_t *s = shdr(dynsym_);
-  const shdr_t *d = shdr(dynstr_);
+void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version,
+                    PyAddresses &addrs) {
+  const shdr_t *s = shdr(sym);
+  const shdr_t *d = shdr(str);
   for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
+    if (have_version && addrs.tstate_addr && addrs.interp_head_addr &&
+        addrs.interp_head_fn_addr) {
+      break;
+    }
+
     const sym_t *sym =
         reinterpret_cast<const sym_t *>(p() + s->sh_offset + i * s->sh_entsize);
     const char *name =
         reinterpret_cast<const char *>(p() + d->sh_offset + sym->st_name);
-    if (!addr && strcmp(name, "_PyThreadState_Current") == 0) {
-      addr = static_cast<unsigned long>(sym->st_value);
+    if (!addrs.tstate_addr && strcmp(name, "_PyThreadState_Current") == 0) {
+      addrs.tstate_addr = static_cast<unsigned long>(sym->st_value);
+    } else if (!addrs.interp_head_addr && strcmp(name, "interp_head") == 0) {
+      addrs.interp_head_addr = static_cast<unsigned long>(sym->st_value);
+    } else if (!addrs.interp_head_addr &&
+               strcmp(name, "PyInterpreterState_Head") == 0) {
+      addrs.interp_head_fn_addr = static_cast<unsigned long>(sym->st_value);
     } else if (!have_version) {
       if (strcmp(name, "PyString_Type") == 0) {
         // if we find PyString_Type, it's python 2
@@ -136,10 +150,17 @@ unsigned long ELF::GetThreadState(PyVersion *version) {
         *version = PyVersion::Py3;
       }
     }
-    if (have_version && addr) {
-      break;
-    }
   }
-  return addr;
+}
+
+PyAddresses ELF::GetAddresses(PyVersion *version) {
+  bool have_version = false;
+  PyAddresses addrs;
+  WalkTable(dynsym_, dynstr_, have_version, version, addrs);
+  if (symtab_ >= 0 && strtab_ >= 0) {
+    WalkTable(symtab_, strtab_, have_version, version, addrs);
+  }
+  if (hdr()->e_type == ET_DYN) addrs.pie = true;
+  return addrs;
 }
 }  // namespace pyflame

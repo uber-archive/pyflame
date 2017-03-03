@@ -46,10 +46,45 @@ namespace pyflame {
 // The Python interpreter version
 enum class PyVersion { Unknown = 0, Py2 = 2, Py3 = 3 };
 
+// Symbols
+struct PyAddresses {
+  unsigned long tstate_addr;
+  unsigned long interp_head_addr;
+  unsigned long interp_head_fn_addr;
+  unsigned long interp_head_hint;
+  bool pie;
+
+  PyAddresses()
+      : tstate_addr(0),
+        interp_head_addr(0),
+        interp_head_fn_addr(0),
+        interp_head_hint(0),
+        pie(false) {}
+
+  PyAddresses operator+(const unsigned long base) const {
+    PyAddresses res;
+    res.tstate_addr = this->tstate_addr == 0 ? 0 : this->tstate_addr + base;
+    res.interp_head_addr =
+        this->interp_head_addr == 0 ? 0 : this->interp_head_addr + base;
+    res.interp_head_fn_addr =
+        this->interp_head_fn_addr == 0 ? 0 : this->interp_head_fn_addr + base;
+    return res;
+  }
+
+  bool is_valid() const { return this->tstate_addr != 0; }
+};
+
 // Representation of an ELF file.
 class ELF {
  public:
-  ELF() : addr_(nullptr), length_(0), dynamic_(-1), dynstr_(-1), dynsym_(-1) {}
+  ELF()
+      : addr_(nullptr),
+        length_(0),
+        dynamic_(-1),
+        dynstr_(-1),
+        dynsym_(-1),
+        strtab_(-1),
+        symtab_(-1) {}
   ~ELF() { Close(); }
 
   // Open a file
@@ -64,13 +99,14 @@ class ELF {
   // Find the DT_NEEDED fields. This is similar to the ldd(1) command.
   std::vector<std::string> NeededLibs();
 
-  // Get the address of _PyThreadState_Current, and the Python version
-  unsigned long GetThreadState(PyVersion *version);
+  // Get the address of _PyThreadState_Current & interp_head, and the Python
+  // version
+  PyAddresses GetAddresses(PyVersion *version);
 
  private:
   void *addr_;
   size_t length_;
-  int dynamic_, dynstr_, dynsym_;
+  int dynamic_, dynstr_, dynsym_, strtab_, symtab_;
 
   inline const ehdr_t *hdr() const {
     return reinterpret_cast<const ehdr_t *>(addr_);
@@ -99,5 +135,8 @@ class ELF {
     const shdr_t *strings = shdr(dynstr_);
     return reinterpret_cast<const char *>(p() + strings->sh_offset + offset);
   }
+
+  void WalkTable(int sym, int str, bool &have_version, PyVersion *version,
+                 PyAddresses &addrs);
 };
 }  // namespace pyflame
