@@ -31,6 +31,7 @@
 #include "./ptrace.h"
 #include "./pyfrob.h"
 #include "./version.h"
+#include "./symbol.h"
 
 // FIXME: this logic should be moved to configure.ac
 #if !defined(ENABLE_PY2) && !defined(ENABLE_PY3)
@@ -52,6 +53,7 @@ const char usage_str[] =
      "  -o, --output=PATH    Output to file path\n"
      "  -t, --trace          Trace a child process\n"
      "  -T, --timestamp      Include timestamps for each stacktrace\n"
+     "  -p, --python         Set python version (default auto-detect)\n"
      "  -v, --version        Show the version\n"
      "  -x, --exclude-idle   Exclude idle time from statistics\n");
 
@@ -120,6 +122,7 @@ int main(int argc, char **argv) {
   bool include_ts = false;
   double seconds = 1;
   double sample_rate = 0.001;
+  PyVersion py_version = PyVersion::Unknown;
   std::ofstream output_file;
   for (;;) {
     static struct option long_options[] = {
@@ -129,11 +132,12 @@ int main(int argc, char **argv) {
         {"output", required_argument, 0, 'o'},
         {"trace", no_argument, 0, 't'},
         {"timestamp", no_argument, 0, 'T'},
+        {"python", required_argument, 0, 'p'},
         {"version", no_argument, 0, 'v'},
         {"exclude-idle", no_argument, 0, 'x'},
         {0, 0, 0, 0}};
     int option_index = 0;
-    int c = getopt_long(argc, argv, "hr:s:tTvxo:", long_options, &option_index);
+    int c = getopt_long(argc, argv, "hr:s:tTp:vxo:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -161,6 +165,9 @@ int main(int argc, char **argv) {
         break;
       case 'T':
         include_ts = true;
+        break;
+      case 'p':
+	py_version = static_cast<PyVersion>(std::stod(optarg));
         break;
       case 'v':
         std::cout << PACKAGE_STRING << "\n\n";
@@ -261,7 +268,11 @@ finish_arg_parse:
   try {
     PtraceAttach(pid);
     PyFrob frobber(pid);
-    frobber.DetectPython();
+    if (py_version == PyVersion::Unknown) {
+      frobber.DetectPython();
+    } else {
+      frobber.SetPython(py_version);
+    }
 
     const std::chrono::microseconds interval{
         static_cast<long>(sample_rate * 1000000)};
