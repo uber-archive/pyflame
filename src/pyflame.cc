@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
         include_ts = true;
         break;
       case 'p':
-	py_version = static_cast<PyVersion>(std::stod(optarg));
+        py_version = static_cast<PyVersion>(std::stod(optarg));
         break;
       case 'v':
         std::cout << PACKAGE_STRING << "\n\n";
