@@ -271,7 +271,12 @@ bug:
 [Pyflame can only decode ASCII filenames in Python 3](https://github.com/uber/pyflame/issues/2).
 The issue has more details, if you want to help fix it.
 
-## Hacking
+## Contributing
+
+We love getting pull requests and bug reports! This section outlines some ways
+you can contribute to Pyflame.
+
+### Hacking
 
 This section will explain the Pyflame code for people who are interested in
 contributing source code patches.
@@ -296,6 +301,23 @@ You can run the test suite locally like this:
 # Run the Pyflame test suite.
 make test
 ```
+
+### How Else Can I Help?
+
+Patches are not the only way to contribute to Pyflame! Bug reports are very
+useful as well. If you file a bug, make sure you tell us the exact version of
+Python you're using, and how to reproduce the issue.
+
+We are also actively looking to learn about how people are using Pyflame. One
+way to help is to write a blog post about how you used Pyflame. If you do, we may
+add a link to your blog post here. Some existing blog posts on Pyflame include:
+
+ * [Pyflame: Uber Engineering's Ptracing Profiler For Python](http://eng.uber.com/pyflame/) by
+   Evan Klitzke (2016-09)
+ * [Pyflame Dual Interpreter Mode](https://eklitzke.org/pyflame-dual-interpreter-mode) by
+   Evan Klitzke (2016-10)
+ * [Using Uber's Pyflame and Logs to Tackle Scaling Issues](https://benbernardblog.com/using-ubers-pyflame-and-logs-to-tackle-scaling-issues/) by
+   Benoit Bernard (2017-02)
 
 ## Legal and Licensing
 
