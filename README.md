@@ -257,7 +257,7 @@ setsebool -P deny_ptrace 0
 ### Does Pyflame support multithreaded applications?
 
 Yes, Pyflame now supports multithreaded applications. The profiles from all
-threads are merged in the output. 
+threads are merged in the output.
 
 ## Python 3 Support
 
@@ -281,7 +281,10 @@ the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
 Additionally, all of the source code is formatted
 with [clang-format](http://clang.llvm.org/docs/ClangFormat.html). There's a
 `.clang-format` file checked into the root of this repository which will make
-`clang-format` do the right thing.
+`clang-format` do the right thing. Different clang releases may format the
+source code slightly differently, as the formatting rules are updated within
+clang itself. Therefore you should eyeball the changes made when formatting,
+especially if you have an older version of clang.
 
 The Linux-specific code is be mostly restricted to the files `src/aslr.*`,
 `src/namespace.*`, and `src/ptrace.*`. If you want to port Pyflame to another
