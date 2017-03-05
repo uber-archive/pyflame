@@ -33,6 +33,10 @@
 #include "./exc.h"
 
 namespace pyflame {
+static bool threads_enabled = true;
+
+void DisableThreads(void) { threads_enabled = false; }
+
 void PtraceAttach(pid_t pid) {
   if (ptrace(PTRACE_ATTACH, pid, 0, 0)) {
     std::ostringstream ss;
@@ -93,33 +97,36 @@ long PtracePeek(pid_t pid, unsigned long addr) {
   return data;
 }
 
-void do_wait() {
+static void do_wait(pid_t pid) {
   int status;
-  if (wait(&status) == -1) {
-    throw PtraceException("Failed to PTRACE_CONT");
+  if (waitpid(pid, &status, 0) == -1) {
+    std::ostringstream ss;
+    ss << "Failed to waitpid(): " << strerror(errno);
+    throw PtraceException(ss.str());
   }
   if (WIFSTOPPED(status)) {
-    if (WSTOPSIG(status) != SIGTRAP) {
+    int signum = WSTOPSIG(status);
+    if (signum != SIGTRAP) {
       std::ostringstream ss;
-      ss << "Failed to PTRACE_CONT - unexpectedly got status  "
-         << strsignal(status);
+      ss << "Failed to waitpid(), unexpectedly got status: "
+         << strsignal(signum);
       throw PtraceException(ss.str());
     }
   } else {
     std::ostringstream ss;
-    ss << "Failed to PTRACE_CONT - unexpectedly got status  " << status;
+    ss << "Failed to waitpid(), unexpectedly got status: " << status;
     throw PtraceException(ss.str());
   }
 }
 
 void PtraceCont(pid_t pid) {
   ptrace(PTRACE_CONT, pid, 0, 0);
-  do_wait();
+  do_wait(pid);
 }
 
 void PtraceSingleStep(pid_t pid) {
   ptrace(PTRACE_SINGLESTEP, pid, 0, 0);
-  do_wait();
+  do_wait(pid);
 }
 
 std::string PtracePeekString(pid_t pid, unsigned long addr) {
@@ -186,6 +193,9 @@ static unsigned long AllocPage(pid_t pid) {
 }
 
 static std::vector<pid_t> ListThreads(pid_t pid) {
+  if (!threads_enabled) {
+    return {pid};
+  }
   std::vector<pid_t> result;
   std::ostringstream dirname;
   dirname << "/proc/" << pid << "/task";

@@ -22,6 +22,10 @@
 #include <string>
 
 namespace pyflame {
+
+// disable multi-threading support
+void DisableThreads(void);
+
 // attach to a process
 void PtraceAttach(pid_t pid);
 
