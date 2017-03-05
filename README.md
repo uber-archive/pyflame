@@ -257,7 +257,9 @@ setsebool -P deny_ptrace 0
 ### Does Pyflame support multithreaded applications?
 
 Yes, Pyflame now supports multithreaded applications. The profiles from all
-threads are merged in the output.
+threads are merged in the output. You can optionally disable this by using the
+flag `--no-threads`. Note that you may need to use this option if you are using
+a kernel older than 3.16.
 
 ## Python 3 Support
 
