@@ -14,36 +14,34 @@
 
 #pragma once
 
-#include "./frame.h"
 #include "./symbol.h"
+#include "./thread.h"
+
 
 // This abstracts the representation of py2/py3
 namespace pyflame {
 
-// Locate the address of the first frame
-typedef unsigned long (*first_frame_addr_t)(pid_t, unsigned long);
-
-// Get the stack. The stack will be in reverse order (most recent frame first).
-typedef std::vector<Frame> (*get_stack_t)(pid_t, unsigned long);
+// Get the threads. Each thread stack will be in reverse order (most recent
+// frame first).
+typedef std::vector<Thread> (*get_threads_t)(pid_t, PyAddresses);
 
 // Frobber to get python stack stuff; this encapsulates all of the Python
 // interpreter logic.
 class PyFrob {
  public:
-  PyFrob(pid_t pid) : pid_(pid), thread_state_addr_(0) {}
+  PyFrob(pid_t pid) : pid_(pid), addrs_() {}
 
-  // Must be called before GetStack() to set/auto-detect the Python version
+  // Must be called before GetThreads() to set/auto-detect the Python version
   void DetectPython();
   void SetPython(PyVersion);
 
   // Get the current frame list.
-  std::vector<Frame> GetStack();
+  std::vector<Thread> GetThreads();
 
  private:
   pid_t pid_;
-  unsigned long thread_state_addr_;
-  first_frame_addr_t first_frame_addr_;
-  get_stack_t get_stack_;
+  PyAddresses addrs_;
+  get_threads_t get_threads_;
 };
 
 }  // namespace pyflame

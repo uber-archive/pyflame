@@ -153,10 +153,9 @@ flame chart.
 
 ### What Is "(idle)" Time?
 
-From time to time the Python interpreter will have nothing to do other than wait
-for I/O to complete. This will typically happen when the Python interpreter is
-waiting for network operations to finish. In this scenario Pyflame will report
-the time as "idle".
+On some platforms Pyflame can't profile code that doesn't hold the Global
+Interpreter Lock (such as I/O and native libraries like NumPy). In this case
+Pyflame will report the time as "idle".
 
 If you don't want to include this time you can use the invocation `pyflame -x`.
 
@@ -255,6 +254,11 @@ If you'd like to enable it:
 setsebool -P deny_ptrace 0
 ```
 
+### Does Pyflame support multithreaded applications?
+
+Yes, Pyflame now supports multithreaded applications. The profiles from all
+threads are merged in the output.
+
 ## Python 3 Support
 
 This mostly works: if you have the Python 3 headers installed on your system,
@@ -277,7 +281,10 @@ the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
 Additionally, all of the source code is formatted
 with [clang-format](http://clang.llvm.org/docs/ClangFormat.html). There's a
 `.clang-format` file checked into the root of this repository which will make
-`clang-format` do the right thing.
+`clang-format` do the right thing. Different clang releases may format the
+source code slightly differently, as the formatting rules are updated within
+clang itself. Therefore you should eyeball the changes made when formatting,
+especially if you have an older version of clang.
 
 The Linux-specific code is be mostly restricted to the files `src/aslr.*`,
 `src/namespace.*`, and `src/ptrace.*`. If you want to port Pyflame to another
