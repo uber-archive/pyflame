@@ -42,6 +42,7 @@ class PyFrob {
   pid_t pid_;
   PyAddresses addrs_;
   get_threads_t get_threads_;
+  void set_addrs_(PyVersion*);
 };
 
 }  // namespace pyflame
