@@ -30,9 +30,9 @@
 #include "./exc.h"
 #include "./ptrace.h"
 #include "./pyfrob.h"
+#include "./symbol.h"
 #include "./thread.h"
 #include "./version.h"
-#include "./symbol.h"
 
 // FIXME: this logic should be moved to configure.ac
 #if !defined(ENABLE_PY2) && !defined(ENABLE_PY3)
@@ -51,7 +51,7 @@ const char usage_str[] =
      "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
      "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
      "(default 0.001)\n"
-     "  -n, --no-threads     Disable multi-threading support\n"
+     "  -L, --threads        Enable multi-threading support\n"
      "  -o, --output=PATH    Output to file path\n"
      "  -t, --trace          Trace a child process\n"
      "  -T, --timestamp      Include timestamps for each stacktrace\n"
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
         {"help", no_argument, 0, 'h'},
         {"rate", required_argument, 0, 'r'},
         {"seconds", required_argument, 0, 's'},
-        {"no-threads", no_argument, 0, 'n'},
+        {"threads", no_argument, 0, 'L'},  // ps also uses -L for threads (LWP)
         {"output", required_argument, 0, 'o'},
         {"trace", no_argument, 0, 't'},
         {"timestamp", no_argument, 0, 'T'},
@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
         {0, 0, 0, 0}};
     int option_index = 0;
     int c =
-        getopt_long(argc, argv, "hr:s:tTp:vxno:", long_options, &option_index);
+        getopt_long(argc, argv, "hr:s:tTp:vxLo:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -156,8 +156,8 @@ int main(int argc, char **argv) {
         std::cout << usage_str;
         return 0;
         break;
-      case 'n':
-        DisableThreads();
+      case 'L':
+        SetThreading(true);  // enable multi-threading
         break;
       case 'r':
         sample_rate = std::stod(optarg);

@@ -33,9 +33,9 @@
 #include "./exc.h"
 
 namespace pyflame {
-static bool threads_enabled = true;
+static bool threads_enabled = false;
 
-void DisableThreads(void) { threads_enabled = false; }
+void SetThreading(bool enabled) { threads_enabled = enabled; }
 
 void PtraceAttach(pid_t pid) {
   if (ptrace(PTRACE_ATTACH, pid, 0, 0)) {
