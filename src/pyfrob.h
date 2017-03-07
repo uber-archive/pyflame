@@ -17,6 +17,7 @@
 #include "./symbol.h"
 #include "./thread.h"
 
+
 // This abstracts the representation of py2/py3
 namespace pyflame {
 
@@ -30,8 +31,9 @@ class PyFrob {
  public:
   PyFrob(pid_t pid) : pid_(pid), addrs_() {}
 
-  // Must be called before GetThreads() to detect the Python version
+  // Must be called before GetThreads() to set/auto-detect the Python version
   void DetectPython();
+  void SetPython(PyVersion);
 
   // Get the current frame list.
   std::vector<Thread> GetThreads();
@@ -40,6 +42,7 @@ class PyFrob {
   pid_t pid_;
   PyAddresses addrs_;
   get_threads_t get_threads_;
+  void set_addrs_(PyVersion*);
 };
 
 }  // namespace pyflame

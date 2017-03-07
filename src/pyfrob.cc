@@ -117,11 +117,9 @@ FROB_FUNCS
 }
 #endif
 
-void PyFrob::DetectPython() {
+void PyFrob::set_addrs_(PyVersion *version) {
   Namespace ns(pid_);
-  bool matched = false;
-  PyVersion version = PyVersion::Unknown;
-  addrs_ = Addrs(pid_, &ns, &version);
+  addrs_ = Addrs(pid_, &ns, version);
 #ifdef __amd64__
   // If we didn't find the interp_head address, but we did find the public
   // PyInterpreterState_Head
@@ -132,29 +130,33 @@ void PyFrob::DetectPython() {
         PtraceCallFunction(pid_, addrs_.interp_head_fn_addr);
   }
 #endif
+}
 
+void PyFrob::SetPython(PyVersion version) {
   switch (version) {
-    case PyVersion::Unknown:
-      break;  // to appease -Wall
-    case PyVersion::Py2:
 #ifdef ENABLE_PY2
+    case PyVersion::Py2:
       get_threads_ = py2::GetThreads;
-      matched = true;
-#endif
       break;
-    case PyVersion::Py3:
+#endif
 #ifdef ENABLE_PY3
+    case PyVersion::Py3:
       get_threads_ = py3::GetThreads;
-      matched = true;
-#endif
       break;
+#endif
+    default:
+      std::ostringstream os;
+      os << "Target is Python " << static_cast<int>(version)
+         << ", which is not supported by this pyflame build.";
+      throw FatalException(os.str());
   }
-  if (!matched) {
-    std::ostringstream os;
-    os << "Target is Python " << static_cast<int>(version)
-       << ", which is not supported by this pyflame build.";
-    throw FatalException(os.str());
-  }
+  set_addrs_(&version);
+}
+
+void PyFrob::DetectPython() {
+  PyVersion version = PyVersion::Unknown;
+  set_addrs_(&version);
+  SetPython(version);
 }
 
 std::vector<Thread> PyFrob::GetThreads() { return get_threads_(pid_, addrs_); }
