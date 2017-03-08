@@ -256,10 +256,35 @@ setsebool -P deny_ptrace 0
 
 ### Does Pyflame support multithreaded applications?
 
-Yes, Pyflame now supports multithreaded applications. The profiles from all
-threads are merged in the output. You can optionally disable this by using the
-flag `--no-threads`. Note that you may need to use this option if you are using
-a kernel older than 3.16.
+Yes, Pyflame supports multithreaded applications. The default behavior is for
+Pyflame to trace only the currently running thread (if there is one). Normally
+in Python only one thread can run at a time, due to the GIL, so in some sense
+this is a more accurate representation of the profile of an application, even
+when it is multithreaded.
+
+If instead you invoke Pyflame with the `--threads` option, Pyflame will take a
+snapshot of each thread's stack each time it samples the target process. At the
+end of the invocation, the profiling data for each thread will be printed to
+stdout sequentially. This gives you a more accurate profile in the sense that
+you will see what each thread was trying to do, even if it wasn't actually
+scheduled to run.
+
+**Pyflame may "freeze" the target process if you use this option with older
+versions of the Linux kernel.** In particular, for this option to work you need
+a kernel built with [waitid() ptrace support](https://lwn.net/Articles/688624/).
+This change was landed for Linux kernel 4.7. Most Linux distros also backported
+this change to older kernels, e.g. this change was backported to the 3.16 kernel
+series in 3.16.37 (which is in Debian Jessie's kernel patches). For more
+extensive discussion,
+see [issue #55](https://github.com/uber/pyflame/issues/55).
+
+One interesting use of this feature is to get a point-in-time snapshot of what
+each thread is doing, like so:
+
+```bash
+# Get a point-in-time snapshot of what each thread is currently running.
+pyflame -s 0 --threads PID
+```
 
 ## Python 3 Support
 
