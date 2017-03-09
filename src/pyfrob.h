@@ -14,9 +14,9 @@
 
 #pragma once
 
+#include "./ptrace.h"
 #include "./symbol.h"
 #include "./thread.h"
-
 
 // This abstracts the representation of py2/py3
 namespace pyflame {
@@ -30,6 +30,7 @@ typedef std::vector<Thread> (*get_threads_t)(pid_t, PyAddresses);
 class PyFrob {
  public:
   PyFrob(pid_t pid) : pid_(pid), addrs_() {}
+  ~PyFrob() { PtraceCleanup(pid_); }
 
   // Must be called before GetThreads() to set/auto-detect the Python version
   void DetectPython();

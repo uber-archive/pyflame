@@ -165,14 +165,14 @@ std::unique_ptr<uint8_t[]> PtracePeekBytes(pid_t pid, unsigned long addr,
 }
 
 #ifdef __amd64__
+static const long syscall_x86 = 0x050f;  // x86 code for SYSCALL
 
 static unsigned long probe_ = 0;
 
 static unsigned long AllocPage(pid_t pid) {
   user_regs_struct oldregs = PtraceGetRegs(pid);
-  long code = 0x050f;  // syscall
   long orig_code = PtracePeek(pid, oldregs.rip);
-  PtracePoke(pid, oldregs.rip, code);
+  PtracePoke(pid, oldregs.rip, syscall_x86);
 
   user_regs_struct newregs = oldregs;
   newregs.rax = SYS_mmap;
@@ -256,5 +256,29 @@ long PtraceCallFunction(pid_t pid, unsigned long addr) {
   PtraceSetRegs(pid, oldregs);
   return newregs.rax;
 };
+
+void PtraceCleanup(pid_t pid) {
+  if (probe_ == 0) {
+    return;
+  }
+
+  user_regs_struct oldregs = PtraceGetRegs(pid);
+  long orig_code = PtracePeek(pid, oldregs.rip);
+  PtracePoke(pid, oldregs.rip, syscall_x86);
+
+  user_regs_struct newregs = oldregs;
+  newregs.rax = SYS_munmap;
+  newregs.rdi = probe_;         // addr
+  newregs.rsi = getpagesize();  // len
+  PtraceSetRegs(pid, newregs);
+  PtraceSingleStep(pid);
+  PtraceSetRegs(pid, oldregs);
+  PtracePoke(pid, oldregs.rip, orig_code);
+
+  probe_ = 0;
+}
+#else
+void PtraceCleanup(pid_t pid) {}
 #endif
+
 }  // namespace pyflame
