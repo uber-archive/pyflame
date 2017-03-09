@@ -61,4 +61,7 @@ void PtraceSingleStep(pid_t pid);
 // call a function pointer
 long PtraceCallFunction(pid_t pid, unsigned long addr);
 #endif
+
+// maybe dealloc the page allocated in PtraceCallFunction();
+void PtraceCleanup(pid_t pid);
 }  // namespace pyflame
