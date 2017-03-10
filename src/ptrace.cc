@@ -120,12 +120,20 @@ static void do_wait(pid_t pid) {
 }
 
 void PtraceCont(pid_t pid) {
-  ptrace(PTRACE_CONT, pid, 0, 0);
+  if (ptrace(PTRACE_CONT, pid, 0, 0) == -1) {
+    std::ostringstream ss;
+    ss << "Failed to PTRACE_CONT: " << strerror(errno);
+    throw PtraceException(ss.str());
+  }
   do_wait(pid);
 }
 
 void PtraceSingleStep(pid_t pid) {
-  ptrace(PTRACE_SINGLESTEP, pid, 0, 0);
+  if (ptrace(PTRACE_SINGLESTEP, pid, 0, 0) == -1) {
+    std::ostringstream ss;
+    ss << "Failed to PTRACE_SINGLESTEP: " << strerror(errno);
+    throw PtraceException(ss.str());
+  }
   do_wait(pid);
 }
 
