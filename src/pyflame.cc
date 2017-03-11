@@ -123,6 +123,7 @@ int main(int argc, char **argv) {
   bool trace = false;
   bool include_idle = true;
   bool include_ts = false;
+  bool enable_threads = false;
   double seconds = 1;
   double sample_rate = 0.001;
   PyVersion py_version = PyVersion::Unknown;
@@ -158,7 +159,7 @@ int main(int argc, char **argv) {
         return 0;
         break;
       case 'L':
-        SetThreading(true);  // enable multi-threading
+        enable_threads = true;
         break;
       case 'r':
         sample_rate = std::stod(optarg);
@@ -275,7 +276,7 @@ finish_arg_parse:
   size_t idle = 0;
   try {
     PtraceAttach(pid);
-    PyFrob frobber(pid);
+    PyFrob frobber(pid, enable_threads);
     if (py_version == PyVersion::Unknown) {
       frobber.DetectPython();
     } else {

@@ -29,7 +29,8 @@ typedef std::vector<Thread> (*get_threads_t)(pid_t, PyAddresses);
 // interpreter logic.
 class PyFrob {
  public:
-  PyFrob(pid_t pid) : pid_(pid), addrs_() {}
+  PyFrob(pid_t pid, bool enable_threads)
+      : pid_(pid), enable_threads_(enable_threads) {}
   ~PyFrob() { PtraceCleanup(pid_); }
 
   // Must be called before GetThreads() to set/auto-detect the Python version
@@ -42,7 +43,9 @@ class PyFrob {
  private:
   pid_t pid_;
   PyAddresses addrs_;
+  bool enable_threads_;
   get_threads_t get_threads_;
+
   void set_addrs_(PyVersion*);
 };
 

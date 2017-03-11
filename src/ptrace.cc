@@ -33,9 +33,6 @@
 #include "./exc.h"
 
 namespace pyflame {
-static bool threads_enabled = false;
-
-void SetThreading(bool enabled) { threads_enabled = enabled; }
 
 void PtraceAttach(pid_t pid) {
   if (ptrace(PTRACE_ATTACH, pid, 0, 0)) {
@@ -201,9 +198,6 @@ static unsigned long AllocPage(pid_t pid) {
 }
 
 static std::vector<pid_t> ListThreads(pid_t pid) {
-  if (!threads_enabled) {
-    return {pid};
-  }
   std::vector<pid_t> result;
   std::ostringstream dirname;
   dirname << "/proc/" << pid << "/task";
