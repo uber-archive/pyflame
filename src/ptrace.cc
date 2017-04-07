@@ -40,7 +40,8 @@ void PtraceAttach(pid_t pid) {
     ss << "Failed to attach to PID " << pid << ": " << strerror(errno);
     throw PtraceException(ss.str());
   }
-  if (wait(nullptr) == -1) {
+  int status;
+  if (waitpid(pid, &status, __WALL) != pid || !WIFSTOPPED(status)) {
     std::ostringstream ss;
     ss << "Failed to wait on PID " << pid << ": " << strerror(errno);
     throw PtraceException(ss.str());
@@ -266,21 +267,29 @@ void PtraceCleanup(pid_t pid) {
 
   user_regs_struct oldregs = PtraceGetRegs(pid);
   long orig_code = PtracePeek(pid, oldregs.rip);
-  PtracePoke(pid, oldregs.rip, syscall_x86);
 
   user_regs_struct newregs = oldregs;
   newregs.rax = SYS_munmap;
   newregs.rdi = probe_;         // addr
   newregs.rsi = getpagesize();  // len
+
+  PauseChildThreads(pid);
+
+  PtracePoke(pid, oldregs.rip, syscall_x86);
   PtraceSetRegs(pid, newregs);
   PtraceSingleStep(pid);
-  PtraceSetRegs(pid, oldregs);
   PtracePoke(pid, oldregs.rip, orig_code);
+  PtraceSetRegs(pid, oldregs);
+
+  ResumeChildThreads(pid);
+  PtraceDetach(pid);
 
   probe_ = 0;
 }
 #else
-void PtraceCleanup(pid_t pid) {}
+void PtraceCleanup(pid_t pid) {
+  PtraceDetach(pid);
+}
 #endif
 
 }  // namespace pyflame
