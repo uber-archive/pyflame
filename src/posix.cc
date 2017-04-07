@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include "./exc.h"
+#include "./netns.h"
 
 namespace pyflame {
 int OpenRdonly(const char *path) {
