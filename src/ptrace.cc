@@ -287,9 +287,7 @@ void PtraceCleanup(pid_t pid) {
   probe_ = 0;
 }
 #else
-void PtraceCleanup(pid_t pid) {
-  PtraceDetach(pid);
-}
+void PtraceCleanup(pid_t pid) { PtraceDetach(pid); }
 #endif
 
 }  // namespace pyflame

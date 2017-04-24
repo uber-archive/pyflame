@@ -24,7 +24,9 @@
 #include "./ptrace.h"
 #include "./symbol.h"
 
-#define FROB_FUNCS std::vector<Thread> GetThreads(pid_t pid, PyAddresses addr);
+#define FROB_FUNCS                                            \
+  std::vector<Thread> GetThreads(pid_t pid, PyAddresses addr, \
+                                 bool enable_threads);
 
 namespace pyflame {
 namespace {
@@ -159,5 +161,7 @@ void PyFrob::DetectPython() {
   SetPython(version);
 }
 
-std::vector<Thread> PyFrob::GetThreads() { return get_threads_(pid_, addrs_); }
+std::vector<Thread> PyFrob::GetThreads() {
+  return get_threads_(pid_, addrs_, enable_threads_);
+}
 }  // namespace pyflame
