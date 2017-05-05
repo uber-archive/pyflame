@@ -127,50 +127,48 @@ void FollowFrame(pid_t pid, unsigned long frame, std::vector<Frame> *stack) {
   }
 }
 
-std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs) {
+std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs,
+                               bool enable_threads) {
   unsigned long istate = 0;
 
   // First try to get interpreter state via dereferencing
   // _PyThreadState_Current. This won't work if the main thread doesn't hold
   // the GIL (_Current will be null).
-  const long tstate = PtracePeek(pid, addrs.tstate_addr);
-  if (tstate != 0) {
-    istate = static_cast<unsigned long>(
-        PtracePeek(pid, tstate + offsetof(PyThreadState, interp)));
-    // Secondly try to get it via the static interp_head symbol, if we managed
-    // to find it:
-    //  - interp_head is not strictly speaking part of the public API so it
-    //    might get removed!
-    //  - interp_head is not part of the dynamic symbol table, so e.g. strip
-    //    will drop it
-  } else if (addrs.interp_head_addr != 0) {
-    istate =
-        static_cast<unsigned long>(PtracePeek(pid, addrs.interp_head_addr));
-  } else if (addrs.interp_head_hint != 0) {
-    // Finally. check if we have already put a hint into interp_head_hint -
-    // currently this can only happen if we called PyInterpreterState_Head.
-    istate = addrs.interp_head_hint;
-  }
-
-  if (istate == 0) {
-    return {};
+  unsigned long tstate = PtracePeek(pid, addrs.tstate_addr);
+  unsigned long current_tstate = tstate;
+  if (enable_threads) {
+    if (tstate != 0) {
+      istate = static_cast<unsigned long>(
+          PtracePeek(pid, tstate + offsetof(PyThreadState, interp)));
+      // Secondly try to get it via the static interp_head symbol, if we managed
+      // to find it:
+      //  - interp_head is not strictly speaking part of the public API so it
+      //    might get removed!
+      //  - interp_head is not part of the dynamic symbol table, so e.g. strip
+      //    will drop it
+    } else if (addrs.interp_head_addr != 0) {
+      istate =
+          static_cast<unsigned long>(PtracePeek(pid, addrs.interp_head_addr));
+    } else if (addrs.interp_head_hint != 0) {
+      // Finally. check if we have already put a hint into interp_head_hint -
+      // currently this can only happen if we called PyInterpreterState_Head.
+      istate = addrs.interp_head_hint;
+    }
+    if (istate != 0) {
+      tstate = static_cast<unsigned long>(
+          PtracePeek(pid, istate + offsetof(PyInterpreterState, tstate_head)));
+    }
   }
 
   std::vector<Thread> threads;
-  unsigned long chain_next_addr =
-      istate + offsetof(PyInterpreterState, tstate_head);
-  do {
-    const unsigned long chain_tstate =
-        static_cast<unsigned long>(PtracePeek(pid, chain_next_addr));
-    if (chain_tstate == 0) break;
-
+  while (tstate != 0) {
     const long id =
-        PtracePeek(pid, chain_tstate + offsetof(PyThreadState, thread_id));
-    const bool is_current = chain_tstate == addrs.tstate_addr;
+        PtracePeek(pid, tstate + offsetof(PyThreadState, thread_id));
+    const bool is_current = tstate == current_tstate;
 
     // dereference the frame
     const unsigned long frame_addr = static_cast<unsigned long>(
-        PtracePeek(pid, chain_tstate + offsetof(PyThreadState, frame)));
+        PtracePeek(pid, tstate + offsetof(PyThreadState, frame)));
 
     std::vector<Frame> stack;
     if (frame_addr != 0) {
@@ -178,8 +176,12 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs) {
       threads.push_back(Thread(id, is_current, stack));
     }
 
-    chain_next_addr = chain_tstate + offsetof(PyThreadState, next);
-  } while (1);
+    if (enable_threads) {
+      tstate = PtracePeek(pid, tstate + offsetof(PyThreadState, next));
+    } else {
+      tstate = 0;
+    }
+  };
 
   return threads;
 }

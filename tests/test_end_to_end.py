@@ -67,6 +67,12 @@ def threaded_sleeper():
 
 
 @pytest.yield_fixture
+def threaded_busy():
+    with python_proc('threaded_busy.py') as p:
+        yield p
+
+
+@pytest.yield_fixture
 def exit_early():
     with python_proc('exit_early.py') as p:
         yield p
@@ -119,7 +125,8 @@ def test_non_gil(sleeper):
 
 def test_threaded(threaded_sleeper):
     """Basic test for non-GIL/native code processes."""
-    proc = subprocess.Popen(['./src/pyflame', str(threaded_sleeper.pid)],
+    proc = subprocess.Popen(['./src/pyflame', '--threads',
+                             str(threaded_sleeper.pid)],
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                             universal_newlines=True)
@@ -137,6 +144,20 @@ def test_threaded(threaded_sleeper):
             has_sleep_b = True
     assert has_sleep_a
     assert has_sleep_b
+
+
+def test_unthreaded(threaded_busy):
+    """Test only one process profiled by default"""
+    proc = subprocess.Popen(['./src/pyflame', '-s', '0',
+                             str(threaded_busy.pid)],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            universal_newlines=True)
+    out, err = communicate(proc)
+    assert not err
+    assert proc.returncode == 0
+    lines = out.strip().split('\n')
+    assert len(lines) == 1
 
 
 def test_exclude_idle(sleeper):
