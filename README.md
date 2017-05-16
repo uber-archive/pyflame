@@ -101,8 +101,8 @@ pyflame 12345 | flamegraph.pl > myprofile.svg
 You can also change the sample time and sampling frequency:
 
 ```bash
-# Profile PID for 60 seconds, sampling every 10ms.
-pyflame -s 60 -r 0.10 PID
+# Profile PID for 60 seconds, sampling every 100ms.
+pyflame -s 60 -r 0.1 PID
 ```
 
 ### Trace Mode
