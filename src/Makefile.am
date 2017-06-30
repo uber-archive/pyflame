@@ -29,8 +29,8 @@ pyflame_LDADD += libfrob3.la
 endif
 
 if ENABLE_PY36
-libfrob3_la_SOURCES = frob36.cc
-libfrob3_la_CXXFLAGS = $(PY3_CFLAGS)
+libfrob36_la_SOURCES = frob36.cc
+libfrob36_la_CXXFLAGS = $(PY36_CFLAGS)
 noinst_LTLIBRARIES += libfrob36.la
 pyflame_LDADD += libfrob36.la
 endif
