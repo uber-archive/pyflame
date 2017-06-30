@@ -113,7 +113,7 @@ FROB_FUNCS
 }
 #endif
 
-#ifdef ENABLE_PY3
+#if defined(ENABLE_PY3) || defined(ENABLE_PY36)
 namespace py3 {
 FROB_FUNCS
 }
@@ -141,7 +141,7 @@ void PyFrob::SetPython(PyVersion version) {
       get_threads_ = py2::GetThreads;
       break;
 #endif
-#ifdef ENABLE_PY3
+#if defined(ENABLE_PY3) || defined(ENABLE_PY36)
     case PyVersion::Py3:
       get_threads_ = py3::GetThreads;
       break;

@@ -53,7 +53,7 @@ unsigned long StringSize(unsigned long addr) {
 unsigned long StringData(unsigned long addr) {
   return addr + offsetof(PyStringObject, ob_sval);
 }
-#elif PYFLAME_PY_VERSION == 3
+#elif PYFLAME_PY_VERSION == 3 || PYFLAME_PY_VERSION == 36
 namespace py3 {
 unsigned long StringSize(unsigned long addr) {
   return addr + offsetof(PyVarObject, ob_size);
