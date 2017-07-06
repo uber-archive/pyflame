@@ -53,8 +53,18 @@ unsigned long StringSize(unsigned long addr) {
 unsigned long StringData(unsigned long addr) {
   return addr + offsetof(PyStringObject, ob_sval);
 }
-#elif PYFLAME_PY_VERSION == 3 || PYFLAME_PY_VERSION == 36
+#elif PYFLAME_PY_VERSION == 3
 namespace py3 {
+unsigned long StringSize(unsigned long addr) {
+  return addr + offsetof(PyVarObject, ob_size);
+}
+
+unsigned long StringData(unsigned long addr) {
+  // this works only if the filename is all ascii *fingers crossed*
+  return addr + sizeof(PyASCIIObject);
+}
+#elif PYFLAME_PY_VERSION == 36
+namespace py36 {
 unsigned long StringSize(unsigned long addr) {
   return addr + offsetof(PyVarObject, ob_size);
 }
@@ -66,6 +76,8 @@ unsigned long StringData(unsigned long addr) {
 #else
 static_assert(false, "uh oh, bad PYFLAME_PY_VERSION");
 #endif
+
+
 
 // Extract the line number from the code object. Python uses a compressed table
 // data structure to store line numbers. See:
