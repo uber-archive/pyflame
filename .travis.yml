@@ -21,14 +21,6 @@ matrix:
             - python3.4-dev
       env: PYTHONVERSION=python3.4
     - compiler: gcc
-      python: "3.5"
-      dist: trusty
-      addons:
-        apt:
-          packages:
-            - python3.5-dev
-      env: PYTHONVERSION=python3
-    - compiler: gcc
       python: "3.6.1"
       dist: trusty
       addons:
@@ -40,7 +32,7 @@ matrix:
 before_install:
   - sudo add-apt-repository ppa:jonathonf/python-3.6 -y
   - sudo apt-get update -y
-  - sudo apt-get install python3.6 -y
+  - sudo apt-get install python3.6 python3.6-dev -y
 
 script:
   - sudo sysctl kernel.yama.ptrace_scope=0
