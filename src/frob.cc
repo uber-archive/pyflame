@@ -77,8 +77,6 @@ unsigned long StringData(unsigned long addr) {
 static_assert(false, "uh oh, bad PYFLAME_PY_VERSION");
 #endif
 
-
-
 // Extract the line number from the code object. Python uses a compressed table
 // data structure to store line numbers. See:
 //
