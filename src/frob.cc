@@ -37,7 +37,6 @@
 #include "./ptrace.h"
 #include "./pyfrob.h"
 #include "./symbol.h"
-#include "./symbol.h"
 
 // why would this not be true idk
 static_assert(sizeof(long) == sizeof(void *), "wat platform r u on");
@@ -54,9 +53,8 @@ unsigned long StringData(unsigned long addr) {
   return addr + offsetof(PyStringObject, ob_sval);
 }
 
-unsigned long ByteData(unsigned long addr) {
-  return addr + offsetof(PyStringObject, ob_sval);
-}
+// should get inlined
+unsigned long ByteData(unsigned long addr) { return StringData(addr); }
 
 #elif PYFLAME_PY_VERSION == 3
 namespace py3 {
