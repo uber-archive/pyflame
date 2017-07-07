@@ -34,8 +34,8 @@ matrix:
       addons:
         apt:
           packages:
-            - python3.6
-      env: PYTHONVERSION=python3.6
+            - python3
+      env: PYTHONVERSION=python3
 
 script:
   - sudo sysctl kernel.yama.ptrace_scope=0
