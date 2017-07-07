@@ -19,7 +19,7 @@ matrix:
         apt:
           packages:
             - python3.4-dev
-      env: PYTHONVERSION=python3
+      env: PYTHONVERSION=python3.4
     - compiler: gcc
       python: "3.5"
       dist: trusty
@@ -35,7 +35,7 @@ matrix:
         apt:
           packages:
             - python3.6
-      env: PYTHONVERSION=python36
+      env: PYTHONVERSION=python3.6
 
 script:
   - sudo sysctl kernel.yama.ptrace_scope=0
