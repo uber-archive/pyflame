@@ -148,7 +148,10 @@ void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version,
         // if we find PyBytes_Type, it's python 3
         // continue looping though, in case we see a python3.6 symbol
         *version = PyVersion::Py3;
-      } else if (strcmp(name, "_PyEval_RequestCodeExtraIndex") == 0 || strcmp(name, "_PyCode_GetExtra")  == 0|| strcmp(name, "_PyCode_SetExtra") == 0) {
+      } else if (strcmp(name, "_PyEval_RequestCodeExtraIndex") == 0 || 
+                 strcmp(name, "_PyCode_GetExtra")  == 0 || 
+                 strcmp(name, "_PyCode_SetExtra") == 0) {
+        // these symbols were added here https://www.python.org/dev/peps/pep-0523/
         have_version = true;
         *version = PyVersion::Py36;
       }
