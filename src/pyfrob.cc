@@ -147,7 +147,7 @@ void PyFrob::SetPython(PyVersion version) {
       get_threads_ = py2::GetThreads;
       break;
 #endif
-#ifdef ENABLE_PY
+#ifdef ENABLE_PY3
     case PyVersion::Py3:
       get_threads_ = py3::GetThreads;
       break;
