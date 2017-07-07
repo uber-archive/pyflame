@@ -37,6 +37,11 @@ matrix:
             - python3
       env: PYTHONVERSION=python3
 
+before_install:
+  - sudo add-apt-repository ppa:jonathonf/python-3.6
+  - sudo apt-get update
+  - sudo apt-get install python3.6
+
 script:
   - sudo sysctl kernel.yama.ptrace_scope=0
   - unset PYTHON_CFLAGS
