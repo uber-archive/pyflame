@@ -35,6 +35,9 @@ you're building from the Git repository.
 ```bash
 # Install build dependencies on Fedora.
 sudo dnf install autoconf automake gcc-c++ python-devel libtool
+
+# If you want Python 3 support, make sure to install this as well.
+sudo dnf install python3-devel
 ```
 
 * Debian/Ubuntu
@@ -42,6 +45,9 @@ sudo dnf install autoconf automake gcc-c++ python-devel libtool
 ```bash
 # Install build dependencies on Debian or Ubuntu.
 sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev libtool make
+
+# If you want Python 3 support, make sure to install this as well.
+sudo apt-get install python3-dev
 ```
 
 #### Compilation
