@@ -1,33 +1,13 @@
 sudo: required
+compiler: gcc
+dist: trusty
+language: python
 
-language: cpp
-
-matrix:
-  include:
-    - compiler: gcc
-      python: "2.7"
-      dist: trusty
-      addons:
-        apt:
-          packages:
-            - python-dev
-      env: PYTHONVERSION=python2
-    - compiler: gcc
-      python: "3.4"
-      dist: trusty
-      addons:
-        apt:
-          packages:
-            - python3-dev
-      env: PYTHONVERSION=python3
-    - compiler: gcc
-      python: "3.5"
-      dist: trusty
-      addons:
-        apt:
-          packages:
-            - python3-dev
-      env: PYTHONVERSION=python3
+python:
+  - "2.6"
+  - "2.7"
+  - "3.4"
+  - "3.5"
 
 script:
   - sudo sysctl kernel.yama.ptrace_scope=0
