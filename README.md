@@ -293,15 +293,16 @@ setsebool -P deny_ptrace 0
 
 ## Python 3 Support
 
-This mostly works: if you have the Python 3 headers installed on your system,
-the configure script should detect the presence of Python 3 and use it. Please
-report any bugs related to Python 3 detection if you find them (particularly if
-you have Python 3 headers installed, but the build system isn't finding them).
+Pyflame will detect Python 3 headers at build time, and will compile with Python
+3 support if these headers are detected. Python 3.4 and 3.5 are known to work.
+Issue #69 tracks Python 3.6 support. Issue #77 tracks supporting earlier Python
+3 releases.
 
-There is one known
+There is one known Python 3
 bug:
-[Pyflame can only decode ASCII filenames in Python 3](https://github.com/uber/pyflame/issues/2).
-The issue has more details, if you want to help fix it.
+[Pyflame assumes ASCII filenames in Python 3](https://github.com/uber/pyflame/issues/2).
+This is only going to affect you if you actually use Unicode symbols in your
+Python source code file names.
 
 ## Contributing
 
