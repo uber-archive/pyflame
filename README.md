@@ -15,6 +15,22 @@ Learn more by reading
 
 ![pyflame](https://cloud.githubusercontent.com/assets/2734/17949703/8ef7d08c-6a0b-11e6-8bbd-41f82086d862.png)
 
+## Python 3 Support
+
+Pyflame will detect Python 3 headers at build time, and will be compiled with
+Python 3 support if these headers are detected. Python 3.4 and 3.5 are known to
+work. [Issue #69](https://github.com/uber/pyflame/issues/69) tracks Python 3.6
+support. [Issue #77](https://github.com/uber/pyflame/issues/77) tracks
+supporting earlier Python 3 releases.
+
+There is one known bug specific to Python
+3:
+[Pyflame will assume file names are encoded in ASCII](https://github.com/uber/pyflame/issues/2).
+This is will only affect you if you actually use Unicode in your `.py` file
+names, which is probably quite uncommon. In principle it is possible to fix this
+although a bit tricky; see the linked issue for details, if you're interested in
+contributing a patch.
+
 ## Installing
 
 You can build Pyflame from source, or install a pre-built release for your
@@ -290,19 +306,6 @@ If you'd like to enable it:
 # Enable ptrace under SELinux.
 setsebool -P deny_ptrace 0
 ```
-
-## Python 3 Support
-
-Pyflame will detect Python 3 headers at build time, and will compile with Python
-3 support if these headers are detected. Python 3.4 and 3.5 are known to
-work. [Issue #69](https://github.com/uber/pyflame/issues/69) tracks Python 3.6
-support. [Issue #77](https://github.com/uber/pyflame/issues/77) tracks
-supporting earlier Python 3 releases.
-
-There is one known bug specific to Python
-3: [Pyflame assumes ASCII filenames](https://github.com/uber/pyflame/issues/2).
-This is will only affect you if you actually use Unicode symbols in your Python
-source code file names, which is probably uncommon.
 
 ## Contributing
 
