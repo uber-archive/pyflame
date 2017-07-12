@@ -9,8 +9,13 @@ AM_INIT_AUTOMAKE([dist-bzip2 foreign subdir-objects -Wall -Werror])
 
 # Checks for programs.
 AC_PROG_CXX
+AC_PROG_AWK
 AC_PROG_CC
+AC_PROG_CPP
 AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+
 AM_PROG_AR
 
 LT_INIT
@@ -37,13 +42,18 @@ AX_CHECK_COMPILE_FLAG([-Wall],
 AC_CHECK_HEADERS([fcntl.h limits.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
-# AC_CHECK_HEADER_STDBOOL
+AC_CHECK_HEADER_STDBOOL
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT8_T
 
 # Checks for library functions.
 AC_FUNC_FORK
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MMAP
-AC_CHECK_FUNCS([memmove munmap strerror strtol strtoul])
+AC_CHECK_FUNCS([getpagesize memmove munmap strerror strtol strtoul])
 
 PKG_CHECK_MODULES([PY2], [python2], [enable_py2="yes"], [AC_MSG_WARN([Building without Python 2 support])])
 AM_CONDITIONAL([ENABLE_PY2], [test x"$enable_py2" = xyes])
