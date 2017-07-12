@@ -23,7 +23,7 @@ endif
 
 if ENABLE_PY3
 libfrob3_la_SOURCES = frob3.cc
-libfrob3_la_CXXFLAGS = $(PY3_CFLAGS)
+libfrob3_la_CXXFLAGS = $(PY3_CFLAGS) $(PY36_CFLAGS)
 noinst_LTLIBRARIES += libfrob3.la
 pyflame_LDADD += libfrob3.la
 endif
