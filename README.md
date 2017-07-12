@@ -24,9 +24,9 @@ support. [Issue #77](https://github.com/uber/pyflame/issues/77) tracks
 supporting earlier Python 3 releases.
 
 There is one known bug specific to Python
-3:
-[Pyflame will assume file names are encoded in ASCII](https://github.com/uber/pyflame/issues/2).
-This is will only affect you if you actually use Unicode in your `.py` file
+3. [Issue #2](https://github.com/uber/pyflame/issues/2) describes the problem:
+Pyflame assumes that Python 3 file names are encoded using ASCII. This is will
+only affect you if you actually use non-ASCII code points in your `.py` file
 names, which is probably quite uncommon. In principle it is possible to fix this
 although a bit tricky; see the linked issue for details, if you're interested in
 contributing a patch.
