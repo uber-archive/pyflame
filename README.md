@@ -1,4 +1,6 @@
-# Pyflame: A Ptracing Profiler For Python [![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame)
+# Pyflame: A Ptracing Profiler For Python
+
+[![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame)
 
 Pyflame is a unique profiling tool that
 generates [flame graphs](http://www.brendangregg.com/flamegraphs.html) for
@@ -33,6 +35,7 @@ enough that you can use it to profile live processes in production.
         - [Arch Linux](#arch-linux)
     - [Usage](#usage)
         - [Attaching To A Running Python Process](#attaching-to-a-running-python-process)
+            - [Attaching To Docker/Containerized Processes](#attaching-to-dockercontainerized-processes)
         - [Tracing Python Commands](#tracing-python-commands)
             - [Tracing Programs That Print To Stdout](#tracing-programs-that-print-to-stdout)
         - [Timestamp ("Flame Chart") Mode](#timestamp-flame-chart-mode)
@@ -193,6 +196,27 @@ pyflame -s 60 -r 0.01 PID
 The default behavior is to sample for 1 second (equivalent to `-s 1`), taking a
 snapshot every millisecond (equivalent to `-r 0.001`).
 
+#### Attaching To Docker/Containerized Processes
+
+Pyflame knows how to do something interesting: it can attach to containerized
+processes from **outside the container**. It does this by directly using
+the [setns(2)](http://man7.org/linux/man-pages/man2/setns.2.html) system call
+(which is how Docker works under the hood).
+
+If you choose to profile a process from outside the container, use the true PID,
+as reported by `ps` on the host (i.e. outside of the container).
+
+You can also run Pyflame from inside containers, although this is a bit more
+annoying, since normally ptrace is disabled inside containers for security
+reasons. If you attach to a process this way, you will need to use the
+inside-the-container PID. You can find this by running `ps` inside of the
+container itself.
+
+We recommend running Pyflame from outside containers, since it means you can
+keep ptrace disabled inside containers. If you want to run Pyflame inside
+containers, and have problems, please make sure to read the Docker notes in
+the [FAQ](#faq).
+
 ### Tracing Python Commands
 
 Sometimes you want to trace a command from start to finish. An example would be
@@ -319,9 +343,8 @@ so a sufficiently motivated person could get macOS support working.
 
 ### What Are These Ptrace Permissions Errors?
 
-Because it's so powerful, the `ptrace(2)` system call is locked down by default
-in various situations by different Linux distributions. In order to use ptrace
-these conditions must be met:
+Because it's so powerful, the `ptrace(2)` system call is often disabled or
+severely restricted. In order to use ptrace, these conditions must be met:
 
  * You must have the
    [`SYS_PTRACE` capability](http://man7.org/linux/man-pages/man7/capabilities.7.html) (which
@@ -334,8 +357,8 @@ expected.
 
 #### Ptrace Errors Within Docker Containers
 
-By default Docker images do not have the `SYS_PTRACE` capability. When you
-invoke `docker run` try using the `--cap-add SYS_PTRACE` option:
+By default Docker images do not have the `SYS_PTRACE` capability. If you want it
+enabled, invoke `docker run` using the `--cap-add SYS_PTRACE` option:
 
 ```bash
 # Allows processes within the Docker container to use ptrace.
@@ -350,11 +373,11 @@ to list your current capabilities:
 capsh --print
 ```
 
-Further note that by design you do not need to run Pyflame from within a Docker
-container. If you have sufficient permissions (i.e. you are root, or the same
-UID as the Docker process) Pyflame can be run from outside of the container and
-inspect a process inside the container. That said, Pyflame will certainly work
-within containers if that's how you want to use it.
+You do not need to run Pyflame from within a Docker container. If you have
+sufficient permissions (i.e. you are root, or the same UID as the Docker
+process) Pyflame can be run from outside a container to inspect a process inside
+a container. This is better for security, since you can keep ptrace disabled in
+the container.
 
 #### Ptrace Errors Outside Docker Containers Or When Not Using Docker
 
