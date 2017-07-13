@@ -152,6 +152,7 @@ void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version,
                  strcmp(name, "_PyCode_GetExtra")  == 0 || 
                  strcmp(name, "_PyCode_SetExtra") == 0) {
         // these symbols were added here https://www.python.org/dev/peps/pep-0523/
+        *version = PyVersion::Py36;
         have_version = true;
       }
     }

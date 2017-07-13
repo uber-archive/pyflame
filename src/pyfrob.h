@@ -38,7 +38,7 @@ class PyFrob {
   void SetPython(PyVersion);
 
   // Get the current frame list.
-  std::vector<Thread> GetThreads();
+  std::vector<Thread> GetThreads(PyVersion version);
 
  private:
   pid_t pid_;
