@@ -2,22 +2,20 @@
 
 [![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame)
 
-Pyflame is a profiling tool that
+Pyflame is a unique profiling tool that
 generates [flame graphs](http://www.brendangregg.com/flamegraphs.html) for
-Python. Pyflame is unique among Python profilers, because it does not require
-explicit instrumentation: you can use it with any running Python process, no
-modifications needed! Pyflame uses the
+Python. Pyflame is the only Python profiler based on the
 Linux [ptrace(2)](http://man7.org/linux/man-pages/man2/ptrace.2.html) system
-call to take periodic snapshots of the Python execution stack. Pyflame is
-capable of profiling embedded Python interpreters, such
-as [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/). It also fully supports
+call. This allows it to take snapshots of the Python call stack without explicit
+instrumentation, meaning you can profile a program without modifying its source
+code! Pyflame is capable of profiling embedded Python interpreters
+like [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/). It fully supports
 profiling multi-threaded Python programs.
 
 Pyflame is written in C++, with attention to speed and performance. Pyflame
 usually introduces less overhead than the builtin `profile` (or `cProfile`)
-modules, and also emits richer profiling data than `profile`. The profiling
-overhead of Pyflame is low enough that you can use it to profile live processes
-in production.
+modules, and also emits richer profiling data. The profiling overhead is low
+enough that you can use it to profile live processes in production.
 
 ![pyflame](https://cloud.githubusercontent.com/assets/2734/17949703/8ef7d08c-6a0b-11e6-8bbd-41f82086d862.png)
 
