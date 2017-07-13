@@ -71,21 +71,6 @@ unsigned long ByteData(unsigned long addr) {
   return addr + offsetof(PyBytesObject, ob_sval);
 }
 
-#elif PYFLAME_PY_VERSION == 36
-namespace py36 {
-unsigned long StringSize(unsigned long addr) {
-  return addr + offsetof(PyVarObject, ob_size);
-}
-
-unsigned long StringData(unsigned long addr) {
-  // this works only if the filename is all ascii *fingers crossed*
-  return addr + sizeof(PyASCIIObject);
-}
-
-unsigned long ByteData(unsigned long addr) {
-  return addr + offsetof(PyBytesObject, ob_sval);
-}
-
 #else
 static_assert(false, "uh oh, bad PYFLAME_PY_VERSION");
 #endif
