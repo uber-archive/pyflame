@@ -1,6 +1,6 @@
-[![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame)
-
 # Pyflame: A Ptracing Profiler For Python
+
+[![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame)
 
 Pyflame is a tool for
 generating [flame graphs](https://github.com/brendangregg/FlameGraph) for Python
@@ -8,19 +8,50 @@ processes. Pyflame is different from existing Python profilers because it
 doesn't require explicit instrumentation: it will work with any running Python
 process! Pyflame works by using
 the [ptrace(2)](http://man7.org/linux/man-pages/man2/ptrace.2.html) system call
-to analyze the currently-executing stack trace for a Python process.
+to analyze the currently-executing stack trace for a Python process. Pyflame is
+also capable of profiling embedded Python interpreters, such
+as [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/), or other binaries that
+link against libpython.
 
-Learn more by reading
-[the Uber Engineering blog post about Pyflame](http://eng.uber.com/pyflame/).
+Pyflame is written in C++, and was written with attention to speed. The
+profiling overhead is low enough that you can use Pyflame to profile processes
+in production.
 
 ![pyflame](https://cloud.githubusercontent.com/assets/2734/17949703/8ef7d08c-6a0b-11e6-8bbd-41f82086d862.png)
 
-## Installing
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-refresh-toc -->
+**Table of Contents**
 
-You can build Pyflame from source, or install a pre-built release for your
-distro.
+- [Pyflame: A Ptracing Profiler For Python](#pyflame-a-ptracing-profiler-for-python)
+    - [Installing From Source](#installing-from-source)
+        - [Build Dependencies](#build-dependencies)
+            - [Debian/Ubuntu](#debianubuntu)
+            - [Fedora](#fedora)
+        - [Compilation](#compilation)
+            - [Creating A Debian Package](#creating-a-debian-package)
+        - [Python 3 Support](#python-3-support)
+    - [Installing A Pre-Built Package](#installing-a-pre-built-package)
+        - [Ubuntu PPA](#ubuntu-ppa)
+        - [Arch Linux](#arch-linux)
+    - [Usage](#usage)
+        - [Trace Mode](#trace-mode)
+        - [Timestamp ("Flame Chart") Mode](#timestamp-flame-chart-mode)
+    - [FAQ](#faq)
+        - [What Is "(idle)" Time?](#what-is-idle-time)
+        - [Are BSD / OS X / macOS Supported?](#are-bsd--os-x--macos-supported)
+        - [What Are These Ptrace Permissions Errors?](#what-are-these-ptrace-permissions-errors)
+            - [Ptrace Errors Within Docker Containers](#ptrace-errors-within-docker-containers)
+            - [Ptrace Errors Outside Docker Containers Or When Not Using Docker](#ptrace-errors-outside-docker-containers-or-when-not-using-docker)
+            - [Ptrace With SELinux](#ptrace-with-selinux)
+    - [Blog Posts](#blog-posts)
+    - [Contributing](#contributing)
+        - [Hacking](#hacking)
+        - [How Else Can I Help?](#how-else-can-i-help)
+    - [Legal and Licensing](#legal-and-licensing)
 
-### Building from source
+<!-- markdown-toc end -->
+
+## Installing From Source
 
 To build Pyflame you will need a C++ compiler with basic C++11 support. Pyflame
 is known to compile on versions of GCC as old as GCC 4.6. You'll also need GNU
@@ -28,25 +59,34 @@ Autotools ([GNU Autoconf](https://www.gnu.org/software/autoconf/autoconf.html)
 and [GNU Automake](https://www.gnu.org/software/automake/automake.html)) if
 you're building from the Git repository.
 
-#### Install build-time dependencies
+### Build Dependencies
 
-* Fedora
+#### Debian/Ubuntu
 
-```bash
-# Install build dependencies on Fedora.
-sudo dnf install autoconf automake gcc-c++ python-devel libtool
-```
-
-* Debian/Ubuntu
+Install the following packages if you are building for Debian or Ubuntu. Note
+that you technically only need one of `python-dev` or `python3-dev`, but if you have both
+installed then you can use Pyflame to profile both Python 2 and Python 3
+processes.
 
 ```bash
 # Install build dependencies on Debian or Ubuntu.
-sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev libtool make
+sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev python3-dev libtool make
 ```
 
-#### Compilation
+#### Fedora
 
-From git you would then compile like so:
+Again, you technically only need one of `python-devel` and `python3-devel`,
+although installing both is recommended.
+
+```bash
+# Install build dependencies on Fedora.
+sudo dnf install autoconf automake gcc-c++ python-devel python3-devel libtool
+```
+
+### Compilation
+
+Once you've installed the appropriate build dependencies (see below), you can
+compile Pyflame like so:
 
 ```bash
 ./autogen.sh
@@ -55,17 +95,48 @@ make
 make install
 ```
 
-If you'd like to build a Debian package there's already a `debian/` directory at
-the root of this project. We'd like to remove this, as per the
-[upstream Debian packaging guidelines](https://wiki.debian.org/UpstreamGuide).
-If you can help get this project packaged in Debian please let us know.
+#### Creating A Debian Package
 
-### Installing a pre-built package
+If you'd like to build a Debian package, run the following from the root of your
+Pyflame git checkout:
 
-#### Ubuntu PPA
+```bash
+# Install additional dependencies required for packaging.
+sudo apt-get install debhelper dh-autoreconf dpkg-dev
 
-The community has setup a PPA for all current Ubuntu releases:
-[PPA](https://launchpad.net/~trevorjay/+archive/ubuntu/pyflame).
+# This create a file named something like ../pyflame_1.3.1_amd64.deb
+dpkg-buildpackage -uc -us
+```
+
+### Python 3 Support
+
+Pyflame will detect Python 3 headers at build time, and will be compiled with
+Python 3 support if these headers are detected. Python 3.4 and 3.5 are known to
+work. [Issue #69](https://github.com/uber/pyflame/issues/69) tracks Python 3.6
+support. [Issue #77](https://github.com/uber/pyflame/issues/77) tracks
+supporting earlier Python 3 releases.
+
+There is one known bug specific to Python
+3. [Issue #2](https://github.com/uber/pyflame/issues/2) describes the problem:
+Pyflame assumes that Python 3 file names are encoded using ASCII. This is will
+only affect you if you actually use non-ASCII code points in your `.py` file
+names, which is probably quite uncommon. In principle it is possible to fix this
+although a bit tricky; see the linked issue for details, if you're interested in
+contributing a patch.
+
+## Installing A Pre-Built Package
+
+Several Pyflame users have created unofficial pre-built packages for different
+distros. Uploads of these packages tend to lag the official Pyflame releases, so
+you are **strongly encouraged to check the pre-built version** to ensure that it
+is not too old. If you want the newest version of Pyflame, build from source.
+
+### Ubuntu PPA
+
+[Trevor Joynson](https://github.com/akatrevorjay) has set up an unofficial PPA
+for all current Ubuntu
+releases:
+[ppa:trevorjay/pyflame](https://launchpad.net/~trevorjay/+archive/ubuntu/pyflame).
 
 ```bash
 sudo apt-add-repository ppa:trevorjay/pyflame
@@ -73,9 +144,13 @@ sudo apt-get update
 sudo apt-get install pyflame
 ```
 
-#### Arch Linux
+Note also that you can build your own Debian package easily, using the one
+provided in the `debian/` directory of this project.
 
-You can install pyflame from [AUR](https://aur.archlinux.org/packages/pyflame-git/).
+### Arch Linux
+
+[Oleg Senin](https://github.com/RealFatCat) has added an Arch Linux package
+to [AUR](https://aur.archlinux.org/packages/pyflame-git/).
 
 ## Usage
 
@@ -285,17 +360,17 @@ If you'd like to enable it:
 setsebool -P deny_ptrace 0
 ```
 
-## Python 3 Support
+## Blog Posts
 
-This mostly works: if you have the Python 3 headers installed on your system,
-the configure script should detect the presence of Python 3 and use it. Please
-report any bugs related to Python 3 detection if you find them (particularly if
-you have Python 3 headers installed, but the build system isn't finding them).
+If you write a blog post about Pyflame, we may include it here. Some existing
+blog posts on Pyflame include:
 
-There is one known
-bug:
-[Pyflame can only decode ASCII filenames in Python 3](https://github.com/uber/pyflame/issues/2).
-The issue has more details, if you want to help fix it.
+ * [Pyflame: Uber Engineering's Ptracing Profiler For Python](http://eng.uber.com/pyflame/) by
+   Evan Klitzke (2016-09)
+ * [Pyflame Dual Interpreter Mode](https://eklitzke.org/pyflame-dual-interpreter-mode) by
+   Evan Klitzke (2016-10)
+ * [Using Uber's Pyflame and Logs to Tackle Scaling Issues](https://benbernardblog.com/using-ubers-pyflame-and-logs-to-tackle-scaling-issues/) by
+   Benoit Bernard (2017-02)
 
 ## Contributing
 
@@ -333,17 +408,6 @@ make test
 Patches are not the only way to contribute to Pyflame! Bug reports are very
 useful as well. If you file a bug, make sure you tell us the exact version of
 Python you're using, and how to reproduce the issue.
-
-We are also actively looking to learn about how people are using Pyflame. One
-way to help is to write a blog post about how you used Pyflame. If you do, we may
-add a link to your blog post here. Some existing blog posts on Pyflame include:
-
- * [Pyflame: Uber Engineering's Ptracing Profiler For Python](http://eng.uber.com/pyflame/) by
-   Evan Klitzke (2016-09)
- * [Pyflame Dual Interpreter Mode](https://eklitzke.org/pyflame-dual-interpreter-mode) by
-   Evan Klitzke (2016-10)
- * [Using Uber's Pyflame and Logs to Tackle Scaling Issues](https://benbernardblog.com/using-ubers-pyflame-and-logs-to-tackle-scaling-issues/) by
-   Benoit Bernard (2017-02)
 
 ## Legal and Licensing
 
