@@ -1,29 +1,30 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 ENVDIR="./test_env"
 
 # Run tests using pip; $1 = python version
 run_pip_tests() {
-  virtualenv -p "$1" "${ENVDIR}"
+  virtualenv -q -p "$1" "${ENVDIR}"
   trap 'rm -rf ${ENVDIR}' EXIT
 
   . "${ENVDIR}/bin/activate"
-  pip install --upgrade pip
-  pip install pytest
+  pip install -q pytest
 
   find tests/ -name '*.pyc' -delete
-  py.test tests/
+  py.test -q tests/
 
   # clean up the trap
   rm -rf "${ENVDIR}" EXIT
   trap "" EXIT
 }
 
-# See if we can run the pip tests with this Python version
+# Make a best effort to run the tests against some Python version.
 try_pip_tests() {
-  if which "$1" &>/dev/null; then
+  if command -v "$1" &>/dev/null; then
+    echo -n "Running test suite against "
+    "$1" --version
     run_pip_tests "$1"
   fi
 }
