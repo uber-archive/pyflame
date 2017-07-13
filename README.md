@@ -186,9 +186,12 @@ You can also change the sample time with `-s`, and the sampling frequency with
 `-r`. Both units are measured in seconds.
 
 ```bash
-# Profile PID for 60 seconds, sampling every 100ms.
-pyflame -s 60 -r 0.1 PID
+# Profile PID for 60 seconds, sampling every 10ms.
+pyflame -s 60 -r 0.01 PID
 ```
+
+The default behavior is to sample for 1 second (equivalent to `-s 1`), taking a
+snapshot every millisecond (equivalent to `-r 0.001`).
 
 ### Tracing Python Commands
 
