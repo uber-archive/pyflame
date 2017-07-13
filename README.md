@@ -27,14 +27,16 @@ in production.
         - [Build Dependencies](#build-dependencies)
             - [Debian/Ubuntu](#debianubuntu)
             - [Fedora](#fedora)
-        - [Compilation](#compilation)
+        - [Compiling](#compiling)
             - [Creating A Debian Package](#creating-a-debian-package)
         - [Python 3 Support](#python-3-support)
     - [Installing A Pre-Built Package](#installing-a-pre-built-package)
         - [Ubuntu PPA](#ubuntu-ppa)
         - [Arch Linux](#arch-linux)
     - [Usage](#usage)
-        - [Trace Mode](#trace-mode)
+        - [Attaching To A Running Python Process](#attaching-to-a-running-python-process)
+        - [Tracing Python Commands](#tracing-python-commands)
+            - [Tracing Programs That Print To Stdout](#tracing-programs-that-print-to-stdout)
         - [Timestamp ("Flame Chart") Mode](#timestamp-flame-chart-mode)
     - [FAQ](#faq)
         - [What Is "(idle)" Time?](#what-is-idle-time)
@@ -83,7 +85,7 @@ although installing both is recommended.
 sudo dnf install autoconf automake gcc-c++ python-devel python3-devel libtool
 ```
 
-### Compilation
+### Compiling
 
 Once you've installed the appropriate build dependencies (see below), you can
 compile Pyflame like so:
@@ -92,8 +94,13 @@ compile Pyflame like so:
 ./autogen.sh
 ./configure      # Plus any options like --prefix.
 make
-make install
+make test        # Optional, test the build! Should take < 1 minute.
+make install     # Optional, install into the configure prefix.
 ```
+
+The Pyflame executable produced by the `make` command will be located at
+`src/pyflame`. Note that the `make test` command requires that you have
+`virtualenv` installed.
 
 #### Creating A Debian Package
 
@@ -154,75 +161,99 @@ to [AUR](https://aur.archlinux.org/packages/pyflame-git/).
 
 ## Usage
 
-After compiling Pyflame you'll get a small executable called `pyflame` (which
-will be in the `src/` directory if you haven't run `make install`). The most
-basic usage is:
+Pyflame has two distinct modes: you can attach to a running process, or you can
+trace a command from start to finish.
+
+### Attaching To A Running Python Process
+
+The default behavior of Pyflame is to attach to an existing Python process. The
+target process is specified via its PID:
 
 ```bash
 # Profile PID for 1s, sampling every 1ms.
 pyflame PID
 ```
 
-The `pyflame` command will send data to stdout that is suitable for using with
+This will print data to stdout in a format that is suitable for usage with
 Brendan Gregg's `flamegraph.pl` tool (which you can
-get [here](https://github.com/brendangregg/FlameGraph)). Therefore a typical
-command pipeline might be like this:
+get [here](https://github.com/brendangregg/FlameGraph)). A typical command
+pipeline might be like this:
 
 ```bash
 # Generate flame graph for pid 12345; assumes flamegraph.pl is in your $PATH.
 pyflame 12345 | flamegraph.pl > myprofile.svg
 ```
 
-You can also change the sample time and sampling frequency:
+You can also change the sample time with `-s`, and the sampling frequency with
+`-r`. Both units are measured in seconds.
 
 ```bash
 # Profile PID for 60 seconds, sampling every 100ms.
 pyflame -s 60 -r 0.1 PID
 ```
 
-### Trace Mode
+### Tracing Python Commands
 
-Sometimes you want to trace a process from start to finish. An example would be
-tracing the run of a test suite. Pyflame supports this use case. To use it, you
-invoke Pyflame like this:
+Sometimes you want to trace a command from start to finish. An example would be
+tracing the run of a test suite or batch job. Pass `-t` as the **last** Pyflame
+flag to run in trace mode. Anything after the `-t` flag is interpreted literally
+as part of the command to run:
 
 ```bash
 # Trace a given command until completion.
 pyflame [regular pyflame options] -t command arg1 arg2...
 ```
 
-Frequently the value of `command` will actually be `python`, but it could be
-something else like `uwsgi` or `py.test`. For instance, here's how Pyflame can
-be used to trace its own test suite:
+
+Often `command` will be `python` or `python3`, but it could be something else,
+like `uwsgi` or `py.test`. For instance, here's how Pyflame can be used to trace
+its own test suite:
 
 ```bash
 # Trace the Pyflame test suite, a.k.a. pyflameception!
 pyflame -t py.test tests/
 ```
 
-Beware that when using the trace mode the stdout/stderr of the pyflame process
-and the traced process will be mixed. This means if the traced process sends
-data to stdout you may need to filter it somehow before sending the output to
-`flamegraph.pl`.
+As described in the docs for attach mode, you can use `-r` to control the
+sampling frequency.
+
+#### Tracing Programs That Print To Stdout
+
+By default, Pyflame will send flame graph data to stdout. If the profiled
+program is also sending data to stdout, then `flamegraph.pl` will see the output
+from both programs, and will get confused. To solve this, use the `-o` option:
+
+```bash
+# Trace a process, sending profiling information to profile.txt
+pyflame -o profile.txt -t python -c 'for x in range(1000): print(x)'
+
+# Convert profile.txt to a flame graph named profile.svg
+flamegraph.pl <profile.txt >profile.svg
+```
 
 ### Timestamp ("Flame Chart") Mode
 
-Pyflame can also generate data with timestamps which can be used to
-generate ["flame charts"](https://addyosmani.com/blog/devtools-flame-charts/)
-that can be viewed in Chrome. These are a type of inverted flamegraph that can
-more readable in some cases. Output in this data format is controlled with the
-`-T` option.
+Generally we recommend using regular flame graphs, generated by `flamegraph.pl`.
+However, Pyflame can also generate data with a special time stamp output format,
+useful for
+generating ["flame charts"](https://addyosmani.com/blog/devtools-flame-charts/)
+(somewhat like an inverted flame graph) that are viewable in Chrome. In some
+cases, the flame chart format is easier to
+understand.
 
-Use `utils/flame-chart-json` to generate the JSON data required for viewing
-Flame Charts using the Chrome CPU profiler.
+To generate a flame chart, use `pyflame -T`, and then pass the output to
+`utils/flame-chart-json` to convert the output into the JSON format required by
+the Chrome CPU profiler:
 
+```bash
+# Generate flame chart data viewable in Chrome.
+pyflame -T [other pyflame options] | flame-chart-json > foo.cpuprofile
 ```
-Usage: cat <pyflame_output_file> | flame-chart-json > <fc_output>.cpuprofile
-(or) pyflame [regular pyflame options] | flame-chart-json > <fc_output>.cpuprofile
-```
 
-Then load the resulting `.cpuprofile` file into the Chrome CPU profiler to view
-flame chart.
+Read the
+following
+[Chrome DevTools article](https://developers.google.com/web/updates/2016/12/devtools-javascript-cpu-profile-migration) for
+instructions on loading a `.cpuprofile` file in Chrome 58+.
 
 ## FAQ
 
@@ -267,12 +298,23 @@ pyflame -s 0 --threads PID
 
 ### Are BSD / OS X / macOS Supported?
 
-No, these aren't supported. Someone who is proficient with low-level C
-programming can probably get BSD to work, as described in issue #3. It is
-probably much more difficult (although not impossible) to adapt this code to
-work on OS X/macOS, since the current code assumes that the host
-uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files
-as the executable file format for the Python interpreter.
+Pyflame uses a few Linux-specific interfaces, so unfortunately it is the only
+platform supported right now. Pull requests to add support for other platforms
+are very much wanted.
+
+Someone who is proficient with low-level C systems programming can probably get
+BSD to work without *too much* difficulty. The necessary work to adapt the code
+is described in [Issue #3](https://github.com/uber/pyflame/issues/3).
+
+By comparison, it is probably *much more* work to get Pyflame working on macOS.
+The current code assumes that the host
+uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format)
+object/executable files. Apple uses a different object file format,
+called [Mach-O](https://en.wikipedia.org/wiki/Mach-O), so porting Pyflame to
+macOS would entail doing all of the work to port Pyflame to BSD, *plus*
+additional work to parse Mach-O object files. That said, the Mach-O format is
+documented online (e.g. [here](https://lowlevelbits.org/parsing-mach-o-files/)),
+so a sufficiently motivated person could get macOS support working.
 
 ### What Are These Ptrace Permissions Errors?
 
