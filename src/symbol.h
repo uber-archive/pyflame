@@ -44,7 +44,7 @@ static_assert(false, "unknown build environment");
 namespace pyflame {
 
 // The Python interpreter version
-enum class PyVersion { Unknown = 0, Py2 = 2, Py3 = 3};
+enum class PyVersion { Unknown = 0, Py2 = 2, Py3 = 3 };
 
 // Symbols
 struct PyAddresses {
