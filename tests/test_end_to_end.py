@@ -19,7 +19,7 @@ import subprocess
 
 
 IDLE_RE = re.compile(r'^\(idle\) \d+$')
-FLAMEGRAPH_RE = re.compile(r'^.+ \d+$')
+FLAMEGRAPH_RE = re.compile(r'^(.+) (\d+)$')
 TS_IDLE_RE = re.compile(r'\(idle\)')
 # Matches strings of the form
 # './tests/sleeper.py:<module>:31;./tests/sleeper.py:main:26;'
@@ -84,6 +84,25 @@ def not_python():
         yield p
 
 
+def assert_flamegraph(line, allow_idle=False):
+    if allow_idle and IDLE_RE.match(line):
+        return
+    m = FLAMEGRAPH_RE.match(line)
+    assert m is not None
+    parts, count = m.groups()
+    count = int(count, 10)
+    assert count >= 1
+    for part in parts.split(';'):
+        fname, func, line_num = part.split(':')
+        line_num = int(line_num, 10)
+
+        # Make a best effort to sanity check the line number. This logic could
+        # definitely be improved, since right now an off-by-one error wouldn't
+        # be caught by the test suite.
+        if fname.startswith('./tests/'):
+            assert 1 <= line_num < 300
+
+
 def communicate(proc):
     out, err = proc.communicate()
     if isinstance(out, bytes):
@@ -105,8 +124,7 @@ def test_monitor(dijkstra):
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
-        assert FLAMEGRAPH_RE.match(line) is not None
-
+        assert_flamegraph(line)
 
 def test_non_gil(sleeper):
     """Basic test for non-GIL/native code processes."""
@@ -120,7 +138,7 @@ def test_non_gil(sleeper):
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
-        assert FLAMEGRAPH_RE.match(line) is not None
+        assert_flamegraph(line, allow_idle=True)
 
 
 def test_threaded(threaded_sleeper):
@@ -135,19 +153,28 @@ def test_threaded(threaded_sleeper):
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    has_sleep_a = False
-    has_sleep_b = False
+    a_count = 0
+    b_count = 0
     for line in lines:
         if SLEEP_A_RE.match(line):
-            has_sleep_a = True
-        if SLEEP_B_RE.match(line):
-            has_sleep_b = True
-    assert has_sleep_a
-    assert has_sleep_b
+            assert_flamegraph(line)
+            a_count += 1
+        elif SLEEP_B_RE.match(line):
+            assert_flamegraph(line)
+            b_count += 1
+
+    # We must see both threads.
+    assert a_count > 0
+    assert b_count > 0
+
+    # We should see them both *about* the same number of times.
+    small = float(min(a_count, b_count))
+    big = float(max(a_count, b_count))
+    assert (small / big) >= 0.5
 
 
 def test_unthreaded(threaded_busy):
-    """Test only one process profiled by default"""
+    """Test only one process is profiled by default."""
     proc = subprocess.Popen(['./src/pyflame', '-s', '0',
                              str(threaded_busy.pid)],
                             stdout=subprocess.PIPE,
@@ -172,8 +199,7 @@ def test_exclude_idle(sleeper):
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
-        assert FLAMEGRAPH_RE.match(line) is not None
-        assert not IDLE_RE.match(line)
+        assert_flamegraph(line)
 
 
 def test_exit_early(exit_early):
@@ -186,7 +212,7 @@ def test_exit_early(exit_early):
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
-        assert FLAMEGRAPH_RE.match(line) or IDLE_RE.match(line)
+        assert_flamegraph(line, allow_idle=True)
 
 
 def test_sample_not_python(not_python):
@@ -210,7 +236,7 @@ def test_trace():
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
-        assert FLAMEGRAPH_RE.match(line) or IDLE_RE.match(line)
+        assert_flamegraph(line, allow_idle=True)
 
 
 def test_trace_not_python():
@@ -298,8 +324,7 @@ def test_include_ts(sleeper):
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
-        assert (TS_FLAMEGRAPH_RE.match(line) or
-                TS_RE.match(line) or TS_IDLE_RE.match(line))
+        assert TS_FLAMEGRAPH_RE.match(line) or TS_RE.match(line) or TS_IDLE_RE.match(line)
 
 
 def test_include_ts_exclude_idle(sleeper):
@@ -315,4 +340,4 @@ def test_include_ts_exclude_idle(sleeper):
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
         assert not TS_IDLE_RE.match(line)
-        assert (TS_FLAMEGRAPH_RE.match(line) or TS_RE.match(line))
+        assert TS_FLAMEGRAPH_RE.match(line) or TS_RE.match(line)
