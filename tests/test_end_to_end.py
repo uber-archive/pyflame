@@ -17,7 +17,6 @@ import pytest
 import re
 import subprocess
 
-
 IDLE_RE = re.compile(r'^\(idle\) \d+$')
 FLAMEGRAPH_RE = re.compile(r'^(.+) (\d+)$')
 TS_IDLE_RE = re.compile(r'\(idle\)')
@@ -45,7 +44,7 @@ def proc(argv, wait_for_pid=True):
 
 
 def python_proc(test_file):
-    return proc(['python', './tests/%s' % (test_file,)])
+    return proc(['python', './tests/%s' % (test_file, )])
 
 
 @pytest.yield_fixture
@@ -114,10 +113,11 @@ def communicate(proc):
 
 def test_monitor(dijkstra):
     """Basic test for the monitor mode."""
-    proc = subprocess.Popen(['./src/pyflame', str(dijkstra.pid)],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            universal_newlines=True)
+    proc = subprocess.Popen(
+        ['./src/pyflame', str(dijkstra.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
     out, err = communicate(proc)
     assert not err
     assert proc.returncode == 0
@@ -126,12 +126,14 @@ def test_monitor(dijkstra):
     for line in lines:
         assert_flamegraph(line)
 
+
 def test_non_gil(sleeper):
     """Basic test for non-GIL/native code processes."""
-    proc = subprocess.Popen(['./src/pyflame', str(sleeper.pid)],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            universal_newlines=True)
+    proc = subprocess.Popen(
+        ['./src/pyflame', str(sleeper.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
     out, err = communicate(proc)
     assert not err
     assert proc.returncode == 0
@@ -143,11 +145,12 @@ def test_non_gil(sleeper):
 
 def test_threaded(threaded_sleeper):
     """Basic test for non-GIL/native code processes."""
-    proc = subprocess.Popen(['./src/pyflame', '--threads',
-                             str(threaded_sleeper.pid)],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            universal_newlines=True)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '--threads',
+         str(threaded_sleeper.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
     out, err = communicate(proc)
     assert not err
     assert proc.returncode == 0
@@ -175,11 +178,12 @@ def test_threaded(threaded_sleeper):
 
 def test_unthreaded(threaded_busy):
     """Test only one process is profiled by default."""
-    proc = subprocess.Popen(['./src/pyflame', '-s', '0',
-                             str(threaded_busy.pid)],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            universal_newlines=True)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-s', '0',
+         str(threaded_busy.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
     out, err = communicate(proc)
     assert not err
     assert proc.returncode == 0
@@ -189,10 +193,11 @@ def test_unthreaded(threaded_busy):
 
 def test_exclude_idle(sleeper):
     """Basic test for idle processes."""
-    proc = subprocess.Popen(['./src/pyflame', '-x', str(sleeper.pid)],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            universal_newlines=True)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-x', str(sleeper.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
     out, err = communicate(proc)
     assert not err
     assert proc.returncode == 0
@@ -203,9 +208,11 @@ def test_exclude_idle(sleeper):
 
 
 def test_exit_early(exit_early):
-    proc = subprocess.Popen(['./src/pyflame', '-s', '10', str(exit_early.pid)],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-s', '10',
+         str(exit_early.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not err
     assert proc.returncode == 0
@@ -216,9 +223,10 @@ def test_exit_early(exit_early):
 
 
 def test_sample_not_python(not_python):
-    proc = subprocess.Popen(['./src/pyflame', str(not_python.pid)],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ['./src/pyflame', str(not_python.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
     assert err.startswith('Failed to locate libpython')
@@ -226,10 +234,10 @@ def test_sample_not_python(not_python):
 
 
 def test_trace():
-    proc = subprocess.Popen(['./src/pyflame', '-t',
-                             'python', 'tests/exit_early.py', '-s'],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-t', 'python', 'tests/exit_early.py', '-s'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not err
     assert proc.returncode == 0
@@ -240,9 +248,10 @@ def test_trace():
 
 
 def test_trace_not_python():
-    proc = subprocess.Popen(['./src/pyflame', '-t', './tests/sleep.sh'],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-t', './tests/sleep.sh'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
     assert err.startswith('Failed to locate libpython')
@@ -250,9 +259,10 @@ def test_trace_not_python():
 
 
 def test_pyflame_a_pyflame():
-    proc = subprocess.Popen(['./src/pyflame', '-t', './src/pyflame'],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-t', './src/pyflame'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
     assert err.startswith('You tried to pyflame a pyflame')
@@ -260,9 +270,10 @@ def test_pyflame_a_pyflame():
 
 
 def test_pyflame_nonexistent_file():
-    proc = subprocess.Popen(['./src/pyflame', '-t', '/no/such/file'],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-t', '/no/such/file'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
     assert 'Child process exited with status' in err
@@ -270,9 +281,10 @@ def test_pyflame_nonexistent_file():
 
 
 def test_trace_no_arg():
-    proc = subprocess.Popen(['./src/pyflame', '-t'],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-t'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
     assert err.startswith('Usage: ')
@@ -280,9 +292,8 @@ def test_trace_no_arg():
 
 
 def test_sample_no_arg():
-    proc = subprocess.Popen(['./src/pyflame'],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ['./src/pyflame'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
     assert err.startswith('Usage: ')
@@ -290,22 +301,24 @@ def test_sample_no_arg():
 
 
 def test_sample_extra_args():
-    proc = subprocess.Popen(['./src/pyflame', 'foo', 'bar'],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ['./src/pyflame', 'foo', 'bar'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
     assert err.startswith('Usage: ')
     assert proc.returncode == 1
 
 
-@pytest.mark.parametrize('pid', [(1,), (0,)])
+@pytest.mark.parametrize('pid', [(1, ), (0, )])
 def test_permission_error(pid):
     # pid 1 = EPERM
     # pid 0 = ESRCH
-    proc = subprocess.Popen(['./src/pyflame', str(pid)],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    proc = subprocess.Popen(
+        ['./src/pyflame', str(pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
     assert err.startswith('Failed to attach to PID')
@@ -314,25 +327,29 @@ def test_permission_error(pid):
 
 def test_include_ts(sleeper):
     """Basic test for timestamp processes."""
-    proc = subprocess.Popen(['./src/pyflame', '-T', str(sleeper.pid)],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            universal_newlines=True)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-T', str(sleeper.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
     out, err = proc.communicate()
     assert not err
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
     for line in lines:
-        assert TS_FLAMEGRAPH_RE.match(line) or TS_RE.match(line) or TS_IDLE_RE.match(line)
+        assert TS_FLAMEGRAPH_RE.match(line) or TS_RE.match(
+            line) or TS_IDLE_RE.match(line)
 
 
 def test_include_ts_exclude_idle(sleeper):
     """Basic test for timestamp processes."""
-    proc = subprocess.Popen(['./src/pyflame', '-T', '-x',  str(sleeper.pid)],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            universal_newlines=True)
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-T', '-x',
+         str(sleeper.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
     out, err = proc.communicate()
     assert not err
     assert proc.returncode == 0
