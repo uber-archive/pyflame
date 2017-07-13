@@ -23,7 +23,7 @@ namespace pyflame {
 
 // Get the threads. Each thread stack will be in reverse order (most recent
 // frame first).
-typedef std::vector<Thread> (*get_threads_t)(pid_t, PyAddresses, bool);
+typedef std::vector<Thread> (*get_threads_t)(pid_t, PyAddresses, PyVersion, bool);
 
 // Frobber to get python stack stuff; this encapsulates all of the Python
 // interpreter logic.
