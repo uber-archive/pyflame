@@ -60,7 +60,7 @@ AM_CONDITIONAL([ENABLE_PY2], [test x"$enable_py2" = xyes])
 AM_COND_IF([ENABLE_PY2], [AC_DEFINE([ENABLE_PY2], [1], [Python2 is enabled])])
 
 PKG_CHECK_MODULES([PY34], [python-3.4], [enable_py34="yes"], 
-                          [PKG_CHECK_MODULES([PY35], [python-3.5], [enable_py34="yes"], [AC_MSG_WARN([Building without Python 3.4/3.5 support]])])
+                          [PKG_CHECK_MODULES([PY35], [python-3.5], [enable_py34="yes"], [AC_MSG_WARN([Building without Python 3.4/3.5 support])]])
 AM_CONDITIONAL([ENABLE_PY34], [test x"$enable_py34" = xyes])
 AM_COND_IF([ENABLE_PY34], [AC_DEFINE([ENABLE_PY34], [1], [Python3 is enabled])])
 
