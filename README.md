@@ -8,14 +8,15 @@ Python. Pyflame is unique among Python profilers, because it does not require
 explicit instrumentation: you can use it with any running Python process, no
 modifications needed! Pyflame is able to achieve this using the
 Linux [ptrace(2)](http://man7.org/linux/man-pages/man2/ptrace.2.html) system
-call to grab snapshots of the stack trace of Python process. Pyflame is also
-capable of profiling embedded Python interpreters, such
-as [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/), or other binaries that
-link against libpython. Pyflame also fully supports profiling multi-threaded
-Python programs.
+call to grab snapshots of the Python stack. Pyflame is also capable of profiling
+embedded Python interpreters, such
+as [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/). Pyflame also fully
+supports profiling multi-threaded Python programs.
 
-Pyflame is written in C++, and was written with attention to speed. The
-profiling overhead is low enough that you can use Pyflame to profile processes
+Pyflame is written in C++, with attention to speed and performance. Pyflame
+usually introduces less overhead than the builtin `profile` (or `cProfile`)
+modules, and also emits richer profiling data than `profile`. The profiling
+overhead of Pyflame is low enough that you can use it to profile live processes
 in production.
 
 ![pyflame](https://cloud.githubusercontent.com/assets/2734/17949703/8ef7d08c-6a0b-11e6-8bbd-41f82086d862.png)
