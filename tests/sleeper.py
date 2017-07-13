@@ -18,7 +18,7 @@ import time
 
 
 def main():
-    sys.stdout.write('%d\n' % (os.getpid(),))
+    sys.stdout.write('%d\n' % (os.getpid(), ))
     sys.stdout.flush()
     while True:
         time.sleep(0.1)

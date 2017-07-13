@@ -23,7 +23,7 @@ def main():
     parser.add_argument('-s', '--silent', action='store_true')
     args = parser.parse_args()
     if not args.silent:
-        sys.stdout.write('%d\n' % (os.getpid(),))
+        sys.stdout.write('%d\n' % (os.getpid(), ))
         sys.stdout.flush()
     max_time = time.time() + 2
     while True:

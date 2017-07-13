@@ -2,20 +2,20 @@
 
 [![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame)
 
-Pyflame is a tool for
-generating [flame graphs](https://github.com/brendangregg/FlameGraph) for Python
-processes. Pyflame is different from existing Python profilers because it
-doesn't require explicit instrumentation: it will work with any running Python
-process! Pyflame works by using
-the [ptrace(2)](http://man7.org/linux/man-pages/man2/ptrace.2.html) system call
-to analyze the currently-executing stack trace for a Python process. Pyflame is
-also capable of profiling embedded Python interpreters, such
-as [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/), or other binaries that
-link against libpython.
+Pyflame is a unique profiling tool that
+generates [flame graphs](http://www.brendangregg.com/flamegraphs.html) for
+Python. Pyflame is the only Python profiler based on the
+Linux [ptrace(2)](http://man7.org/linux/man-pages/man2/ptrace.2.html) system
+call. This allows it to take snapshots of the Python call stack without explicit
+instrumentation, meaning you can profile a program without modifying its source
+code! Pyflame is capable of profiling embedded Python interpreters
+like [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/). It fully supports
+profiling multi-threaded Python programs.
 
-Pyflame is written in C++, and was written with attention to speed. The
-profiling overhead is low enough that you can use Pyflame to profile processes
-in production.
+Pyflame is written in C++, with attention to speed and performance. Pyflame
+usually introduces less overhead than the builtin `profile` (or `cProfile`)
+modules, and also emits richer profiling data. The profiling overhead is low
+enough that you can use it to profile live processes in production.
 
 ![pyflame](https://cloud.githubusercontent.com/assets/2734/17949703/8ef7d08c-6a0b-11e6-8bbd-41f82086d862.png)
 
@@ -27,14 +27,17 @@ in production.
         - [Build Dependencies](#build-dependencies)
             - [Debian/Ubuntu](#debianubuntu)
             - [Fedora](#fedora)
-        - [Compilation](#compilation)
+        - [Compiling](#compiling)
             - [Creating A Debian Package](#creating-a-debian-package)
         - [Python 3 Support](#python-3-support)
     - [Installing A Pre-Built Package](#installing-a-pre-built-package)
         - [Ubuntu PPA](#ubuntu-ppa)
         - [Arch Linux](#arch-linux)
     - [Usage](#usage)
-        - [Trace Mode](#trace-mode)
+        - [Attaching To A Running Python Process](#attaching-to-a-running-python-process)
+            - [Attaching To Docker/Containerized Processes](#attaching-to-dockercontainerized-processes)
+        - [Tracing Python Commands](#tracing-python-commands)
+            - [Tracing Programs That Print To Stdout](#tracing-programs-that-print-to-stdout)
         - [Timestamp ("Flame Chart") Mode](#timestamp-flame-chart-mode)
     - [FAQ](#faq)
         - [What Is "(idle)" Time?](#what-is-idle-time)
@@ -83,7 +86,7 @@ although installing both is recommended.
 sudo dnf install autoconf automake gcc-c++ python-devel python3-devel libtool
 ```
 
-### Compilation
+### Compiling
 
 Once you've installed the appropriate build dependencies (see below), you can
 compile Pyflame like so:
@@ -92,8 +95,13 @@ compile Pyflame like so:
 ./autogen.sh
 ./configure      # Plus any options like --prefix.
 make
-make install
+make test        # Optional, test the build! Should take < 1 minute.
+make install     # Optional, install into the configure prefix.
 ```
+
+The Pyflame executable produced by the `make` command will be located at
+`src/pyflame`. Note that the `make test` command requires that you have
+`virtualenv` installed.
 
 #### Creating A Debian Package
 
@@ -154,75 +162,123 @@ to [AUR](https://aur.archlinux.org/packages/pyflame-git/).
 
 ## Usage
 
-After compiling Pyflame you'll get a small executable called `pyflame` (which
-will be in the `src/` directory if you haven't run `make install`). The most
-basic usage is:
+Pyflame has two distinct modes: you can attach to a running process, or you can
+trace a command from start to finish.
+
+### Attaching To A Running Python Process
+
+The default behavior of Pyflame is to attach to an existing Python process. The
+target process is specified via its PID:
 
 ```bash
 # Profile PID for 1s, sampling every 1ms.
 pyflame PID
 ```
 
-The `pyflame` command will send data to stdout that is suitable for using with
+This will print data to stdout in a format that is suitable for usage with
 Brendan Gregg's `flamegraph.pl` tool (which you can
-get [here](https://github.com/brendangregg/FlameGraph)). Therefore a typical
-command pipeline might be like this:
+get [here](https://github.com/brendangregg/FlameGraph)). A typical command
+pipeline might be like this:
 
 ```bash
 # Generate flame graph for pid 12345; assumes flamegraph.pl is in your $PATH.
 pyflame 12345 | flamegraph.pl > myprofile.svg
 ```
 
-You can also change the sample time and sampling frequency:
+You can also change the sample time with `-s`, and the sampling frequency with
+`-r`. Both units are measured in seconds.
 
 ```bash
-# Profile PID for 60 seconds, sampling every 100ms.
-pyflame -s 60 -r 0.1 PID
+# Profile PID for 60 seconds, sampling every 10ms.
+pyflame -s 60 -r 0.01 PID
 ```
 
-### Trace Mode
+The default behavior is to sample for 1 second (equivalent to `-s 1`), taking a
+snapshot every millisecond (equivalent to `-r 0.001`).
 
-Sometimes you want to trace a process from start to finish. An example would be
-tracing the run of a test suite. Pyflame supports this use case. To use it, you
-invoke Pyflame like this:
+#### Attaching To Docker/Containerized Processes
+
+Pyflame knows how to do something interesting: it can attach to containerized
+processes from **outside the container**. It does this by directly using
+the [setns(2)](http://man7.org/linux/man-pages/man2/setns.2.html) system call
+(which is how Docker works under the hood).
+
+If you choose to profile a process from outside the container, use the true PID,
+as reported by `ps` on the host (i.e. outside of the container).
+
+You can also run Pyflame from inside containers, although this is a bit more
+annoying, since normally ptrace is disabled inside containers for security
+reasons. If you attach to a process this way, you will need to use the
+inside-the-container PID. You can find this by running `ps` inside of the
+container itself.
+
+We recommend running Pyflame from outside containers, since it means you can
+keep ptrace disabled inside containers. If you want to run Pyflame inside
+containers, and have problems, please make sure to read the Docker notes in
+the [FAQ](#faq).
+
+### Tracing Python Commands
+
+Sometimes you want to trace a command from start to finish. An example would be
+tracing the run of a test suite or batch job. Pass `-t` as the **last** Pyflame
+flag to run in trace mode. Anything after the `-t` flag is interpreted literally
+as part of the command to run:
 
 ```bash
 # Trace a given command until completion.
 pyflame [regular pyflame options] -t command arg1 arg2...
 ```
 
-Frequently the value of `command` will actually be `python`, but it could be
-something else like `uwsgi` or `py.test`. For instance, here's how Pyflame can
-be used to trace its own test suite:
+
+Often `command` will be `python` or `python3`, but it could be something else,
+like `uwsgi` or `py.test`. For instance, here's how Pyflame can be used to trace
+its own test suite:
 
 ```bash
 # Trace the Pyflame test suite, a.k.a. pyflameception!
 pyflame -t py.test tests/
 ```
 
-Beware that when using the trace mode the stdout/stderr of the pyflame process
-and the traced process will be mixed. This means if the traced process sends
-data to stdout you may need to filter it somehow before sending the output to
-`flamegraph.pl`.
+As described in the docs for attach mode, you can use `-r` to control the
+sampling frequency.
+
+#### Tracing Programs That Print To Stdout
+
+By default, Pyflame will send flame graph data to stdout. If the profiled
+program is also sending data to stdout, then `flamegraph.pl` will see the output
+from both programs, and will get confused. To solve this, use the `-o` option:
+
+```bash
+# Trace a process, sending profiling information to profile.txt
+pyflame -o profile.txt -t python -c 'for x in range(1000): print(x)'
+
+# Convert profile.txt to a flame graph named profile.svg
+flamegraph.pl <profile.txt >profile.svg
+```
 
 ### Timestamp ("Flame Chart") Mode
 
-Pyflame can also generate data with timestamps which can be used to
-generate ["flame charts"](https://addyosmani.com/blog/devtools-flame-charts/)
-that can be viewed in Chrome. These are a type of inverted flamegraph that can
-more readable in some cases. Output in this data format is controlled with the
-`-T` option.
+Generally we recommend using regular flame graphs, generated by `flamegraph.pl`.
+However, Pyflame can also generate data with a special time stamp output format,
+useful for
+generating ["flame charts"](https://addyosmani.com/blog/devtools-flame-charts/)
+(somewhat like an inverted flame graph) that are viewable in Chrome. In some
+cases, the flame chart format is easier to
+understand.
 
-Use `utils/flame-chart-json` to generate the JSON data required for viewing
-Flame Charts using the Chrome CPU profiler.
+To generate a flame chart, use `pyflame -T`, and then pass the output to
+`utils/flame-chart-json` to convert the output into the JSON format required by
+the Chrome CPU profiler:
 
+```bash
+# Generate flame chart data viewable in Chrome.
+pyflame -T [other pyflame options] | flame-chart-json > foo.cpuprofile
 ```
-Usage: cat <pyflame_output_file> | flame-chart-json > <fc_output>.cpuprofile
-(or) pyflame [regular pyflame options] | flame-chart-json > <fc_output>.cpuprofile
-```
 
-Then load the resulting `.cpuprofile` file into the Chrome CPU profiler to view
-flame chart.
+Read the
+following
+[Chrome DevTools article](https://developers.google.com/web/updates/2016/12/devtools-javascript-cpu-profile-migration) for
+instructions on loading a `.cpuprofile` file in Chrome 58+.
 
 ## FAQ
 
@@ -267,18 +323,28 @@ pyflame -s 0 --threads PID
 
 ### Are BSD / OS X / macOS Supported?
 
-No, these aren't supported. Someone who is proficient with low-level C
-programming can probably get BSD to work, as described in issue #3. It is
-probably much more difficult (although not impossible) to adapt this code to
-work on OS X/macOS, since the current code assumes that the host
-uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format) files
-as the executable file format for the Python interpreter.
+Pyflame uses a few Linux-specific interfaces, so unfortunately it is the only
+platform supported right now. Pull requests to add support for other platforms
+are very much wanted.
+
+Someone who is proficient with low-level C systems programming can probably get
+BSD to work without *too much* difficulty. The necessary work to adapt the code
+is described in [Issue #3](https://github.com/uber/pyflame/issues/3).
+
+By comparison, it is probably *much more* work to get Pyflame working on macOS.
+The current code assumes that the host
+uses [ELF](https://en.wikipedia.org/wiki/Executable_and_Linkable_Format)
+object/executable files. Apple uses a different object file format,
+called [Mach-O](https://en.wikipedia.org/wiki/Mach-O), so porting Pyflame to
+macOS would entail doing all of the work to port Pyflame to BSD, *plus*
+additional work to parse Mach-O object files. That said, the Mach-O format is
+documented online (e.g. [here](https://lowlevelbits.org/parsing-mach-o-files/)),
+so a sufficiently motivated person could get macOS support working.
 
 ### What Are These Ptrace Permissions Errors?
 
-Because it's so powerful, the `ptrace(2)` system call is locked down by default
-in various situations by different Linux distributions. In order to use ptrace
-these conditions must be met:
+Because it's so powerful, the `ptrace(2)` system call is often disabled or
+severely restricted. In order to use ptrace, these conditions must be met:
 
  * You must have the
    [`SYS_PTRACE` capability](http://man7.org/linux/man-pages/man7/capabilities.7.html) (which
@@ -291,8 +357,8 @@ expected.
 
 #### Ptrace Errors Within Docker Containers
 
-By default Docker images do not have the `SYS_PTRACE` capability. When you
-invoke `docker run` try using the `--cap-add SYS_PTRACE` option:
+By default Docker images do not have the `SYS_PTRACE` capability. If you want it
+enabled, invoke `docker run` using the `--cap-add SYS_PTRACE` option:
 
 ```bash
 # Allows processes within the Docker container to use ptrace.
@@ -307,11 +373,11 @@ to list your current capabilities:
 capsh --print
 ```
 
-Further note that by design you do not need to run Pyflame from within a Docker
-container. If you have sufficient permissions (i.e. you are root, or the same
-UID as the Docker process) Pyflame can be run from outside of the container and
-inspect a process inside the container. That said, Pyflame will certainly work
-within containers if that's how you want to use it.
+You do not need to run Pyflame from within a Docker container. If you have
+sufficient permissions (i.e. you are root, or the same UID as the Docker
+process) Pyflame can be run from outside a container to inspect a process inside
+a container. This is better for security, since you can keep ptrace disabled in
+the container.
 
 #### Ptrace Errors Outside Docker Containers Or When Not Using Docker
 
@@ -371,6 +437,8 @@ blog posts on Pyflame include:
    Evan Klitzke (2016-10)
  * [Using Uber's Pyflame and Logs to Tackle Scaling Issues](https://benbernardblog.com/using-ubers-pyflame-and-logs-to-tackle-scaling-issues/) by
    Benoit Bernard (2017-02)
+ * [Building Pyflame on Centos 6](http://blog.motitan.com/2017/04/15/python%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7%E4%B9%8Bpyflame/) (Chinese)
+   by Faicker Mo (2017-04)
 
 ## Contributing
 
@@ -402,6 +470,9 @@ You can run the test suite locally like this:
 # Run the Pyflame test suite.
 make test
 ```
+
+If you change any of the Python files in the `tests/` directory, please run your
+changes through [YAPF](https://github.com/google/yapf) before submitting a PR.
 
 ### How Else Can I Help?
 

@@ -4,8 +4,10 @@ ACLOCAL_AMFLAGS = -I m4
 
 man1_MANS = pyflame.man
 
+.PHONY: clean-local
 clean-local:
 	rm -f core.* pyflame
 
+.PHONY: test
 test:
-	bash runtests.sh
+	./runtests.sh

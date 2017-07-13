@@ -35,7 +35,7 @@ def sleep_b():
 
 
 def main():
-    sys.stdout.write('%d\n' % (os.getpid(),))
+    sys.stdout.write('%d\n' % (os.getpid(), ))
     sys.stdout.flush()
     thread_a = threading.Thread(target=sleep_a)
     thread_a.start()

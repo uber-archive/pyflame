@@ -9,10 +9,19 @@ python:
   - "3.4"
   - "3.5"
 
+addons:
+  apt:
+    packages:
+      - autotools-dev
+      - g++
+      - pkg-config
+      - python-dev
+      - python3-dev
+
 script:
   - sudo sysctl kernel.yama.ptrace_scope=0
   - unset PYTHON_CFLAGS
   - ./autogen.sh
   - ./configure
   - make
-  - make test
+  - ./runtests.sh python

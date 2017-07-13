@@ -19,9 +19,7 @@ import random
 import sys
 import threading
 
-
 log = logging.getLogger('dijkstra')
-
 
 try:
     range = xrange
@@ -95,12 +93,13 @@ class Graph(object):
         gx, gy = self.goal
         dx = gx - x
         dy = gy - y
-        return dx*dx + dy*dy
+        return dx * dx + dy * dy
 
     def __str__(self):
-        return '%s(%d, %d, %s) initial=%s goal=%s' % (
-            self.__class__.__name__, self.width, self.height,
-            sorted(self.filled), self.initial, self.goal)
+        return '%s(%d, %d, %s) initial=%s goal=%s' % (self.__class__.__name__,
+                                                      self.width, self.height,
+                                                      sorted(self.filled),
+                                                      self.initial, self.goal)
 
     def __contains__(self, elem):
         return elem in self.filled
@@ -163,7 +162,7 @@ def run():
 def run_times(quiet, times):
     """Run Dijkstra's algorithm in a loop."""
     if not quiet:
-        sys.stdout.write('%d\n' % (os.getpid(),))
+        sys.stdout.write('%d\n' % (os.getpid(), ))
         sys.stdout.flush()
     if times <= 0:
         while True:
@@ -175,14 +174,13 @@ def run_times(quiet, times):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-q', '--quiet', action='store_true',
-                        help='Be quiet')
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Be verbose')
-    parser.add_argument('-t', '--threads', type=int, default=1,
-                        help='Number of threads')
-    parser.add_argument('-n', '--num', type=int, default=0,
-                        help='Number of iterations')
+    parser.add_argument('-q', '--quiet', action='store_true', help='Be quiet')
+    parser.add_argument(
+        '-v', '--verbose', action='store_true', help='Be verbose')
+    parser.add_argument(
+        '-t', '--threads', type=int, default=1, help='Number of threads')
+    parser.add_argument(
+        '-n', '--num', type=int, default=0, help='Number of iterations')
     args = parser.parse_args()
 
     logging.basicConfig()
