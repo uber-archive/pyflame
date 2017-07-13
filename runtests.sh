@@ -4,11 +4,6 @@ set -ex
 
 ENVDIR="./test_env"
 
-# Used for Travis.
-pyversion() {
-  python -c 'import sys; print("python%d" % sys.version_info.major)'
-}
-
 # Run tests using pip; $1 = python version
 run_pip_tests() {
   virtualenv -p "$1" "${ENVDIR}"
@@ -42,8 +37,6 @@ run_rpm_tests() {
 if [ $# -eq 0 ]; then
   try_pip_tests python
   try_pip_tests python3
-elif [ "$1" = "travis" ]; then
-  run_pip_tests "$(pyversion)"
 elif [ "$1" = "rpm" ]; then
   run_rpm_tests
 else

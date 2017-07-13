@@ -15,4 +15,4 @@ script:
   - ./autogen.sh
   - ./configure
   - make
-  - ./runtests.sh travis
+  - ./runtests.sh python
