@@ -43,6 +43,7 @@ class PyFrob {
  private:
   pid_t pid_;
   PyAddresses addrs_;
+  PyVersion version_;
   bool enable_threads_;
   get_threads_t get_threads_;
 

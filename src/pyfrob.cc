@@ -159,6 +159,7 @@ void PyFrob::DetectPython() {
   PyVersion version = PyVersion::Unknown;
   set_addrs_(&version);
   SetPython(version);
+  version_ = version;
 }
 
 std::vector<Thread> PyFrob::GetThreads() {
