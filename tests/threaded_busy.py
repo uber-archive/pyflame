@@ -23,7 +23,7 @@ def do_sleep():
 
 
 def main():
-    sys.stdout.write('%d\n' % (os.getpid(),))
+    sys.stdout.write('%d\n' % (os.getpid(), ))
     sys.stdout.flush()
     thread = threading.Thread(target=do_sleep)
     thread.start()
