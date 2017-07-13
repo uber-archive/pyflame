@@ -1,6 +1,4 @@
-# Pyflame: A Ptracing Profiler For Python
-
-[![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame)
+# Pyflame: A Ptracing Profiler For Python [![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame)
 
 Pyflame is a unique profiling tool that
 generates [flame graphs](http://www.brendangregg.com/flamegraphs.html) for
