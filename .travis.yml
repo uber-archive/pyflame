@@ -10,6 +10,11 @@ python:
   - "3.5"
   - "3.6"
 
+before_install:
+  - sudo add apt-repository ppa:jonathonf/python-3.6 -y
+  - sudo apt-get update -y
+  - sudo apt-get install python3.6 python3.6-dev -y
+
 addons:
   apt:
     packages:
