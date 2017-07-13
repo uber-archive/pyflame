@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#define PYFLAME_PY_VERSION 3
+#define PYFLAME_PY_VERSION 34
 
 #include "./frob.cc"
