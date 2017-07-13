@@ -445,6 +445,9 @@ You can run the test suite locally like this:
 make test
 ```
 
+If you change any of the Python files in the `tests/` directory, please run your
+changes through [YAPF](https://github.com/google/yapf) before submitting a PR.
+
 ### How Else Can I Help?
 
 Patches are not the only way to contribute to Pyflame! Bug reports are very
