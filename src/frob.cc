@@ -136,7 +136,6 @@ void FollowFrame(pid_t pid, unsigned long frame, std::vector<Frame> *stack) {
 }
 
 std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs,
-                               PyVersion version,
                                bool enable_threads) {
   unsigned long istate = 0;
 

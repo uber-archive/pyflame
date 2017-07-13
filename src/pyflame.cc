@@ -290,7 +290,7 @@ finish_arg_parse:
                std::chrono::microseconds(static_cast<long>(seconds * 1000000));
     for (;;) {
       auto now = std::chrono::system_clock::now();
-      std::vector<Thread> threads = frobber.GetThreads(py_version);
+      std::vector<Thread> threads = frobber.GetThreads();
 
       // Only true for non-GIL stacks that we couldn't find a way to profile
       // Currently this means stripped builds on non-AMD64 archs

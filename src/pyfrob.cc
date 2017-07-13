@@ -26,7 +26,6 @@
 
 #define FROB_FUNCS                                            \
   std::vector<Thread> GetThreads(pid_t pid, PyAddresses addr, \
-                                 PyVersion version,           \
                                  bool enable_threads);
 
 namespace pyflame {
@@ -160,9 +159,10 @@ void PyFrob::DetectPython() {
   PyVersion version = PyVersion::Unknown;
   set_addrs_(&version);
   SetPython(version);
+  version_ = version;
 }
 
-std::vector<Thread> PyFrob::GetThreads(PyVersion version) {
-  return get_threads_(pid_, addrs_, version, enable_threads_);
+std::vector<Thread> PyFrob::GetThreads() {
+  return get_threads_(pid_, addrs_, enable_threads_);
 }
 }  // namespace pyflame
