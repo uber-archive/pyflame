@@ -15,4 +15,4 @@ script:
   - ./autogen.sh
   - ./configure
   - make
-  - make test
+  - ./runtests.sh travis

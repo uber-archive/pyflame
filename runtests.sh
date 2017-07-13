@@ -4,10 +4,10 @@ set -ex
 
 ENVDIR="./test_env"
 
+# Used for Travis.
 pyversion() {
   python -c 'import sys; print("python%d" % sys.version_info.major)'
 }
-
 
 # Run tests using pip; $1 = python version
 run_pip_tests() {
@@ -17,6 +17,8 @@ run_pip_tests() {
   . "${ENVDIR}/bin/activate"
   pip install --upgrade pip
   pip install pytest
+
+  find tests/ -name '*.pyc' -delete
   py.test tests/
 
   # clean up the trap
@@ -31,18 +33,21 @@ try_pip_tests() {
   fi
 }
 
-# This runs the tests for building an RPM
-run_fedora_tests() {
+# RPM tests are not allowed to use a virtualenv.
+run_rpm_tests() {
   py.test-2 tests/
   py.test-3 tests/
 }
 
-if [ "$1" = "fedora" ]; then
-  # If the first arg is fedora, don't use Pip
-  run_fedora_tests
-elif [ $# -eq 1 ]; then
-  # Run the tests for a particular version of python
-  run_pip_tests "$1"
-else
+if [ $# -eq 0 ]; then
+  try_pip_tests python
+  try_pip_tests python3
+elif [ "$1" = "travis" ]; then
   run_pip_tests "$(pyversion)"
+elif [ "$1" = "rpm" ]; then
+  run_rpm_tests
+else
+  for py in "$@"; do
+    run_pip_tests "$py"
+  done
 fi
