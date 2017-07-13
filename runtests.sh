@@ -3,21 +3,18 @@
 set -e
 
 ENVDIR="./test_env"
+trap 'rm -rf ${ENVDIR}' EXIT
 
 # Run tests using pip; $1 = python version
 run_pip_tests() {
+  rm -rf "${ENVDIR}"
   virtualenv -q -p "$1" "${ENVDIR}"
-  trap 'rm -rf ${ENVDIR}' EXIT
 
   . "${ENVDIR}/bin/activate"
   pip install -q pytest
 
   find tests/ -name '*.pyc' -delete
   py.test -q tests/
-
-  # clean up the trap
-  rm -rf "${ENVDIR}" EXIT
-  trap "" EXIT
 }
 
 # Make a best effort to run the tests against some Python version.
