@@ -1,48 +1,44 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 ENVDIR="./test_env"
-
-pyversion() {
-  python -c 'import sys; print("python%d" % sys.version_info.major)'
-}
-
+trap 'rm -rf ${ENVDIR}' EXIT
 
 # Run tests using pip; $1 = python version
 run_pip_tests() {
-  virtualenv -p "$1" "${ENVDIR}"
-  trap 'rm -rf ${ENVDIR}' EXIT
+  rm -rf "${ENVDIR}"
+  virtualenv -q -p "$1" "${ENVDIR}"
 
   . "${ENVDIR}/bin/activate"
-  pip install --upgrade pip
-  pip install pytest
-  py.test tests/
+  pip install -q pytest
 
-  # clean up the trap
-  rm -rf "${ENVDIR}" EXIT
-  trap "" EXIT
+  find tests/ -name '*.pyc' -delete
+  py.test -q tests/
 }
 
-# See if we can run the pip tests with this Python version
+# Make a best effort to run the tests against some Python version.
 try_pip_tests() {
-  if which "$1" &>/dev/null; then
+  if command -v "$1" &>/dev/null; then
+    echo -n "Running test suite against "
+    "$1" --version
     run_pip_tests "$1"
   fi
 }
 
-# This runs the tests for building an RPM
-run_fedora_tests() {
+# RPM tests are not allowed to use a virtualenv.
+run_rpm_tests() {
   py.test-2 tests/
   py.test-3 tests/
 }
 
-if [ "$1" = "fedora" ]; then
-  # If the first arg is fedora, don't use Pip
-  run_fedora_tests
-elif [ $# -eq 1 ]; then
-  # Run the tests for a particular version of python
-  run_pip_tests "$1"
+if [ $# -eq 0 ]; then
+  try_pip_tests python
+  try_pip_tests python3
+elif [ "$1" = "rpm" ]; then
+  run_rpm_tests
 else
-  run_pip_tests "$(pyversion)"
+  for py in "$@"; do
+    run_pip_tests "$py"
+  done
 fi
