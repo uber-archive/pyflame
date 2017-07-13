@@ -437,6 +437,8 @@ blog posts on Pyflame include:
    Evan Klitzke (2016-10)
  * [Using Uber's Pyflame and Logs to Tackle Scaling Issues](https://benbernardblog.com/using-ubers-pyflame-and-logs-to-tackle-scaling-issues/) by
    Benoit Bernard (2017-02)
+ * [Building Pyflame on Centos 6](http://blog.motitan.com/2017/04/15/python%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7%E4%B9%8Bpyflame/) (Chinese)
+   by Faicker Mo (2017-04)
 
 ## Contributing
 
