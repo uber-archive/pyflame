@@ -119,12 +119,6 @@ FROB_FUNCS
 }
 #endif
 
-#ifdef ENABLE_PY36
-namespace py36 {
-FROB_FUNCS
-}
-#endif
-
 void PyFrob::set_addrs_(PyVersion *version) {
   Namespace ns(pid_);
   addrs_ = Addrs(pid_, &ns, version);
@@ -150,11 +144,6 @@ void PyFrob::SetPython(PyVersion version) {
 #ifdef ENABLE_PY3
     case PyVersion::Py3:
       get_threads_ = py3::GetThreads;
-      break;
-#endif
-#ifdef ENABLE_PY36
-    case PyVersion::Py36:
-      get_threads_ = py36::GetThreads;
       break;
 #endif
     default:

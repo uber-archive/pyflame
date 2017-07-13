@@ -28,7 +28,7 @@
 #include <Python.h>
 #include <frameobject.h>
 
-#if PYFLAME_PY_VERSION == 3 || PYFLAME_PY_VERSION == 36
+#if PYFLAME_PY_VERSION == 3
 #include <unicodeobject.h>
 #endif
 
