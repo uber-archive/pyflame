@@ -21,7 +21,7 @@ noinst_LTLIBRARIES += libfrob2.la
 pyflame_LDADD += libfrob2.la
 endif
 
-if ENABLE_PY3
+if ENABLE_PY34
 libfrob3_la_SOURCES = frob3.cc
 libfrob3_la_CXXFLAGS = $(PY3_CFLAGS)
 noinst_LTLIBRARIES += libfrob3.la
