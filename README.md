@@ -29,10 +29,10 @@ enough that you can use it to profile live processes in production.
             - [Fedora](#fedora)
         - [Compiling](#compiling)
             - [Creating A Debian Package](#creating-a-debian-package)
-        - [Python 3 Support](#python-3-support)
     - [Installing A Pre-Built Package](#installing-a-pre-built-package)
         - [Ubuntu PPA](#ubuntu-ppa)
         - [Arch Linux](#arch-linux)
+    - [Supported Python Versions](#supported-python-versions)
     - [Usage](#usage)
         - [Attaching To A Running Python Process](#attaching-to-a-running-python-process)
             - [Attaching To Docker/Containerized Processes](#attaching-to-dockercontainerized-processes)
@@ -116,22 +116,6 @@ sudo apt-get install debhelper dh-autoreconf dpkg-dev
 dpkg-buildpackage -uc -us
 ```
 
-### Python 3 Support
-
-Pyflame will detect Python 3 headers at build time, and will be compiled with
-Python 3 support if these headers are detected. Python 3.4 and 3.5 are known to
-work. [Issue #69](https://github.com/uber/pyflame/issues/69) tracks Python 3.6
-support. [Issue #77](https://github.com/uber/pyflame/issues/77) tracks
-supporting earlier Python 3 releases.
-
-There is one known bug specific to Python
-3. [Issue #2](https://github.com/uber/pyflame/issues/2) describes the problem:
-Pyflame assumes that Python 3 file names are encoded using ASCII. This is will
-only affect you if you actually use non-ASCII code points in your `.py` file
-names, which is probably quite uncommon. In principle it is possible to fix this
-although a bit tricky; see the linked issue for details, if you're interested in
-contributing a patch.
-
 ## Installing A Pre-Built Package
 
 Several Pyflame users have created unofficial pre-built packages for different
@@ -159,6 +143,15 @@ provided in the `debian/` directory of this project.
 
 [Oleg Senin](https://github.com/RealFatCat) has added an Arch Linux package
 to [AUR](https://aur.archlinux.org/packages/pyflame-git/).
+
+## Supported Python Versions
+
+Python 2 is supported for Python 2.6 and 2.7. Earlier versions of Python 2
+are likely to work as well, but have not been tested.
+
+Python 3 is supported for Python 3.4, 3.5, and 3.6. Python 3.6 introduces a new
+ABI for the `PyCodeObject` type, so Pyflame only supports the Python 3 versions
+that header files were available for when Pyflame was compiled.
 
 ## Usage
 
