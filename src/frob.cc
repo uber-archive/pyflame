@@ -28,7 +28,7 @@
 #include <Python.h>
 #include <frameobject.h>
 
-#if PYFLAME_PY_VERSION == 3
+#if PYFLAME_PY_VERSION >= 34
 #include <unicodeobject.h>
 #endif
 
@@ -56,8 +56,23 @@ unsigned long StringData(unsigned long addr) {
 // should get inlined
 unsigned long ByteData(unsigned long addr) { return StringData(addr); }
 
-#elif PYFLAME_PY_VERSION == 3
+#elif PYFLAME_PY_VERSION == 34
 namespace py3 {
+unsigned long StringSize(unsigned long addr) {
+  return addr + offsetof(PyVarObject, ob_size);
+}
+
+unsigned long StringData(unsigned long addr) {
+  // this works only if the filename is all ascii *fingers crossed*
+  return addr + sizeof(PyASCIIObject);
+}
+
+unsigned long ByteData(unsigned long addr) {
+  return addr + offsetof(PyBytesObject, ob_sval);
+}
+
+#elif PYFLAME_PY_VERSION == 36
+namespace py36 {
 unsigned long StringSize(unsigned long addr) {
   return addr + offsetof(PyVarObject, ob_size);
 }
