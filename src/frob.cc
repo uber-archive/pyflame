@@ -45,33 +45,50 @@ static_assert(sizeof(long) == sizeof(void *), "wat platform r u on");
 namespace pyflame {
 
 #if PYFLAME_PY_VERSION == 2
-namespace py2 {
-unsigned long StringSize(unsigned long addr) {
-  return addr + offsetof(PyStringObject, ob_size);
+    namespace py2 {
+        unsigned long StringSize(unsigned long addr) {
+            return addr + offsetof(PyStringObject, ob_size);
+        }
+
+        unsigned long StringData(unsigned long addr) {
+            return addr + offsetof(PyStringObject, ob_sval);
+        }
+
+        unsigned long ByteData(unsigned long addr) {
+            return addr + offsetof(PyStringObject, ob_sval);
+        }
 }
 
-unsigned long StringData(unsigned long addr) {
-  return addr + offsetof(PyStringObject, ob_sval);
-}
 #elif PYFLAME_PY_VERSION == 3
-namespace py3 {
-unsigned long StringSize(unsigned long addr) {
-  return addr + offsetof(PyVarObject, ob_size);
+    namespace py3 {
+        unsigned long StringSize(unsigned long addr) {
+            return addr + offsetof(PyVarObject, ob_size);
+        }
+
+        unsigned long StringData(unsigned long addr) {
+            // this works only if the filename is all ascii *fingers crossed*
+            return addr + sizeof(PyASCIIObject);
+        }
+
+        unsigned long ByteData(unsigned long addr) {
+            return addr + offsetof(PyBytesObject, ob_sval);
+        }
 }
 
-unsigned long StringData(unsigned long addr) {
-  // this works only if the filename is all ascii *fingers crossed*
-  return addr + sizeof(PyASCIIObject);
-}
 #elif PYFLAME_PY_VERSION == 36
-namespace py36 {
-unsigned long StringSize(unsigned long addr) {
-  return addr + offsetof(PyVarObject, ob_size);
-}
+    namespace py36 {
+        unsigned long StringSize(unsigned long addr) {
+            return addr + offsetof(PyVarObject, ob_size);
+        }
 
-unsigned long StringData(unsigned long addr) {
-  // this works only if the filename is all ascii *fingers crossed*
-  return addr + sizeof(PyASCIIObject);
+        unsigned long StringData(unsigned long addr) {
+           // this works only if the filename is all ascii *fingers crossed*
+            return addr + sizeof(PyASCIIObject);
+        }
+
+        unsigned long ByteData(unsigned long addr) {
+            return addr + offsetof(PyBytesObject, ob_sval);
+        }
 }
 #else
 static_assert(false, "uh oh, bad PYFLAME_PY_VERSION");
@@ -102,7 +119,7 @@ size_t GetLine(pid_t pid, unsigned long frame, unsigned long f_code) {
   int line = PtracePeek(pid, f_code + offsetof(PyCodeObject, co_firstlineno)) &
              std::numeric_limits<int>::max();
   const std::unique_ptr<uint8_t[]> tbl =
-      PtracePeekBytes(pid, StringData(co_lnotab), size);
+      PtracePeekBytes(pid, ByteData(co_lnotab), size);
   size /= 2;  // since we increment twice in each loop iteration
   const uint8_t *p = tbl.get();
   int addr = 0;
