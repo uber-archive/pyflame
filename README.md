@@ -457,12 +457,9 @@ source code slightly differently, as the formatting rules are updated within
 clang itself. Therefore you should eyeball the changes made when formatting,
 especially if you have an older version of clang.
 
-The Linux-specific code is mostly restricted to the files `src/aslr.*`,
-`src/namespace.*`, and `src/ptrace.*`. If you want to port Pyflame to another
-Unix, you will probably only need to modify these files. If you are interested
-in porting Pyflame to a new platform (e.g. BSD), you might want to start with
-getting the following command to work, before testing against the full test
-suite:
+If you are changing any of the low-level C++ bits, and end up with a broken
+build, you may want to try by getting the following command working before
+testing with the full test suite:
 
 ```bash
 # Sanity check Pyflame.
