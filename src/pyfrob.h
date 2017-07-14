@@ -33,12 +33,11 @@ class PyFrob {
       : pid_(pid), enable_threads_(enable_threads) {}
   ~PyFrob() { PtraceCleanup(pid_); }
 
-  // Must be called before GetThreads() to set/auto-detect the Python version
-  void DetectPython();
-  void SetPython(PyVersion);
+  // Must be called before GetThreads() to detect the Python ABI.
+  void DetectABI(void);
 
   // Get the current frame list.
-  std::vector<Thread> GetThreads();
+  std::vector<Thread> GetThreads(void);
 
  private:
   pid_t pid_;
@@ -46,7 +45,8 @@ class PyFrob {
   bool enable_threads_;
   get_threads_t get_threads_;
 
-  void set_addrs_(PyVersion*);
+  // Fill the addrs_ member
+  PyABI set_addrs_(void);
 };
 
 }  // namespace pyflame

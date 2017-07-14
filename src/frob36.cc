@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// ABI for Python 3.6
 #define PYFLAME_PY_VERSION 36
 
 #include "./frob.cc"

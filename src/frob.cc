@@ -43,8 +43,8 @@ static_assert(sizeof(long) == sizeof(void *), "wat platform r u on");
 
 namespace pyflame {
 
-#if PYFLAME_PY_VERSION == 2
-namespace py2 {
+#if PYFLAME_PY_VERSION == 26
+namespace py26 {
 unsigned long StringSize(unsigned long addr) {
   return addr + offsetof(PyStringObject, ob_size);
 }
@@ -57,7 +57,7 @@ unsigned long StringData(unsigned long addr) {
 unsigned long ByteData(unsigned long addr) { return StringData(addr); }
 
 #elif PYFLAME_PY_VERSION == 34
-namespace py3 {
+namespace py34 {
 unsigned long StringSize(unsigned long addr) {
   return addr + offsetof(PyVarObject, ob_size);
 }
@@ -208,5 +208,5 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs,
 
   return threads;
 }
-}  // namespace py2/py3
+}  // namespace py*
 }  // namespace pyflame

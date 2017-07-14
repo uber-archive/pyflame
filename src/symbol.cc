@@ -118,12 +118,12 @@ std::vector<std::string> ELF::NeededLibs() {
   return needed;
 }
 
-void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version,
-                    PyAddresses &addrs) {
+void ELF::WalkTable(int sym, int str, PyABI *abi, PyAddresses &addrs) {
+  bool have_abi = false;
   const shdr_t *s = shdr(sym);
   const shdr_t *d = shdr(str);
   for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
-    if (have_version && addrs.tstate_addr && addrs.interp_head_addr &&
+    if (have_abi && addrs.tstate_addr && addrs.interp_head_addr &&
         addrs.interp_head_fn_addr) {
       break;
     }
@@ -139,35 +139,34 @@ void ELF::WalkTable(int sym, int str, bool &have_version, PyVersion *version,
     } else if (!addrs.interp_head_addr &&
                strcmp(name, "PyInterpreterState_Head") == 0) {
       addrs.interp_head_fn_addr = static_cast<unsigned long>(sym->st_value);
-    } else if (!have_version) {
+    } else if (!have_abi) {
       if (strcmp(name, "PyString_Type") == 0) {
-        // if we find PyString_Type, it's python 2
-        have_version = true;
-        *version = PyVersion::Py2;
+        // If we find PyString_Type, this is some kind of Python 2.
+        have_abi = true;
+        *abi = PyABI::Py26;
       } else if (strcmp(name, "PyBytes_Type") == 0) {
-        // if we find PyBytes_Type, it's python 3
-        // continue looping though, in case we see a python3.6 symbol
-        *version = PyVersion::Py3;
+        // If we find PyBytes_Type, it's Python 3. Continue looping though, in
+        // case we see a Python 3.6 symbol.
+        *abi = PyABI::Py34;
       } else if (strcmp(name, "_PyEval_RequestCodeExtraIndex") == 0 ||
                  strcmp(name, "_PyCode_GetExtra") == 0 ||
                  strcmp(name, "_PyCode_SetExtra") == 0) {
-        // these symbols were added here
+        // Symbols added for Python 3.6, see:
         // https://www.python.org/dev/peps/pep-0523/
-        have_version = true;
-        *version = PyVersion::Py36;
+        have_abi = true;
+        *abi = PyABI::Py36;
       }
     }
   }
 }
 
-PyAddresses ELF::GetAddresses(PyVersion *version) {
-  bool have_version = false;
+PyAddresses ELF::GetAddresses(PyABI *abi) {
   PyAddresses addrs;
-  WalkTable(dynsym_, dynstr_, have_version, version, addrs);
+  WalkTable(dynsym_, dynstr_, abi, addrs);
   if (symtab_ >= 0 && strtab_ >= 0) {
-    WalkTable(symtab_, strtab_, have_version, version, addrs);
+    WalkTable(symtab_, strtab_, abi, addrs);
   }
-  if (hdr()->e_type == ET_DYN) addrs.pie = true;
+  addrs.pie = (hdr()->e_type == ET_DYN);
   return addrs;
 }
 }  // namespace pyflame
