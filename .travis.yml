@@ -4,10 +4,6 @@ dist: trusty
 language: python
 
 python:
-  - "2.6"
-  - "2.7"
-  - "3.4"
-  - "3.5"
   - "3.6"
 
 addons:
@@ -20,6 +16,7 @@ addons:
       - pkg-config
       - python-dev
       - python3-dev
+      - python3.6-dev
 
 script:
   - sudo sysctl kernel.yama.ptrace_scope=0
