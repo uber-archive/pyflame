@@ -443,6 +443,10 @@ you can contribute to Pyflame.
 This section will explain the Pyflame code for people who are interested in
 contributing source code patches.
 
+A good way to start understanding the code is to read the two blog posts (linked
+above) written by Evan Klitzke. They cover the basics about how Pyflame works,
+and have some helpful information about how the code is organized.
+
 The code style in Pyflame (mostly) conforms to
 the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html).
 Additionally, all of the source code is formatted
@@ -453,11 +457,19 @@ source code slightly differently, as the formatting rules are updated within
 clang itself. Therefore you should eyeball the changes made when formatting,
 especially if you have an older version of clang.
 
-The Linux-specific code is be mostly restricted to the files `src/aslr.*`,
+The Linux-specific code is mostly restricted to the files `src/aslr.*`,
 `src/namespace.*`, and `src/ptrace.*`. If you want to port Pyflame to another
-Unix, you will probably only need to modify these files.
+Unix, you will probably only need to modify these files. If you are interested
+in porting Pyflame to a new platform (e.g. BSD), you might want to start with
+getting the following command to work, before testing against the full test
+suite:
 
-You can run the test suite locally like this:
+```bash
+# Sanity check Pyflame.
+pyflame -t python -c 'print(sum(i for i in range(100000)))'
+```
+
+To run the full test suite locally:
 
 ```bash
 # Run the Pyflame test suite.
@@ -465,7 +477,8 @@ make test
 ```
 
 If you change any of the Python files in the `tests/` directory, please run your
-changes through [YAPF](https://github.com/google/yapf) before submitting a PR.
+changes through [YAPF](https://github.com/google/yapf) before submitting a pull
+request.
 
 ### How Else Can I Help?
 
