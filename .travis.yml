@@ -13,6 +13,7 @@ python:
 addons:
   apt:
     sources:
+      # Needed only because the Travis VMs don't have python-3.6.pc
       - sourceline: 'ppa:jonathonf/python-3.6'
     packages:
       - autotools-dev
@@ -24,7 +25,6 @@ addons:
 
 script:
   - sudo sysctl kernel.yama.ptrace_scope=0
-  - unset PYTHON_CFLAGS
   - ./autogen.sh
   - ./configure
   - make
