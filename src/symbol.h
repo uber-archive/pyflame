@@ -43,8 +43,15 @@ static_assert(false, "unknown build environment");
 
 namespace pyflame {
 
-// The Python interpreter version
-enum class PyVersion { Unknown = 0, Py2 = 2, Py3 = 3, Py36 = 36 };
+// The Python interpreter ABI. Some ABIs span multiple Python versions. In that
+// case, the convention is to name the ABI after the first Python release to
+// introduce the ABI.
+enum class PyABI {
+  Unknown = 0,  // Unknown Python ABI
+  Py26 = 26,    // ABI for Python 2.6/2.7
+  Py34 = 34,    // ABI for Python 3.4/3.5
+  Py36 = 36     // ABI for Python 3.6
+};
 
 // Symbols
 struct PyAddresses {
@@ -71,7 +78,11 @@ struct PyAddresses {
     return res;
   }
 
-  bool is_valid() const { return this->tstate_addr != 0; }
+  // True indicates a non-empty struct.
+  explicit operator bool() const { return !empty(); }
+
+  // Empty means the struct hasn't been initialized.
+  inline bool empty() const { return this->tstate_addr == 0; }
 };
 
 // Representation of an ELF file.
@@ -90,7 +101,7 @@ class ELF {
   // Open a file
   void Open(const std::string &target, Namespace *ns);
 
-  // Close the file; normally the destructor will do this for you.
+  // Close the file; normally the destructor will do this automatically.
   void Close();
 
   // Parse the ELF sections.
@@ -99,9 +110,9 @@ class ELF {
   // Find the DT_NEEDED fields. This is similar to the ldd(1) command.
   std::vector<std::string> NeededLibs();
 
-  // Get the address of _PyThreadState_Current & interp_head, and the Python
-  // version
-  PyAddresses GetAddresses(PyVersion *version);
+  // Get the address of _PyThreadState_Current & interp_head, and set the Python
+  // ABI.
+  PyAddresses GetAddresses(PyABI *abi);
 
  private:
   void *addr_;
@@ -136,7 +147,7 @@ class ELF {
     return reinterpret_cast<const char *>(p() + strings->sh_offset + offset);
   }
 
-  void WalkTable(int sym, int str, bool &have_version, PyVersion *version,
-                 PyAddresses &addrs);
+  // Walk the symbol table.
+  void WalkTable(int sym, int str, PyABI *abi, PyAddresses &addrs);
 };
 }  // namespace pyflame
