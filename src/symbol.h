@@ -148,6 +148,6 @@ class ELF {
   }
 
   // Walk the symbol table, and return the detected ABI.
-  PyABI WalkTable(int sym, int str, PyAddresses &addrs);
+  PyABI WalkTable(int sym, int str, PyAddresses *addrs);
 };
 }  // namespace pyflame

@@ -118,14 +118,14 @@ std::vector<std::string> ELF::NeededLibs() {
   return needed;
 }
 
-PyABI ELF::WalkTable(int sym, int str, PyAddresses &addrs) {
+PyABI ELF::WalkTable(int sym, int str, PyAddresses *addrs) {
   PyABI abi{};
   bool have_abi = false;
   const shdr_t *s = shdr(sym);
   const shdr_t *d = shdr(str);
   for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
-    if (have_abi && addrs.tstate_addr && addrs.interp_head_addr &&
-        addrs.interp_head_fn_addr) {
+    if (have_abi && addrs->tstate_addr && addrs->interp_head_addr &&
+        addrs->interp_head_fn_addr) {
       break;
     }
 
@@ -133,13 +133,13 @@ PyABI ELF::WalkTable(int sym, int str, PyAddresses &addrs) {
         reinterpret_cast<const sym_t *>(p() + s->sh_offset + i * s->sh_entsize);
     const char *name =
         reinterpret_cast<const char *>(p() + d->sh_offset + sym->st_name);
-    if (!addrs.tstate_addr && strcmp(name, "_PyThreadState_Current") == 0) {
-      addrs.tstate_addr = static_cast<unsigned long>(sym->st_value);
-    } else if (!addrs.interp_head_addr && strcmp(name, "interp_head") == 0) {
-      addrs.interp_head_addr = static_cast<unsigned long>(sym->st_value);
-    } else if (!addrs.interp_head_addr &&
+    if (!addrs->tstate_addr && strcmp(name, "_PyThreadState_Current") == 0) {
+      addrs->tstate_addr = static_cast<unsigned long>(sym->st_value);
+    } else if (!addrs->interp_head_addr && strcmp(name, "interp_head") == 0) {
+      addrs->interp_head_addr = static_cast<unsigned long>(sym->st_value);
+    } else if (!addrs->interp_head_addr &&
                strcmp(name, "PyInterpreterState_Head") == 0) {
-      addrs.interp_head_fn_addr = static_cast<unsigned long>(sym->st_value);
+      addrs->interp_head_fn_addr = static_cast<unsigned long>(sym->st_value);
     } else if (!have_abi) {
       if (strcmp(name, "PyString_Type") == 0) {
         // If we find PyString_Type, this is some kind of Python 2.
@@ -163,11 +163,10 @@ PyABI ELF::WalkTable(int sym, int str, PyAddresses &addrs) {
 }
 
 PyAddresses ELF::GetAddresses(PyABI *abi) {
-  PyABI detected_abi{};
   PyAddresses addrs;
-  detected_abi = WalkTable(dynsym_, dynstr_, addrs);
+  PyABI detected_abi = WalkTable(dynsym_, dynstr_, &addrs);
   if (symtab_ >= 0 && strtab_ >= 0) {
-    detected_abi = WalkTable(symtab_, strtab_, addrs);
+    detected_abi = WalkTable(symtab_, strtab_, &addrs);
   }
   addrs.pie = (hdr()->e_type == ET_DYN);
   return addrs;
