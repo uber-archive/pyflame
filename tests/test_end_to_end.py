@@ -45,7 +45,7 @@ def proc(argv, wait_for_pid=True):
 
 
 def python_command():
-    return 'python{}'.format(sys.version_info[0])
+    return 'python%d' % (sys.version_info[0], )
 
 
 def python_proc(test_file):
