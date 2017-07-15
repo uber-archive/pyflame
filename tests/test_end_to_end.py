@@ -242,7 +242,7 @@ def test_sample_not_python(not_python):
 def test_trace(force_abi):
     args = ['./src/pyflame']
     if force_abi:
-        abi_string = '%d%d' % (sys.version_info.major, sys.version_info.minor)
+        abi_string = '%d%d' % sys.version_info[:2]
         args.extend(['--abi', abi_string])
     args.extend(['-t', python_command(), 'tests/exit_early.py', '-s'])
 
