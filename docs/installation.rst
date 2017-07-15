@@ -38,8 +38,8 @@ Again, you technically only need one of ``python-devel`` and
 Compiling
 ---------
 
-Once you've installed the appropriate build dependencies (see below),
-you can compile Pyflame like so:
+Once you've installed the appropriate build dependencies, you can compile
+Pyflame like so:
 
 .. code:: bash
 
@@ -49,9 +49,15 @@ you can compile Pyflame like so:
     make test        # Optional, test the build! Should take < 1 minute.
     make install     # Optional, install into the configure prefix.
 
-The Pyflame executable produced by the ``make`` command will be located
-at ``src/pyflame``. Note that the ``make test`` command requires that
-you have ``virtualenv`` installed.
+The Pyflame executable produced by the ``make`` command will be located at
+``src/pyflame``. Note that the ``make test`` command requires that you have the
+``virtualenv`` command installed. You can also sanity check your build with a
+command like:
+
+.. code:: bash
+
+    # Or use -t python3, as appropriate.
+    pyflame -t python -c 'print(sum(i for i in range(100000)))'
 
 Creating A Debian Package
 ~~~~~~~~~~~~~~~~~~~~~~~~~
