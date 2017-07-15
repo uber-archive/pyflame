@@ -1,3 +1,9 @@
+pyflame (1.4.2) unstable; urgency=medium
+
+  * Add --abi, similar to old -p option.
+
+ -- Evan Klitzke <evan@eklitzke.org>  Fri, 14 Jul 2017 18:56:36 -0700
+
 pyflame (1.4.1) unstable; urgency=medium
 
   * Remove -p/--python option.
