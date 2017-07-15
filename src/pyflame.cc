@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
   std::ofstream output_file;
   for (;;) {
     static struct option long_options[] = {
-        {"abi", no_argument, 0, 'a'},
+        {"abi", required_argument, 0, 'a'},
         {"help", no_argument, 0, 'h'},
         {"rate", required_argument, 0, 'r'},
         {"seconds", required_argument, 0, 's'},
