@@ -118,7 +118,8 @@ std::vector<std::string> ELF::NeededLibs() {
   return needed;
 }
 
-void ELF::WalkTable(int sym, int str, PyABI *abi, PyAddresses &addrs) {
+PyABI ELF::WalkTable(int sym, int str, PyAddresses &addrs) {
+  PyABI abi{};
   bool have_abi = false;
   const shdr_t *s = shdr(sym);
   const shdr_t *d = shdr(str);
@@ -143,30 +144,35 @@ void ELF::WalkTable(int sym, int str, PyABI *abi, PyAddresses &addrs) {
       if (strcmp(name, "PyString_Type") == 0) {
         // If we find PyString_Type, this is some kind of Python 2.
         have_abi = true;
-        *abi = PyABI::Py26;
+        abi = PyABI::Py26;
       } else if (strcmp(name, "PyBytes_Type") == 0) {
         // If we find PyBytes_Type, it's Python 3. Continue looping though, in
         // case we see a Python 3.6 symbol.
-        *abi = PyABI::Py34;
+        abi = PyABI::Py34;
       } else if (strcmp(name, "_PyEval_RequestCodeExtraIndex") == 0 ||
                  strcmp(name, "_PyCode_GetExtra") == 0 ||
                  strcmp(name, "_PyCode_SetExtra") == 0) {
         // Symbols added for Python 3.6, see:
         // https://www.python.org/dev/peps/pep-0523/
         have_abi = true;
-        *abi = PyABI::Py36;
+        abi = PyABI::Py36;
       }
     }
   }
+  return abi;
 }
 
 PyAddresses ELF::GetAddresses(PyABI *abi) {
+  PyABI detected_abi{};
   PyAddresses addrs;
-  WalkTable(dynsym_, dynstr_, abi, addrs);
+  detected_abi = WalkTable(dynsym_, dynstr_, addrs);
   if (symtab_ >= 0 && strtab_ >= 0) {
-    WalkTable(symtab_, strtab_, abi, addrs);
+    detected_abi = WalkTable(symtab_, strtab_, addrs);
   }
   addrs.pie = (hdr()->e_type == ET_DYN);
   return addrs;
+  if (abi != nullptr) {
+    *abi = detected_abi;
+  }
 }
 }  // namespace pyflame

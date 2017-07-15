@@ -153,6 +153,10 @@ Python 3 is supported for Python 3.4, 3.5, and 3.6. Python 3.6 introduces a new
 ABI for the `PyCodeObject` type, so Pyflame only supports the Python 3 versions
 that header files were available for when Pyflame was compiled.
 
+It's possible for Pyflame to get confused about what Python version the target
+process is when profiling an embedded Python build, such as uWSGI. If you run
+into this issue, use the `--abi` option to force a particular Python ABI.
+
 ## Usage
 
 Pyflame has two distinct modes: you can attach to a running process, or you can

@@ -34,7 +34,7 @@ class PyFrob {
   ~PyFrob() { PtraceCleanup(pid_); }
 
   // Must be called before GetThreads() to detect the Python ABI.
-  void DetectABI(void);
+  void DetectABI(PyABI abi);
 
   // Get the current frame list.
   std::vector<Thread> GetThreads(void);
@@ -46,7 +46,7 @@ class PyFrob {
   get_threads_t get_threads_;
 
   // Fill the addrs_ member
-  PyABI set_addrs_(void);
+  void set_addrs_(PyABI *abi);
 };
 
 }  // namespace pyflame
