@@ -151,6 +151,9 @@ void PyFrob::DetectABI(PyABI abi) {
     set_addrs_(nullptr);
   }
   switch (abi) {
+    case PyABI::Unknown:
+      throw FatalException("Failed to detect a Python ABI.");
+      break;
 #ifdef ENABLE_PY26
     case PyABI::Py26:
       get_threads_ = py26::GetThreads;
