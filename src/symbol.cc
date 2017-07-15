@@ -169,9 +169,9 @@ PyAddresses ELF::GetAddresses(PyABI *abi) {
     detected_abi = WalkTable(symtab_, strtab_, &addrs);
   }
   addrs.pie = (hdr()->e_type == ET_DYN);
-  return addrs;
   if (abi != nullptr) {
     *abi = detected_abi;
   }
+  return addrs;
 }
 }  // namespace pyflame
