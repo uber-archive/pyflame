@@ -67,3 +67,22 @@ pyflame -o prof.txt -t py.test tests/
 In all of these cases you will get flame graph data on stdout (or to a file if
 you used `-o`). This data is in the format expected by `flamegraph.pl`, which
 you can find [here](https://github.com/brendangregg/FlameGraph).
+
+## FAQ
+
+The full FAQ is [here](https://pyflame.readthedocs.io/en/latest/faq.html).
+
+### What's The Deal With (idle) Time?
+
+Full
+answer
+[here](https://pyflame.readthedocs.io/en/latest/faq.html#what-is-idle-time).
+**tl;dr** use the `-x` option if you find the (idle) output annoying.
+
+### What About These Ptrace Errors?
+
+See [here](https://pyflame.readthedocs.io/en/latest/faq.html#what-are-these-ptrace-permissions-errors).
+
+### How Do I Profile Threaded Applications?
+
+Use the `--threads` option.
