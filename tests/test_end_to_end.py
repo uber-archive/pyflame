@@ -16,6 +16,7 @@ import contextlib
 import pytest
 import re
 import subprocess
+import sys
 
 IDLE_RE = re.compile(r'^\(idle\) \d+$')
 FLAMEGRAPH_RE = re.compile(r'^(.+) (\d+)$')
@@ -43,8 +44,12 @@ def proc(argv, wait_for_pid=True):
         proc.kill()
 
 
+def python_command():
+    return 'python%d' % (sys.version_info[0], )
+
+
 def python_proc(test_file):
-    return proc(['python', './tests/%s' % (test_file, )])
+    return proc([python_command(), './tests/%s' % (test_file, )])
 
 
 @pytest.yield_fixture
@@ -233,11 +238,16 @@ def test_sample_not_python(not_python):
     assert proc.returncode == 1
 
 
-def test_trace():
+@pytest.mark.parametrize('force_abi', [(False, ), (True, )])
+def test_trace(force_abi):
+    args = ['./src/pyflame']
+    if force_abi:
+        abi_string = '%d%d' % sys.version_info[:2]
+        args.extend(['--abi', abi_string])
+    args.extend(['-t', python_command(), 'tests/exit_early.py', '-s'])
+
     proc = subprocess.Popen(
-        ['./src/pyflame', '-t', 'python', 'tests/exit_early.py', '-s'],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not err
     assert proc.returncode == 0

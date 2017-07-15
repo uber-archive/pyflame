@@ -147,7 +147,7 @@ class ELF {
     return reinterpret_cast<const char *>(p() + strings->sh_offset + offset);
   }
 
-  // Walk the symbol table.
-  void WalkTable(int sym, int str, PyABI *abi, PyAddresses &addrs);
+  // Walk the symbol table, and return the detected ABI.
+  PyABI WalkTable(int sym, int str, PyAddresses *addrs);
 };
 }  // namespace pyflame

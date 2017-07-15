@@ -126,10 +126,9 @@ FROB_FUNCS
 #endif
 
 // Fill the addrs_ member
-PyABI PyFrob::set_addrs_(void) {
-  PyABI abi{};
+void PyFrob::set_addrs_(PyABI *abi) {
   Namespace ns(pid_);
-  addrs_ = Addrs(pid_, &ns, &abi);
+  addrs_ = Addrs(pid_, &ns, abi);
 #ifdef __amd64__
   // If we didn't find the interp_head address, but we did find the public
   // PyInterpreterState_Head
@@ -140,12 +139,21 @@ PyABI PyFrob::set_addrs_(void) {
         PtraceCallFunction(pid_, addrs_.interp_head_fn_addr);
   }
 #endif
-  return abi;
 }
 
-void PyFrob::DetectABI(void) {
-  PyABI abi = set_addrs_();
+void PyFrob::DetectABI(PyABI abi) {
+  // Set up the function pointers. By default, we auto-detect the ABI. If an ABI
+  // is explicitly passed to us, then use that one (even though it could be
+  // wrong)!
+  if (abi == PyABI::Unknown) {
+    set_addrs_(&abi);
+  } else {
+    set_addrs_(nullptr);
+  }
   switch (abi) {
+    case PyABI::Unknown:
+      throw FatalException("Failed to detect a Python ABI.");
+      break;
 #ifdef ENABLE_PY26
     case PyABI::Py26:
       get_threads_ = py26::GetThreads;

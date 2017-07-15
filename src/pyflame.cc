@@ -48,6 +48,7 @@ const char usage_str[] =
      "       pyflame [-t|--trace] command arg1 arg2...\n"
      "\n"
      "General Options:\n"
+     "      --abi            Force a particular Python ABI (26, 34, 36)\n"
      "  -h, --help           Show help\n"
      "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
      "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
@@ -119,6 +120,7 @@ inline bool IsPyflame(const std::string &str) {
 }  // namespace
 
 int main(int argc, char **argv) {
+  PyABI abi{};
   bool trace = false;
   bool include_idle = true;
   bool include_ts = false;
@@ -128,6 +130,7 @@ int main(int argc, char **argv) {
   std::ofstream output_file;
   for (;;) {
     static struct option long_options[] = {
+        {"abi", required_argument, 0, 'a'},
         {"help", no_argument, 0, 'h'},
         {"rate", required_argument, 0, 'r'},
         {"seconds", required_argument, 0, 's'},
@@ -149,6 +152,25 @@ int main(int argc, char **argv) {
         if (long_options[option_index].flag != 0) {
           // if the option set a flag, do nothing
           break;
+        }
+        break;
+      case 'a':
+        switch (std::strtol(optarg, nullptr, 10)) {
+          case 26:
+          case 27:
+            abi = PyABI::Py26;
+            break;
+          case 34:
+          case 35:
+            abi = PyABI::Py34;
+            break;
+          case 36:
+            abi = PyABI::Py36;
+            break;
+          default:
+            std::cerr << "Unknown ABI version, should be one of {26, 34, 36}\n";
+            return 1;
+            break;
         }
         break;
       case 'h':
@@ -273,7 +295,7 @@ finish_arg_parse:
   try {
     PtraceAttach(pid);
     PyFrob frobber(pid, enable_threads);
-    frobber.DetectABI();
+    frobber.DetectABI(abi);
 
     const std::chrono::microseconds interval{
         static_cast<long>(sample_rate * 1000000)};
