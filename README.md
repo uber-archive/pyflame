@@ -1,6 +1,8 @@
+# Pyflame: A Ptracing Profiler For Python
+
 [![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame) [![Docs Status](https://readthedocs.org/projects/pyflame/badge/?version=latest)](http://pyflame.readthedocs.io/en/latest/?badge=latest)
 
-# Pyflame: A Ptracing Profiler For Python
+https://pyflame.readthedocs.io/
 
 Pyflame is a unique profiling tool that
 generates [flame graphs](http://www.brendangregg.com/flamegraphs.html) for
@@ -19,15 +21,9 @@ enough that you can use it to profile live processes in production.
 
 ![pyflame](https://cloud.githubusercontent.com/assets/2734/17949703/8ef7d08c-6a0b-11e6-8bbd-41f82086d862.png)
 
-## Instructions
-
-Please find the **full documentation** at: https://pyflame.readthedocs.io/
+## Quickstart
 
 ### Building And Installing
-
-The full documentation for building Pyflame
-is [here](https://pyflame.readthedocs.io/en/latest/installation.html). But
-here's a quick guide for those who know what they're doing.
 
 For Debian/Ubuntu, install the following:
 
@@ -51,7 +47,7 @@ and use.
 
 The full documentation for using Pyflame
 is [here](https://pyflame.readthedocs.io/en/latest/usage.html). But
-here's a quick recap:
+here's a quick guide:
 
 ```bash
 # Attach to PID 12345 and profile it for 1 second
@@ -77,7 +73,7 @@ The full FAQ is [here](https://pyflame.readthedocs.io/en/latest/faq.html).
 Full
 answer
 [here](https://pyflame.readthedocs.io/en/latest/faq.html#what-is-idle-time).
-**tl;dr** use the `-x` option if you find the (idle) output annoying.
+tl;dr: use the `-x` flag to suppress (idle) output.
 
 ### What About These Ptrace Errors?
 
