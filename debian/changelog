@@ -1,3 +1,9 @@
+pyflame (1.4.4) unstable; urgency=medium
+
+  * Fix building against just Python 2
+
+ -- Evan Klitzke <evan@death.star>  Mon, 24 Jul 2017 13:28:25 -0700
+
 pyflame (1.4.3) unstable; urgency=medium
 
   * Fix building against 3.5.
