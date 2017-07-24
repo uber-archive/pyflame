@@ -2,22 +2,22 @@
 
 [![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame) [![Docs Status](https://readthedocs.org/projects/pyflame/badge/?version=latest)](http://pyflame.readthedocs.io/en/latest/?badge=latest)
 
-https://pyflame.readthedocs.io/
-
-Pyflame is a unique profiling tool that
+Pyflame is a high performance profiling tool that
 generates [flame graphs](http://www.brendangregg.com/flamegraphs.html) for
-Python. Pyflame is the only Python profiler based on the
+Python. Pyflame is implemented in C++, and uses the
 Linux [ptrace(2)](http://man7.org/linux/man-pages/man2/ptrace.2.html) system
-call. This allows it to take snapshots of the Python call stack without explicit
-instrumentation, meaning you can profile a program without modifying its source
-code! Pyflame is capable of profiling embedded Python interpreters
-like [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/). It fully supports
-profiling multi-threaded Python programs.
+call to collect profiling information. It can take snapshots of the Python call
+stack without explicit instrumentation, meaning you can profile a program
+without modifying its source code. Pyflame is capable of profiling embedded
+Python interpreters like [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/).
+It fully supports profiling multi-threaded Python programs.
 
-Pyflame is written in C++, with attention to speed and performance. Pyflame
-usually introduces less overhead than the builtin `profile` (or `cProfile`)
-modules, and also emits richer profiling data. The profiling overhead is low
-enough that you can use it to profile live processes in production.
+Pyflame usually introduces significantly less overhead than the builtin
+`profile` (or `cProfile`) modules, and emits richer profiling data. The
+profiling overhead is low enough that you can use it to profile live processes
+in production.
+
+**Full Documentation:** https://pyflame.readthedocs.io
 
 ![pyflame](https://cloud.githubusercontent.com/assets/2734/17949703/8ef7d08c-6a0b-11e6-8bbd-41f82086d862.png)
 
