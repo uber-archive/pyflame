@@ -170,7 +170,7 @@ std::unique_ptr<uint8_t[]> PtracePeekBytes(pid_t pid, unsigned long addr,
   return bytes;
 }
 
-#ifdef __amd64__
+#if defined(__amd64__) && ENABLE_THREADS
 static const long syscall_x86 = 0x050f;  // x86 code for SYSCALL
 
 static unsigned long probe_ = 0;

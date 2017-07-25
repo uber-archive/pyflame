@@ -4,6 +4,18 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/pyflame.cc])
+AC_CANONICAL_TARGET
+
+# Fail early if the user tries to build on BSD/OS X
+AS_IF([test x"$target_os" = xlinux-gnu], [], [AC_MSG_ERROR([Pyflame can only be built for Linux hosts])])
+
+AS_IF([test x"$target_cpu" = xx86_64],
+      [AC_MSG_NOTICE([x86-64 system, threads will be supported])
+       AC_DEFINE([ENABLE_THREADS], [1], [Threads are enabled.])
+      ],
+      [AC_MSG_NOTICE([Threading support will be disabled (only works on x86-64)])
+       AC_DEFINE([ENABLE_THREADS], [0], [Threads are enabled.])
+      ])
 
 AM_INIT_AUTOMAKE([dist-bzip2 foreign subdir-objects -Wall -Werror])
 
@@ -20,8 +32,8 @@ AM_PROG_AR
 
 LT_INIT
 
-# Fail early if the user tries to build on OS X
-AC_CHECK_HEADERS([linux/ptrace.h], [], [AC_MSG_ERROR([Pyflame only supports Linux hosts])])
+# Ensure Linux kernel headers are present
+AC_CHECK_HEADERS([linux/ptrace.h], [], [AC_MSG_ERROR([Linux kernel headers missing])])
 
 AC_LANG([C++])
 

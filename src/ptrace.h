@@ -21,6 +21,8 @@
 #include <memory>
 #include <string>
 
+#include "./config.h"
+
 namespace pyflame {
 
 // attach to a process
@@ -54,7 +56,7 @@ void PtraceCont(pid_t pid);
 // Execute a single instruction in a traced process
 void PtraceSingleStep(pid_t pid);
 
-#ifdef __amd64__
+#if ENABLE_THREADS
 // call a function pointer
 long PtraceCallFunction(pid_t pid, unsigned long addr);
 #endif
