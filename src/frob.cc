@@ -43,6 +43,52 @@ static_assert(sizeof(long) == sizeof(void *), "wat platform r u on");
 
 namespace pyflame {
 
+#if PYFLAME_PY_VERSION == 26
+namespace py26 {
+unsigned long StringSize(unsigned long addr) {
+  return addr + offsetof(PyStringObject, ob_size);
+}
+
+unsigned long ByteData(unsigned long addr) {
+  return addr + offsetof(PyStringObject, ob_sval);
+}
+
+std::string StringData(pid_t pid, unsigned long addr) {
+  return PtracePeekString(pid, ByteData(addr));
+}
+
+#elif PYFLAME_PY_VERSION == 34
+namespace py34 {
+std::string StringDataPython3(pid_t pid, unsigned long addr);
+
+unsigned long StringSize(unsigned long addr) {
+  return addr + offsetof(PyVarObject, ob_size);
+}
+
+std::string StringData(pid_t pid, unsigned long addr) { return StringDataPython3(pid, addr); }
+
+unsigned long ByteData(unsigned long addr) {
+  return addr + offsetof(PyBytesObject, ob_sval);
+}
+
+#elif PYFLAME_PY_VERSION == 36
+namespace py36 {
+std::string StringDataPython3(pid_t pid, unsigned long addr);
+
+unsigned long StringSize(unsigned long addr) {
+  return addr + offsetof(PyVarObject, ob_size);
+}
+
+std::string StringData(pid_t pid, unsigned long addr) { return StringDataPython3(pid, addr); }
+
+unsigned long ByteData(unsigned long addr) {
+  return addr + offsetof(PyBytesObject, ob_sval);
+}
+
+#else
+static_assert(false, "uh oh, bad PYFLAME_PY_VERSION");
+#endif
+
 #if PYFLAME_PY_VERSION >= 34
 std::string StringDataPython3(pid_t pid, unsigned long addr) {
   // TODO: This function only works for Python >= 3.3. Is it also possible to
@@ -131,48 +177,6 @@ std::string StringDataPython3(pid_t pid, unsigned long addr) {
 
   return dump.str();
 }
-#endif
-
-#if PYFLAME_PY_VERSION == 26
-namespace py26 {
-unsigned long StringSize(unsigned long addr) {
-  return addr + offsetof(PyStringObject, ob_size);
-}
-
-unsigned long ByteData(unsigned long addr) {
-  return addr + offsetof(PyStringObject, ob_sval);
-}
-
-std::string StringData(pid_t pid, unsigned long addr) {
-  return PtracePeekString(pid, ByteData(addr));
-}
-
-#elif PYFLAME_PY_VERSION == 34
-namespace py34 {
-unsigned long StringSize(unsigned long addr) {
-  return addr + offsetof(PyVarObject, ob_size);
-}
-
-std::string StringData(pid_t pid, unsigned long addr) { return StringDataPython3(pid, addr); }
-
-unsigned long ByteData(unsigned long addr) {
-  return addr + offsetof(PyBytesObject, ob_sval);
-}
-
-#elif PYFLAME_PY_VERSION == 36
-namespace py36 {
-unsigned long StringSize(unsigned long addr) {
-  return addr + offsetof(PyVarObject, ob_size);
-}
-
-std::string StringData(pid_t pid, unsigned long addr) { return StringDataPython3(pid, addr); }
-
-unsigned long ByteData(unsigned long addr) {
-  return addr + offsetof(PyBytesObject, ob_sval);
-}
-
-#else
-static_assert(false, "uh oh, bad PYFLAME_PY_VERSION");
 #endif
 
 // Extract the line number from the code object. Python uses a compressed table
