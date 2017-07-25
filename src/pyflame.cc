@@ -35,11 +35,6 @@
 #include "./thread.h"
 #include "./version.h"
 
-// FIXME: this logic should be moved to configure.ac
-#if !defined(ENABLE_PY26) && !defined(ENABLE_PY34) && !defined(ENABLE_PY36)
-static_assert(false, "Need Python2 or Python3 support to build");
-#endif
-
 using namespace pyflame;
 
 namespace {

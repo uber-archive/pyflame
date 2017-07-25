@@ -55,18 +55,23 @@ AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([getpagesize memmove munmap strerror strtol strtoul])
 
-PKG_CHECK_MODULES([PY26], [python2], [enable_py2="yes"], [AC_MSG_WARN([Building without Python 2 support])])
-AM_CONDITIONAL([ENABLE_PY26], [test x"$enable_py2" = xyes])
-AM_COND_IF([ENABLE_PY26], [AC_DEFINE([ENABLE_PY26], [1], [Python2 is enabled])])
+PKG_CHECK_MODULES([PY26], [python2], [enable_py26="yes"], [AC_MSG_WARN([Building without Python 2.6/2.7 support])])
+AM_CONDITIONAL([ENABLE_PY26], [test x"$enable_py26" = xyes])
+AM_COND_IF([ENABLE_PY26], [AC_DEFINE([ENABLE_PY26], [1], [Python 2.6/2.7 will be enabled])])
 
 PKG_CHECK_MODULES([PY34], [python-3.4], [enable_py34="yes"],
                           [PKG_CHECK_MODULES([PY34], [python-3.5], [enable_py34="yes"], [AC_MSG_WARN([Building without Python 3.4/3.5 support])])])
 AM_CONDITIONAL([ENABLE_PY34], [test x"$enable_py34" = xyes])
-AM_COND_IF([ENABLE_PY34], [AC_DEFINE([ENABLE_PY34], [1], [Python3 is enabled])])
+AM_COND_IF([ENABLE_PY34], [AC_DEFINE([ENABLE_PY34], [1], [Python 3.4/3.5 will be enabled])])
 
 PKG_CHECK_MODULES([PY36], [python-3.6], [enable_py36="yes"], [AC_MSG_WARN([Building without Python 3.6 support])])
 AM_CONDITIONAL([ENABLE_PY36], [test x"$enable_py36" = xyes])
-AM_COND_IF([ENABLE_PY36], [AC_DEFINE([ENABLE_PY36], [1], [Python36 is enabled])])
+AM_COND_IF([ENABLE_PY36], [AC_DEFINE([ENABLE_PY36], [1], [Python 3.6 will be enabled])])
+
+AS_IF([test x"$enable_py26" = xyes -o x"$enable_py34" = xyes -o x"$enable_py36" = xyes],
+      [AC_MSG_NOTICE([Found at least one copy of Python.h])],
+      [AC_MSG_ERROR([Failed to find a supported Python.h])]
+)
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
