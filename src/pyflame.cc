@@ -44,11 +44,11 @@ const char usage_str[] =
      "\n"
      "General Options:\n"
      "      --abi            Force a particular Python ABI (26, 34, 36)\n"
+     "      --threads        Enable multi-threading support\n"
      "  -h, --help           Show help\n"
      "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
      "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
      "(default 0.001)\n"
-     "  -L, --threads        Enable multi-threading support\n"
      "  -o, --output=PATH    Output to file path\n"
      "  -t, --trace          Trace a child process\n"
      "  -T, --timestamp      Include timestamps for each stacktrace\n"
@@ -125,20 +125,22 @@ int main(int argc, char **argv) {
   std::ofstream output_file;
   for (;;) {
     static struct option long_options[] = {
-        {"abi", required_argument, 0, 'a'},
-        {"help", no_argument, 0, 'h'},
-        {"rate", required_argument, 0, 'r'},
-        {"seconds", required_argument, 0, 's'},
-        {"threads", no_argument, 0, 'L'},  // ps also uses -L for threads (LWP)
-        {"output", required_argument, 0, 'o'},
-        {"trace", no_argument, 0, 't'},
-        {"timestamp", no_argument, 0, 'T'},
-        {"version", no_argument, 0, 'v'},
-        {"exclude-idle", no_argument, 0, 'x'},
-        {0, 0, 0, 0}};
+      {"abi", required_argument, 0, 'a'},
+      {"help", no_argument, 0, 'h'},
+      {"rate", required_argument, 0, 'r'},
+      {"seconds", required_argument, 0, 's'},
+#if ENABLE_THREADS
+      {"threads", no_argument, 0, 'L'},
+#endif
+      {"output", required_argument, 0, 'o'},
+      {"trace", no_argument, 0, 't'},
+      {"timestamp", no_argument, 0, 'T'},
+      {"version", no_argument, 0, 'v'},
+      {"exclude-idle", no_argument, 0, 'x'},
+      {0, 0, 0, 0}
+    };
     int option_index = 0;
-    int c =
-        getopt_long(argc, argv, "hr:s:tTvxLo:", long_options, &option_index);
+    int c = getopt_long(argc, argv, "hr:s:tTvxo:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -172,9 +174,11 @@ int main(int argc, char **argv) {
         std::cout << usage_str;
         return 0;
         break;
+#ifdef ENABLE_THREADS
       case 'L':
         enable_threads = true;
         break;
+#endif
       case 'r':
         sample_rate = std::stod(optarg);
         break;

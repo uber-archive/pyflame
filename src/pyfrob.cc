@@ -129,7 +129,7 @@ FROB_FUNCS
 void PyFrob::set_addrs_(PyABI *abi) {
   Namespace ns(pid_);
   addrs_ = Addrs(pid_, &ns, abi);
-#ifdef __amd64__
+#if ENABLE_THREADS
   // If we didn't find the interp_head address, but we did find the public
   // PyInterpreterState_Head
   // function, use evil non-portable ptrace tricks to call the function
