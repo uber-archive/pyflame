@@ -49,23 +49,23 @@ unsigned long StringSize(unsigned long addr) {
   return addr + offsetof(PyStringObject, ob_size);
 }
 
-unsigned long StringData(unsigned long addr) {
+unsigned long ByteData(unsigned long addr) {
   return addr + offsetof(PyStringObject, ob_sval);
 }
 
-// should get inlined
-unsigned long ByteData(unsigned long addr) { return StringData(addr); }
+std::string StringData(pid_t pid, unsigned long addr) {
+  return PtracePeekString(pid, ByteData(addr));
+}
 
 #elif PYFLAME_PY_VERSION == 34
 namespace py34 {
+std::string StringDataPython3(pid_t pid, unsigned long addr);
+
 unsigned long StringSize(unsigned long addr) {
   return addr + offsetof(PyVarObject, ob_size);
 }
 
-unsigned long StringData(unsigned long addr) {
-  // this works only if the filename is all ascii *fingers crossed*
-  return addr + sizeof(PyASCIIObject);
-}
+std::string StringData(pid_t pid, unsigned long addr) { return StringDataPython3(pid, addr); }
 
 unsigned long ByteData(unsigned long addr) {
   return addr + offsetof(PyBytesObject, ob_sval);
@@ -73,14 +73,13 @@ unsigned long ByteData(unsigned long addr) {
 
 #elif PYFLAME_PY_VERSION == 36
 namespace py36 {
+std::string StringDataPython3(pid_t pid, unsigned long addr);
+
 unsigned long StringSize(unsigned long addr) {
   return addr + offsetof(PyVarObject, ob_size);
 }
 
-unsigned long StringData(unsigned long addr) {
-  // this works only if the filename is all ascii *fingers crossed*
-  return addr + sizeof(PyASCIIObject);
-}
+std::string StringData(pid_t pid, unsigned long addr) { return StringDataPython3(pid, addr); }
 
 unsigned long ByteData(unsigned long addr) {
   return addr + offsetof(PyBytesObject, ob_sval);
@@ -88,6 +87,96 @@ unsigned long ByteData(unsigned long addr) {
 
 #else
 static_assert(false, "uh oh, bad PYFLAME_PY_VERSION");
+#endif
+
+#if PYFLAME_PY_VERSION >= 34
+std::string StringDataPython3(pid_t pid, unsigned long addr) {
+  // TODO: This function only works for Python >= 3.3. Is it also possible to
+  // support older versions of Python 3?
+
+  // TODO: Can we guarantee that the same padding is used for the bitfield?
+  const std::unique_ptr<uint8_t[]> unicode_bytes =
+      PtracePeekBytes(pid, addr, sizeof(PyASCIIObject));
+  PyASCIIObject *unicode =
+      reinterpret_cast<PyASCIIObject *>(unicode_bytes.get());
+
+  // Because both the filename and function name string objects are made by the
+  // Python interpreter itself, we can probably assume they are compact. This
+  // means that the data immediately follows the object, and is of type {ASCII,
+  // Latin-1, UCS-2, UCS-4}.
+  assert(unicode->state.compact);
+
+  const long str_offset = unicode->state.ascii ? sizeof(PyASCIIObject)
+                                               : sizeof(PyCompactUnicodeObject);
+
+  // NOTE: From CPython commit c47adb04 onwards the kind matches directly to
+  // character size. This is different from the unicode format specification
+  // outlined in PEP 393, which still had only two bits allocated to the kind
+  // field.
+  const unsigned int ch_size = unicode->state.kind;
+  const ssize_t str_length = ch_size * unicode->length;
+  const std::unique_ptr<uint8_t[]> bytes =
+      PtracePeekBytes(pid, addr + str_offset, str_length);
+
+  std::ostringstream dump;
+
+  for (int i = 0; i < str_length; i += ch_size) {
+    Py_UCS4 ch = 0;
+
+    switch (unicode->state.kind) {
+      case PyUnicode_1BYTE_KIND:
+        ch = bytes[i];
+        break;
+      case PyUnicode_2BYTE_KIND: {
+        Py_UCS2 *data_2 = reinterpret_cast<Py_UCS2 *>(&bytes.get()[i]);
+        ch = *data_2;
+        break;
+      }
+      case PyUnicode_4BYTE_KIND: {
+        Py_UCS4 *data_4 = reinterpret_cast<Py_UCS4 *>(&bytes.get()[i]);
+        ch = *data_4;
+        break;
+      }
+      default:
+        // We are not supposed to come here, as the WCHAR kind is not supported
+        // when the object is compact.
+        assert(false);
+        break;
+    }
+
+    // TODO: Is it alright to assume a lack of surrogates. They might be present
+    // in the UCS-2 representation if the UTF-16 approach is used. We currently
+    // assume that CPython will instead use UCS-4 for such characters, instead
+    // of using surrogates.
+
+    // Below section is taken from CPython's STRINGLIB(utf8_encoder) routine.
+    // The differences are that (1) we use a string builder instead of a char
+    // buffer, and (2) that we skip the surrogate handling entirely.
+    if (ch < 0x80) {
+      /* Encode ASCII */
+      dump << (char)ch;
+    } else if (ch < 0x0800) {
+      /* Encode Latin-1 */
+      dump << (char)(0xc0 | (ch >> 6));
+      dump << (char)(0x80 | (ch & 0x3f));
+    } else if (ch < 0x10000) {
+      dump << (char)(0xe0 | (ch >> 12));
+      dump << (char)(0x80 | ((ch >> 6) & 0x3f));
+      dump << (char)(0x80 | (ch & 0x3f));
+    } else {
+      /* ch >= 0x10000 */
+      assert(ch <= 0x10ffff);  // Maximum code point of Unicode 6.0
+
+      /* Encode UCS4 Unicode ordinals */
+      dump << (char)(0xf0 | (ch >> 18));
+      dump << (char)(0x80 | ((ch >> 12) & 0x3f));
+      dump << (char)(0x80 | ((ch >> 6) & 0x3f));
+      dump << (char)(0x80 | (ch & 0x3f));
+    }
+  }
+
+  return dump.str();
+}
 #endif
 
 // Extract the line number from the code object. Python uses a compressed table
@@ -138,10 +227,11 @@ void FollowFrame(pid_t pid, unsigned long frame, std::vector<Frame> *stack) {
   const long f_code = PtracePeek(pid, frame + offsetof(_frame, f_code));
   const long co_filename =
       PtracePeek(pid, f_code + offsetof(PyCodeObject, co_filename));
-  const std::string filename = PtracePeekString(pid, StringData(co_filename));
+  const std::string filename = StringData(pid, co_filename);
   const long co_name =
       PtracePeek(pid, f_code + offsetof(PyCodeObject, co_name));
-  const std::string name = PtracePeekString(pid, StringData(co_name));
+  const std::string name = StringData(pid, co_name);
+
   stack->push_back({filename, name, GetLine(pid, frame, f_code)});
 
   const long f_back = PtracePeek(pid, frame + offsetof(_frame, f_back));
