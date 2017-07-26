@@ -1,3 +1,9 @@
+pyflame (1.5.0) unstable; urgency=medium
+
+  * Much improved Unicode support for Python 3
+
+ -- Evan Klitzke <evan@death.star>  Wed, 26 Jul 2017 14:44:33 -0700
+
 pyflame (1.4.4) unstable; urgency=medium
 
   * Fix building against just Python 2
