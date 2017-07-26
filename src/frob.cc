@@ -163,8 +163,8 @@ std::string StringDataPython3(pid_t pid, unsigned long addr) {
       dump << (char)(0xe0 | (ch >> 12));
       dump << (char)(0x80 | ((ch >> 6) & 0x3f));
       dump << (char)(0x80 | (ch & 0x3f));
-    } else /* ch >= 0x10000 */
-    {
+    } else {
+      /* ch >= 0x10000 */
       assert(ch <= 0x10ffff);  // Maximum code point of Unicode 6.0
 
       /* Encode UCS4 Unicode ordinals */
