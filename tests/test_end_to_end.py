@@ -65,11 +65,11 @@ def sleeper():
     with python_proc('sleeper.py') as p:
         yield p
 
-if sys.version_info >= (3,3):
-    @pytest.yield_fixture
-    def unicode_sleeper():
-        with python_proc('sleeper_ユニコード.py') as p:
-            yield p
+@pytest.mark.skipif(sys.version_info < (3, 3), reason="requires Python 3.3+")
+@pytest.yield_fixture
+def unicode_sleeper():
+    with python_proc('sleeper_ユニコード.py') as p:
+        yield p
 
 @pytest.yield_fixture
 def threaded_sleeper():
