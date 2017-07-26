@@ -113,8 +113,8 @@ std::string StringDataPython3(pid_t pid, unsigned long addr) {
   // character size. This is different from the unicode format specification
   // outlined in PEP 393, which still had only two bits allocated to the kind
   // field.
-  const long ch_size = unicode->state.kind;
-  const long str_length = ch_size * unicode->length;
+  const unsigned int ch_size = unicode->state.kind;
+  const ssize_t str_length = ch_size * unicode->length;
   const std::unique_ptr<uint8_t[]> bytes =
       PtracePeekBytes(pid, addr + str_offset, str_length);
 
