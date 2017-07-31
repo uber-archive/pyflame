@@ -65,11 +65,12 @@ def sleeper():
     with python_proc('sleeper.py') as p:
         yield p
 
-@pytest.mark.skipif(sys.version_info < (3, 3), reason="requires Python 3.3+")
+
 @pytest.yield_fixture
 def unicode_sleeper():
     with python_proc('sleeper_ユニコード.py') as p:
         yield p
+
 
 @pytest.yield_fixture
 def threaded_sleeper():
@@ -222,7 +223,8 @@ def test_exclude_idle(sleeper):
 @pytest.mark.skipif(sys.version_info < (3, 3), reason="requires Python 3.3+")
 def test_utf8_output(unicode_sleeper):
     proc = subprocess.Popen(
-        ['./src/pyflame', '-x', str(unicode_sleeper.pid)],
+        ['./src/pyflame', '-x',
+         str(unicode_sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
