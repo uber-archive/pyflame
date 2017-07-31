@@ -34,6 +34,8 @@ run_pip_tests() {
     # shellcheck source=/dev/null
     . "${ENVDIR}/bin/activate"
   fi
+  echo -n "Running test suite against interpreter "
+  "$1" --version
 
   pip install -q pytest
 
@@ -44,8 +46,6 @@ run_pip_tests() {
 # Make a best effort to run the tests against some Python version.
 try_pip_tests() {
   if command -v "$1" &>/dev/null; then
-    echo -n "Running test suite against interpreter "
-    "$1" --version
     run_pip_tests "$1"
   fi
 }
