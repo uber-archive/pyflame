@@ -10,13 +10,6 @@
 
 set -e
 
-# This script creates its own virtualenv and things can get weird if you try to
-# nest them.
-if [ -n "${VIRTUAL_ENV}" ]; then
-  echo "Do not invoke runtests.sh from within a virtualenv!"
-  exit 1
-fi
-
 ENVDIR="./.test_env"
 trap 'rm -rf ${ENVDIR}' EXIT
 
@@ -34,11 +27,14 @@ done
 
 # Run tests using pip; $1 = python version
 run_pip_tests() {
-  rm -rf "${ENVDIR}"
-  virtualenv -q -p "$1" "${ENVDIR}" &>/dev/null
+  if [ -z "${VIRTUALENV}" ]; then
+    rm -rf "${ENVDIR}"
+    virtualenv -q -p "$1" "${ENVDIR}" &>/dev/null
 
-  # shellcheck source=/dev/null
-  . "${ENVDIR}/bin/activate"
+    # shellcheck source=/dev/null
+    . "${ENVDIR}/bin/activate"
+  fi
+
   pip install -q pytest
 
   find tests/ -name '*.pyc' -delete
