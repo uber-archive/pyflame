@@ -57,10 +57,10 @@ void PtraceCont(pid_t pid);
 void PtraceSingleStep(pid_t pid);
 
 #if ENABLE_THREADS
-// call a function pointer
+// Call a function pointer.
 long PtraceCallFunction(pid_t pid, unsigned long addr);
 #endif
 
-// maybe dealloc the page allocated in PtraceCallFunction();
-void PtraceCleanup(pid_t pid);
+// Detach, and maybe dealloc the page allocated in PtraceCallFunction();
+void PtraceCleanup(pid_t pid) noexcept;
 }  // namespace pyflame
