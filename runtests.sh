@@ -13,17 +13,22 @@ set -e
 ENVDIR="./.test_env"
 trap 'rm -rf ${ENVDIR}' EXIT
 
-while getopts ":h" opt; do
+while getopts ":hx" opt; do
   case $opt in
     h)
-      echo "Usage: $0 [-h] python..."
+      echo "Usage: $0 [-h] [-x] python..."
       exit 1
+      ;;
+    x)
+      set -x
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
       ;;
   esac
 done
+
+shift "$((OPTIND-1))"
 
 # Run tests using pip; $1 = python version
 run_pip_tests() {
