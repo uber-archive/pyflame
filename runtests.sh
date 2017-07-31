@@ -27,7 +27,7 @@ done
 
 # Run tests using pip; $1 = python version
 run_pip_tests() {
-  if [ -z "${VIRTUALENV}" ]; then
+  if [ -z "${VIRTUAL_ENV}" ]; then
     rm -rf "${ENVDIR}"
     virtualenv -q -p "$1" "${ENVDIR}" &>/dev/null
 
