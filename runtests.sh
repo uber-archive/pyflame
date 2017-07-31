@@ -20,11 +20,24 @@ fi
 ENVDIR="./.test_env"
 trap 'rm -rf ${ENVDIR}' EXIT
 
+while getopts ":h" opt; do
+  case $opt in
+    h)
+      echo "Usage: $0 [-h] python..."
+      exit 1
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
 # Run tests using pip; $1 = python version
 run_pip_tests() {
   rm -rf "${ENVDIR}"
   virtualenv -q -p "$1" "${ENVDIR}" &>/dev/null
 
+  # shellcheck source=/dev/null
   . "${ENVDIR}/bin/activate"
   pip install -q pytest
 
@@ -41,7 +54,7 @@ try_pip_tests() {
   fi
 }
 
-# RPM tests are not allowed to use virtualenv at all.
+# Tests run when building RPMs are not allowed to use virtualenv.
 run_rpm_tests() {
   py.test-2 tests/
   py.test-3 tests/
