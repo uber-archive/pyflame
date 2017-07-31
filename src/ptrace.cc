@@ -280,7 +280,7 @@ void PtraceCleanup(pid_t pid) noexcept {
       PtracePoke(pid, oldregs.rip, syscall_x86);
       PtraceSetRegs(pid, newregs);
 
-      // Call the syscall and check the return value.
+      // Actually call munmap(2), and check the return value.
       PtraceSingleStep(pid);
       if (PtraceGetRegs(pid).rax == 0) {
         probe_ = 0;
