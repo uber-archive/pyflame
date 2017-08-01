@@ -318,7 +318,7 @@ def test_sample_not_python(not_python):
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert err.startswith('Failed to locate libpython')
+    assert re.match('Failed to .* libpython', err)
     assert proc.returncode == 1
 
 
@@ -351,7 +351,7 @@ def test_trace_not_python():
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert err.startswith('Failed to locate libpython')
+    assert re.match('Failed to .* libpython', err)
     assert proc.returncode == 1
 
 
@@ -416,7 +416,7 @@ def test_permission_error():
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert err.startswith('Failed to attach to PID')
+    assert err.startswith('Failed to seize PID')
     assert proc.returncode == 1
 
 

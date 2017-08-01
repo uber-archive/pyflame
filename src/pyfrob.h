@@ -39,6 +39,9 @@ class PyFrob {
   // Get the current frame list.
   std::vector<Thread> GetThreads(void);
 
+  // Useful when debugging.
+  std::string Status() const;
+
  private:
   pid_t pid_;
   PyAddresses addrs_;
