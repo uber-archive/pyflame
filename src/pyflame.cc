@@ -344,8 +344,10 @@ finish_arg_parse:
       if ((check_end) && (now + interval >= end)) {
         break;
       }
-      PtraceDetach(pid);
+      // PtraceDetach(pid);
+      std::cerr << "entering call to WaitWithTimeout()" << std::endl;
       WaitWithTimeout(pid, wait_timeout);
+      std::cerr << "finished call to wait with timeout" << std::endl;
       PtraceAttach(pid);
     }
     if (!include_ts) {
@@ -354,6 +356,7 @@ finish_arg_parse:
       PrintFramesTS(*output, call_stacks);
     }
   } catch (const PtraceException &exc) {
+    std::cerr << exc.what() << std::endl;
     // If the process terminates early then we just print the stack traces up
     // until that point in time.
     if (!call_stacks.empty() || idle) {

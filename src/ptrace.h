@@ -56,7 +56,7 @@ std::unique_ptr<uint8_t[]> PtracePeekBytes(pid_t pid, unsigned long addr,
                                            size_t nbytes);
 
 // Continue a traced process
-void PtraceCont(pid_t pid);
+void PtraceCont(pid_t pid, bool wait = true);
 
 // Execute a single instruction in a traced process
 void PtraceSingleStep(pid_t pid);

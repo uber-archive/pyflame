@@ -109,11 +109,28 @@ static long PtraceGetEventMsg(pid_t pid) {
 }
 #endif
 
+static void PtraceSetOptions(pid_t pid, long flags) {
+  std::cerr << "calling PTRACE_SETOPTIONS on pid " << pid << " with flags "
+            << flags << std::endl;
+  if (ptrace(PTRACE_SETOPTIONS, pid, 0, (void *)flags) == -1) {
+    std::ostringstream ss;
+    ss << "Failed to PTRACE_SETOPTIONS: " << strerror(errno);
+    std::cerr << ss.str() << std::endl;
+    throw PtraceException(ss.str());
+  }
+}
+
 void WaitWithTimeout(pid_t pid, const timespec &timeout) {
   int ret;
+  PtraceSetOptions(
+      pid, PTRACE_O_TRACEFORK | PTRACE_O_TRACEEXEC | PTRACE_O_TRACEEXIT);
+  std::cerr << "calling PTRACE_CONT" << std::endl;
+  PtraceCont(pid, false);
+  std::cerr << "called cont" << std::endl;
 #if 0
+  std::cerr << "calling waitpid" << std::endl;
   assert(waitpid(pid, &ret, __WALL) >= 0);
-  std::cerr << "ret is " << ret << std::endl;
+  std::cerr << "waitpid status is " << ret << std::endl;
 #endif
   siginfo_t info;
   sigset_t mask, orig;
@@ -175,13 +192,15 @@ static void do_wait(pid_t pid) {
   }
 }
 
-void PtraceCont(pid_t pid) {
+void PtraceCont(pid_t pid, bool wait) {
   if (ptrace(PTRACE_CONT, pid, 0, 0) == -1) {
     std::ostringstream ss;
     ss << "Failed to PTRACE_CONT: " << strerror(errno);
     throw PtraceException(ss.str());
   }
-  do_wait(pid);
+  if (wait) {
+    do_wait(pid);
+  }
 }
 
 void PtraceSingleStep(pid_t pid) {
@@ -191,16 +210,6 @@ void PtraceSingleStep(pid_t pid) {
     throw PtraceException(ss.str());
   }
   do_wait(pid);
-}
-
-static void PtraceSetOptions(pid_t pid, long flags) {
-  std::cerr << "calling PTRACE_SETOPTIONS on pid " << pid << " with flags "
-            << flags << std::endl;
-  if (ptrace(PTRACE_SETOPTIONS, pid, 0, flags) == -1) {
-    std::ostringstream ss;
-    ss << "Failed to PTRACE_SETOPTIONS: " << strerror(errno);
-    throw PtraceException(ss.str());
-  }
 }
 
 void PtraceFollowFork(pid_t pid) { PtraceSetOptions(pid, PTRACE_O_TRACEFORK); }
