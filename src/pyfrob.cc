@@ -14,6 +14,7 @@
 
 #include "./pyfrob.h"
 
+#include <fstream>
 #include <sstream>
 
 #include "./aslr.h"
@@ -179,6 +180,15 @@ void PyFrob::DetectABI(PyABI abi) {
   if (addrs_.empty()) {
     throw FatalException("DetectABI(): addrs_ is unexpectedly empty.");
   }
+}
+
+std::string PyFrob::Status() const {
+  std::ostringstream os;
+  os << "/proc/" << pid_ << "/stat";
+  std::ifstream statfile(os.str());
+  std::string line;
+  std::getline(statfile, line);
+  return line;
 }
 
 std::vector<Thread> PyFrob::GetThreads(void) {

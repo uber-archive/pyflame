@@ -33,6 +33,39 @@
 #include "./exc.h"
 
 namespace pyflame {
+int DoWait(pid_t pid, int options) {
+  int status;
+  if (waitpid(pid, &status, options) == -1) {
+    std::ostringstream ss;
+    ss << "Failed to waitpid(): " << strerror(errno);
+    throw PtraceException(ss.str());
+  }
+  if (WIFSTOPPED(status)) {
+    int signum = WSTOPSIG(status);
+    if (signum != SIGTRAP) {
+      std::ostringstream ss;
+      ss << "Failed to waitpid(), unexpectedly got status: "
+         << strsignal(signum);
+      throw PtraceException(ss.str());
+    }
+  } else {
+    std::ostringstream ss;
+    ss << "Failed to waitpid(), unexpectedly got status: " << status;
+    throw PtraceException(ss.str());
+  }
+  return status;
+}
+
+bool SawEventExec(int status) {
+  return status >> 8 == (SIGTRAP | (PTRACE_EVENT_EXEC << 8));
+}
+
+void PtraceTraceme() {
+  if (ptrace(PTRACE_TRACEME, getpid(), 0, 0)) {
+    throw PtraceException("Failed to PTRACE_TRACEME");
+  }
+  raise(SIGSTOP);
+}
 
 void PtraceAttach(pid_t pid) {
   if (ptrace(PTRACE_ATTACH, pid, 0, 0)) {
@@ -48,12 +81,27 @@ void PtraceAttach(pid_t pid) {
   }
 }
 
+void PtraceSeize(pid_t pid) {
+  if (ptrace(PTRACE_SEIZE, pid, 0, 0)) {
+    std::ostringstream ss;
+    ss << "Failed to attach to PID " << pid << ": " << strerror(errno);
+    throw PtraceException(ss.str());
+  }
+}
+
 void PtraceDetach(pid_t pid) {
   if (ptrace(PTRACE_DETACH, pid, 0, 0)) {
     std::ostringstream ss;
     ss << "Failed to detach PID " << pid << ": " << strerror(errno);
     throw PtraceException(ss.str());
   }
+}
+
+void PtraceInterrupt(pid_t pid) {
+  if (ptrace(PTRACE_INTERRUPT, pid, 0, 0)) {
+    throw PtraceException("Failed to PTRACE_INTERRUPT");
+  }
+  DoWait(pid);
 }
 
 struct user_regs_struct PtraceGetRegs(pid_t pid) {
@@ -88,32 +136,16 @@ long PtracePeek(pid_t pid, unsigned long addr) {
   const long data = ptrace(PTRACE_PEEKDATA, pid, addr, 0);
   if (data == -1 && errno != 0) {
     std::ostringstream ss;
-    ss << "Failed to PTRACE_PEEKDATA at " << reinterpret_cast<void *>(addr)
-       << ": " << strerror(errno);
+    ss << "Failed to PTRACE_PEEKDATA (pid " << pid << ", addr "
+       << reinterpret_cast<void *>(addr) << "): " << strerror(errno);
     throw PtraceException(ss.str());
   }
   return data;
 }
 
-static void do_wait(pid_t pid) {
-  int status;
-  if (waitpid(pid, &status, 0) == -1) {
-    std::ostringstream ss;
-    ss << "Failed to waitpid(): " << strerror(errno);
-    throw PtraceException(ss.str());
-  }
-  if (WIFSTOPPED(status)) {
-    int signum = WSTOPSIG(status);
-    if (signum != SIGTRAP) {
-      std::ostringstream ss;
-      ss << "Failed to waitpid(), unexpectedly got status: "
-         << strsignal(signum);
-      throw PtraceException(ss.str());
-    }
-  } else {
-    std::ostringstream ss;
-    ss << "Failed to waitpid(), unexpectedly got status: " << status;
-    throw PtraceException(ss.str());
+void PtraceSetOptions(pid_t pid, long options) {
+  if (ptrace(PTRACE_SETOPTIONS, pid, 0, options)) {
+    throw PtraceException("Failed to PTRACE_SETOPTIONS");
   }
 }
 
@@ -123,7 +155,6 @@ void PtraceCont(pid_t pid) {
     ss << "Failed to PTRACE_CONT: " << strerror(errno);
     throw PtraceException(ss.str());
   }
-  do_wait(pid);
 }
 
 void PtraceSingleStep(pid_t pid) {
@@ -132,7 +163,7 @@ void PtraceSingleStep(pid_t pid) {
     ss << "Failed to PTRACE_SINGLESTEP: " << strerror(errno);
     throw PtraceException(ss.str());
   }
-  do_wait(pid);
+  DoWait(pid);
 }
 
 std::string PtracePeekString(pid_t pid, unsigned long addr) {
@@ -252,6 +283,7 @@ long PtraceCallFunction(pid_t pid, unsigned long addr) {
 
   PtraceSetRegs(pid, newregs);
   PtraceCont(pid);
+  DoWait(pid);
 
   newregs = PtraceGetRegs(pid);
   PtraceSetRegs(pid, oldregs);

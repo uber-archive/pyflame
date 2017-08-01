@@ -25,11 +25,18 @@
 
 namespace pyflame {
 
-// attach to a process
-void PtraceAttach(pid_t pid);
+int DoWait(pid_t pid, int options = 0);
+
+bool SawEventExec(int status);
+
+void PtraceTraceme();
 
 // detach a process
+void PtraceAttach(pid_t pid);
 void PtraceDetach(pid_t pid);
+
+void PtraceSeize(pid_t pid);
+void PtraceInterrupt(pid_t pid);
 
 // get regs from a process
 struct user_regs_struct PtraceGetRegs(pid_t pid);
@@ -42,6 +49,8 @@ void PtracePoke(pid_t pid, unsigned long addr, long data);
 
 // read the long word at an address
 long PtracePeek(pid_t pid, unsigned long addr);
+
+void PtraceSetOptions(pid_t pid, long options);
 
 // peek a null-terminated string
 std::string PtracePeekString(pid_t pid, unsigned long addr);

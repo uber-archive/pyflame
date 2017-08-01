@@ -13,11 +13,15 @@
 // limitations under the License.
 
 #include <getopt.h>
+#include <sys/ptrace.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
 #include <algorithm>
+#include <cassert>
 #include <chrono>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -256,60 +260,77 @@ finish_arg_parse:
       return 1;
     } else if (pid == 0) {
       // child; run the command
+      PtraceTraceme();
       if (execvp(argv[optind], argv + optind)) {
-        perror("execlp()");
+        std::cerr << "execvp() failed for: " << argv[optind]
+                  << ", err = " << strerror(errno) << "\n";
         return 1;
       }
     } else {
-      // parent; wait for the child to not be pyflame
-      std::ostringstream os;
-      os << "/proc/" << pid << "/comm";
-      for (;;) {
-        int status;
-        pid_t pid_status = waitpid(pid, &status, WNOHANG);
-        if (pid_status == -1) {
+      pid_t child = waitpid(0, nullptr, 0);
+      assert(child == pid);
+      PtraceSetOptions(pid, PTRACE_O_TRACEEXEC);
+      PtraceCont(pid);
+      int status = 0;
+      while (!SawEventExec(status)) {
+        pid_t p = waitpid(-1, &status, 0);
+        if (p == -1) {
           perror("waitpid()");
           return 1;
-        } else if (pid_status > 0) {
-          std::cerr << "Child process exited with status "
-                    << WEXITSTATUS(pid_status) << "\n";
+        }
+        if (WIFEXITED(status)) {
+          std::cerr << "Child process exited with status: "
+                    << WEXITSTATUS(status) << "\n";
           return 1;
         }
-
-        std::ifstream ifs(os.str());
-        std::string line;
-        std::getline(ifs, line);
-
-        // If the child is not named pyflame we break, otherwise we sleep and
-        // retry. Hopefully this is not an infinite loop, since we already
-        // checked that the child should not have been pyflame. All bets are off
-        // if the child tries to be extra pathological (e.g. immediately exec a
-        // pyflame).
-        if (!IsPyflame(line)) {
-          break;
-        }
-        std::this_thread::sleep_for(interval);
       }
+      PtraceDetach(pid);
+      PtraceSeize(pid);
     }
-  } else if (pid == -1) {
-    // Users should use -p to supply the PID to trace. However, older versions
-    // of Pyflame used a convention where the PID to trace was the final
-    // argument to the pyflame command. This code path handles this legacy use
-    // case, to preserve backward compatibility.
-    if (optind != argc - 1 || (pid = ParsePid(argv[optind])) == -1) {
-      std::cerr << usage_str;
+  } else {
+    if (pid == -1) {
+      // Users should use -p to supply the PID to trace. However, older versions
+      // of Pyflame used a convention where the PID to trace was the final
+      // argument to the pyflame command. This code path handles this legacy use
+      // case, to preserve backward compatibility.
+      if (optind != argc - 1 || (pid = ParsePid(argv[optind])) == -1) {
+        std::cerr << usage_str;
+        return 1;
+      }
+      std::cerr
+          << "WARNING: Specifying a PID to trace without -p is deprecated; "
+             "see Pyflame issue #99 for details.\n ";
+    }
+    try {
+      PtraceSeize(pid);
+    } catch (const PtraceException &err) {
+      std::cerr << "Failed to seize PID " << pid << "\n";
       return 1;
     }
-    std::cerr << "WARNING: Specifying a PID to trace without -p is deprecated; "
-                 "see Pyflame issue #99 for details.\n ";
   }
+  PtraceInterrupt(pid);
 
   std::vector<FrameTS> call_stacks;
   size_t idle = 0;
   try {
-    PtraceAttach(pid);
     PyFrob frobber(pid, enable_threads);
-    frobber.DetectABI(abi);
+
+    bool detected = false;
+    for (size_t i = 0; i < 50; i++) {
+      try {
+        frobber.DetectABI(abi);
+        detected = true;
+        break;
+      } catch (const FatalException &exc) {
+        PtraceCont(pid);
+        std::this_thread::sleep_for(interval);
+        PtraceInterrupt(pid);
+      }
+    }
+    if (!detected) {
+      std::cerr << "Failed to locate libpython within timeout period.\n";
+      return 1;
+    }
 
     const std::chrono::microseconds interval{
         static_cast<long>(sample_rate * 1000000)};
@@ -338,9 +359,9 @@ finish_arg_parse:
       if ((check_end) && (now + interval >= end)) {
         break;
       }
-      PtraceDetach(pid);
+      PtraceCont(pid);
       std::this_thread::sleep_for(interval);
-      PtraceAttach(pid);
+      PtraceInterrupt(pid);
     }
     if (!include_ts) {
       PrintFrames(*output, call_stacks, idle);
