@@ -39,24 +39,6 @@ using namespace pyflame;
 
 typedef std::unordered_map<frames_t, size_t, FrameHash> buckets_t;
 
-static const char usage_str[] =
-    ("Usage: pyflame [options] -p PID\n"
-     "       pyflame [options] [-t|--trace] command arg1 arg2...\n"
-     "\n"
-     "General Options:\n"
-     "      --abi            Force a particular Python ABI (26, 34, 36)\n"
-     "      --threads        Enable multi-threading support\n"
-     "  -h, --help           Show help\n"
-     "  -p, --pid=PID        The PID to trace\n"
-     "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
-     "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
-     "(default 0.001)\n"
-     "  -o, --output=PATH    Output to file path\n"
-     "  -t, --trace          Trace a child process\n"
-     "  -T, --timestamp      Include timestamps for each stacktrace\n"
-     "  -v, --version        Show the version\n"
-     "  -x, --exclude-idle   Exclude idle time from statistics\n");
-
 static pid_t ParsePid(const char *pid_str) {
   long pid = std::strtol(pid_str, nullptr, 10);
   if (pid <= 0 || pid > std::numeric_limits<pid_t>::max()) {
@@ -134,6 +116,24 @@ int main(int argc, char **argv) {
   double seconds = 1;
   double sample_rate = 0.001;
   std::ofstream output_file;
+
+  static const char usage_str[] =
+      ("Usage: pyflame [options] -p PID\n"
+       "       pyflame [options] [-t|--trace] command arg1 arg2...\n"
+       "\n"
+       "General Options:\n"
+       "      --abi            Force a particular Python ABI (26, 34, 36)\n"
+       "      --threads        Enable multi-threading support\n"
+       "  -h, --help           Show help\n"
+       "  -p, --pid=PID        The PID to trace\n"
+       "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
+       "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
+       "(default 0.001)\n"
+       "  -o, --output=PATH    Output to file path\n"
+       "  -t, --trace          Trace a child process\n"
+       "  -T, --timestamp      Include timestamps for each stacktrace\n"
+       "  -v, --version        Show the version\n"
+       "  -x, --exclude-idle   Exclude idle time from statistics\n");
 
   static const char short_opts[] = "ho:p:r:s:tTvx";
   static struct option long_opts[] = {
