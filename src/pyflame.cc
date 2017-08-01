@@ -111,10 +111,11 @@ int main(int argc, char **argv) {
   bool trace = false;
   bool include_idle = true;
   bool include_ts = false;
+  bool follow_fork = false;
   bool enable_threads = false;
   double seconds = 1;
   double sample_rate = 0.001;
-  std::ofstream output_file;
+  std::string output_name;
 
   static const char usage_str[] =
       ("Usage: pyflame [options] -p PID\n"
@@ -123,20 +124,22 @@ int main(int argc, char **argv) {
        "General Options:\n"
        "      --abi            Force a particular Python ABI (26, 34, 36)\n"
        "      --threads        Enable multi-threading support\n"
+       "  -f, --follow-fork    Follow child forks\n"
        "  -h, --help           Show help\n"
+       "  -o, --output=PATH    Output to file path\n"
        "  -p, --pid=PID        The PID to trace\n"
-       "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
        "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
        "(default 0.001)\n"
-       "  -o, --output=PATH    Output to file path\n"
+       "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
        "  -t, --trace          Trace a child process\n"
        "  -T, --timestamp      Include timestamps for each stacktrace\n"
        "  -v, --version        Show the version\n"
        "  -x, --exclude-idle   Exclude idle time from statistics\n");
 
-  static const char short_opts[] = "ho:p:r:s:tTvx";
+  static const char short_opts[] = "fho:p:r:s:tTvx";
   static struct option long_opts[] = {
     {"abi", required_argument, 0, 'a'},
+    {"follow-fork", no_argument, 0, 'f'},
     {"help", no_argument, 0, 'h'},
     {"rate", required_argument, 0, 'r'},
     {"seconds", required_argument, 0, 's'},
@@ -179,6 +182,9 @@ int main(int argc, char **argv) {
             break;
         }
         break;
+      case 'f':
+        follow_fork = true;
+        break;
       case 'h':
         std::cout << usage_str;
         return 0;
@@ -215,11 +221,7 @@ int main(int argc, char **argv) {
         include_idle = false;
         break;
       case 'o':
-        output_file.open(optarg, std::ios::out | std::ios::trunc);
-        if (!output_file.is_open()) {
-          std::cerr << "cannot open file \"" << optarg << "\" as output\n";
-          return 1;
-        }
+        output_name = optarg;
         break;
       case '?':
         // getopt_long should already have printed an error message
@@ -233,12 +235,10 @@ finish_arg_parse:
     std::cerr << "Options -t and -p are not mutually compatible.\n";
     return 1;
   }
+
   const std::chrono::microseconds interval{
       static_cast<long>(sample_rate * 1000000)};
   std::ostream *output = &std::cout;
-  if (output_file.is_open()) {
-    output = &output_file;
-  }
   if (trace) {
     if (optind == argc) {
       std::cerr << usage_str;
@@ -305,9 +305,22 @@ finish_arg_parse:
   }
 
   std::vector<FrameTS> call_stacks;
+  sigset_t mask, orig_mask;
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGCHLD);
+  if (sigprocmask(SIG_BLOCK, &mask, &orig_mask) < 0) {
+    perror("sigprocmask");
+    return 1;
+  }
+  const struct timespec wait_timeout { .tv_sec = 0, .tv_nsec = 1000000 };
+
   size_t idle = 0;
   try {
     PtraceAttach(pid);
+    if (follow_fork) {
+      std::cerr << "doing follow fork for pid: " << pid << "\n";
+      PtraceFollowFork(pid);
+    }
     PyFrob frobber(pid, enable_threads);
     frobber.DetectABI(abi);
 
@@ -339,7 +352,7 @@ finish_arg_parse:
         break;
       }
       PtraceDetach(pid);
-      std::this_thread::sleep_for(interval);
+      WaitWithTimeout(&mask, &wait_timeout);
       PtraceAttach(pid);
     }
     if (!include_ts) {

@@ -14,7 +14,7 @@
 
 #include "./ptrace.h"
 
-#include <dirent.h>
+#include <cassert>
 #include <cerrno>
 #include <cstring>
 #include <fstream>
@@ -24,6 +24,8 @@
 #include <utility>
 #include <vector>
 
+#include <dirent.h>
+#include <signal.h>
 #include <sys/mman.h>
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
@@ -95,6 +97,45 @@ long PtracePeek(pid_t pid, unsigned long addr) {
   return data;
 }
 
+static long PtraceGetEventMsg(pid_t pid) {
+  long who = -1;
+  if (ptrace(PTRACE_GETEVENTMSG, pid, nullptr, (void *)&who) == -1) {
+    std::ostringstream ss;
+    ss << "Failed to PTRACE_GETEVENTMSG: " << strerror(errno);
+    throw PtraceException(ss.str());
+  }
+  return who;
+}
+
+void WaitWithTimeout(const sigset_t *mask, const timespec *timeout) {
+  int status;
+  siginfo_t info;
+  do {
+    const int signum = sigtimedwait(mask, &info, timeout);
+    std::cerr << "got a sigchld from " << info.si_pid
+              << ", status = " << info.si_status << std::endl;
+    if (signum == SIGCHLD) {
+      std::cerr << "waitpid is: " << waitpid(info.si_pid, &status, WNOHANG)
+                << std::endl;
+      std::cerr << "status is " << status << std::endl;
+      long who = PtraceGetEventMsg(info.si_pid);
+      std::cerr << "who = " << who << std::endl;
+    } else if (signum < 0) {
+      if (errno == EINTR) {
+        continue;
+      } else if (errno == EAGAIN) {
+        std::cerr << "timeout\n";
+        return;  // timeout
+      } else {
+        perror("sigtimedwait");
+        return;
+      }
+    } else {
+      assert(false);  // not reached
+    }
+  } while (1);
+}
+
 static void do_wait(pid_t pid) {
   int status;
   if (waitpid(pid, &status, 0) == -1) {
@@ -102,6 +143,11 @@ static void do_wait(pid_t pid) {
     ss << "Failed to waitpid(): " << strerror(errno);
     throw PtraceException(ss.str());
   }
+
+  if (status >> 8 == (SIGTRAP | (PTRACE_EVENT_FORK << 8))) {
+    std::cerr << "Intercepted fork.\n";
+  }
+
   if (WIFSTOPPED(status)) {
     int signum = WSTOPSIG(status);
     if (signum != SIGTRAP) {
@@ -112,7 +158,7 @@ static void do_wait(pid_t pid) {
     }
   } else {
     std::ostringstream ss;
-    ss << "Failed to waitpid(), unexpectedly got status: " << status;
+    ss << "do_wait(), got event other than STOPPED: " << status;
     throw PtraceException(ss.str());
   }
 }
@@ -134,6 +180,16 @@ void PtraceSingleStep(pid_t pid) {
   }
   do_wait(pid);
 }
+
+static void PtraceSetOptions(pid_t pid, long flags) {
+  if (ptrace(PTRACE_SETOPTIONS, pid, flags, 0) == -1) {
+    std::ostringstream ss;
+    ss << "Failed to PTRACE_SETOPTIONS: " << strerror(errno);
+    throw PtraceException(ss.str());
+  }
+}
+
+void PtraceFollowFork(pid_t pid) { PtraceSetOptions(pid, PTRACE_O_TRACEFORK); }
 
 std::string PtracePeekString(pid_t pid, unsigned long addr) {
   std::ostringstream dump;
