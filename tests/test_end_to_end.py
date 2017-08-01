@@ -271,12 +271,16 @@ def test_sample_not_python(not_python):
     assert proc.returncode == 1
 
 
-@pytest.mark.parametrize('force_abi', [(False, ), (True, )])
-def test_trace(force_abi):
+@pytest.mark.parametrize('force_abi,trace_threads',
+                         [(False, False), (False, True), (True, False),
+                          (True, True)])
+def test_trace(force_abi, trace_threads):
     args = ['./src/pyflame']
     if force_abi:
         abi_string = '%d%d' % sys.version_info[:2]
         args.extend(['--abi', abi_string])
+    if trace_threads:
+        args.append('--threads')
     args.extend(['-t', python_command(), 'tests/exit_early.py', '-s'])
 
     proc = subprocess.Popen(

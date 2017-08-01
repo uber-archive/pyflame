@@ -237,8 +237,6 @@ long PtraceCallFunction(pid_t pid, unsigned long addr) {
       return -1;
     }
 
-    // std::cerr << "probe point is at " << reinterpret_cast<void *>(probe_)
-    //           << "\n";
     long code = 0;
     uint8_t *new_code_bytes = (uint8_t *)&code;
     new_code_bytes[0] = 0xff;  // CALL
@@ -260,34 +258,53 @@ long PtraceCallFunction(pid_t pid, unsigned long addr) {
   return newregs.rax;
 };
 
-void PtraceCleanup(pid_t pid) {
-  if (probe_ == 0) {
-    return;
+// Like PtraceDetach(), but ignore errors.
+static inline void SafeDetach(pid_t pid) noexcept {
+  ptrace(PTRACE_DETACH, pid, 0, 0);
+}
+
+void PtraceCleanup(pid_t pid) noexcept {
+  // Clean up the memory area allocated by AllocPage().
+  if (probe_ != 0) {
+    try {
+      const user_regs_struct oldregs = PtraceGetRegs(pid);
+      const long orig_code = PtracePeek(pid, oldregs.rip);
+
+      user_regs_struct newregs = oldregs;
+      newregs.rax = SYS_munmap;
+      newregs.rdi = probe_;         // addr
+      newregs.rsi = getpagesize();  // len
+
+      // Prepare to run munmap(2) syscall.
+      PauseChildThreads(pid);
+      PtracePoke(pid, oldregs.rip, syscall_x86);
+      PtraceSetRegs(pid, newregs);
+
+      // Actually call munmap(2), and check the return value.
+      PtraceSingleStep(pid);
+      if (PtraceGetRegs(pid).rax == 0) {
+        probe_ = 0;
+      } else {
+        std::cerr << "Warning: failed to munmap(2) trampoline page! Please "
+                     "report this on GitHub.\n";
+      }
+
+      // Clean up and resume the child threads.
+      PtracePoke(pid, oldregs.rip, orig_code);
+      PtraceSetRegs(pid, oldregs);
+      ResumeChildThreads(pid);
+
+    } catch (...) {
+      // If the process has already exited, then we'll get a ptrace error, which
+      // can be safely ignored. This *should* happen at the initial
+      // PtraceGetRegs() call, but we wrap the entire block to be safe.
+    }
   }
 
-  user_regs_struct oldregs = PtraceGetRegs(pid);
-  long orig_code = PtracePeek(pid, oldregs.rip);
-
-  user_regs_struct newregs = oldregs;
-  newregs.rax = SYS_munmap;
-  newregs.rdi = probe_;         // addr
-  newregs.rsi = getpagesize();  // len
-
-  PauseChildThreads(pid);
-
-  PtracePoke(pid, oldregs.rip, syscall_x86);
-  PtraceSetRegs(pid, newregs);
-  PtraceSingleStep(pid);
-  PtracePoke(pid, oldregs.rip, orig_code);
-  PtraceSetRegs(pid, oldregs);
-
-  ResumeChildThreads(pid);
-  PtraceDetach(pid);
-
-  probe_ = 0;
+  SafeDetach(pid);
 }
 #else
-void PtraceCleanup(pid_t pid) { PtraceDetach(pid); }
+void PtraceCleanup(pid_t pid) noexcept { SafeDetach(pid); }
 #endif
 
 }  // namespace pyflame
