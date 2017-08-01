@@ -18,3 +18,4 @@ build-aux/
 configure
 config.h
 stamp-h1
+\.test_env/
