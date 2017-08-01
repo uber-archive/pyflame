@@ -39,13 +39,14 @@ using namespace pyflame;
 
 namespace {
 const char usage_str[] =
-    ("Usage: pyflame [options] <pid>\n"
-     "       pyflame [-t|--trace] command arg1 arg2...\n"
+    ("Usage: pyflame [options] -p PID\n"
+     "       pyflame [options] [-t|--trace] command arg1 arg2...\n"
      "\n"
      "General Options:\n"
      "      --abi            Force a particular Python ABI (26, 34, 36)\n"
      "      --threads        Enable multi-threading support\n"
      "  -h, --help           Show help\n"
+     "  -p, --pid=PID        The PID to trace\n"
      "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
      "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
      "(default 0.001)\n"
@@ -56,6 +57,15 @@ const char usage_str[] =
      "  -x, --exclude-idle   Exclude idle time from statistics\n");
 
 typedef std::unordered_map<frames_t, size_t, FrameHash> buckets_t;
+
+pid_t ParsePid(const char *pid_str) {
+  long pid = std::strtol(pid_str, nullptr, 10);
+  if (pid <= 0 || pid > std::numeric_limits<pid_t>::max()) {
+    std::cerr << "PID " << pid << " is out of valid PID range.\n";
+    return -1;
+  }
+  return static_cast<pid_t>(pid);
+}
 
 // Prints all stack traces
 void PrintFrames(std::ostream &out, const std::vector<FrameTS> &call_stacks,
@@ -116,6 +126,7 @@ inline bool IsPyflame(const std::string &str) {
 
 int main(int argc, char **argv) {
   PyABI abi{};
+  pid_t pid = -1;
   bool trace = false;
   bool include_idle = true;
   bool include_ts = false;
@@ -133,6 +144,7 @@ int main(int argc, char **argv) {
       {"threads", no_argument, 0, 'L'},
 #endif
       {"output", required_argument, 0, 'o'},
+      {"pid", required_argument, 0, 'p'},
       {"trace", no_argument, 0, 't'},
       {"timestamp", no_argument, 0, 'T'},
       {"version", no_argument, 0, 'v'},
@@ -140,7 +152,8 @@ int main(int argc, char **argv) {
       {0, 0, 0, 0}
     };
     int option_index = 0;
-    int c = getopt_long(argc, argv, "hr:s:tTvxo:", long_options, &option_index);
+    int c =
+        getopt_long(argc, argv, "hp:r:s:tTvxo:", long_options, &option_index);
     if (c == -1) {
       break;
     }
@@ -179,6 +192,11 @@ int main(int argc, char **argv) {
         enable_threads = true;
         break;
 #endif
+      case 'p':
+        if ((pid = ParsePid(optarg)) == -1) {
+          return 1;
+        }
+        break;
       case 'r':
         sample_rate = std::stod(optarg);
         break;
@@ -216,9 +234,12 @@ int main(int argc, char **argv) {
     }
   }
 finish_arg_parse:
+  if (trace && pid != -1) {
+    std::cerr << "Options -t and -p are not mutually compatible.\n";
+    return 1;
+  }
   const std::chrono::microseconds interval{
       static_cast<long>(sample_rate * 1000000)};
-  pid_t pid;
   std::ostream *output = &std::cout;
   if (output_file.is_open()) {
     output = &output_file;
@@ -275,18 +296,17 @@ finish_arg_parse:
         std::this_thread::sleep_for(interval);
       }
     }
-  } else {
-    // there should be one remaining argument: the pid to trace
-    if (optind != argc - 1) {
+  } else if (pid == -1) {
+    // Users should use -p to supply the PID to trace. However, older versions
+    // of Pyflame used a convention where the PID to trace was the final
+    // argument to the pyflame command. This code path handles this legacy use
+    // case, to preserve backward compatibility.
+    if (optind != argc - 1 || (pid = ParsePid(argv[optind])) == -1) {
       std::cerr << usage_str;
       return 1;
     }
-    pid = static_cast<pid_t>(std::strtol(argv[argc - 1], nullptr, 10));
-    if (pid > std::numeric_limits<pid_t>::max() ||
-        pid < std::numeric_limits<pid_t>::min()) {
-      std::cerr << "PID " << pid << " is out of valid PID range.\n";
-      return 1;
-    }
+    std::cerr << "WARNING: Specifying a PID to trace without -p is deprecated; "
+                 "see Pyflame issue #99 for details.\n ";
   }
 
   std::vector<FrameTS> call_stacks;

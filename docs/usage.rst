@@ -13,7 +13,7 @@ target process is specified via its PID:
 .. code:: bash
 
     # Profile PID for 1s, sampling every 1ms.
-    pyflame PID
+    pyflame -p PID
 
 This will print data to stdout in a format that is suitable for usage with
 Brendan Gregg's ``flamegraph.pl`` tool (which you can get `here
@@ -23,7 +23,7 @@ might be like this:
 .. code:: bash
 
     # Generate flame graph for pid 12345; assumes flamegraph.pl is in your $PATH.
-    pyflame 12345 | flamegraph.pl > myprofile.svg
+    pyflame -p 12345 | flamegraph.pl > myprofile.svg
 
 You can also change the sample time with ``-s``, and the sampling frequency with
 ``-r``. Both units are measured in seconds.
@@ -31,7 +31,7 @@ You can also change the sample time with ``-s``, and the sampling frequency with
 .. code:: bash
 
     # Profile PID for 60 seconds, sampling every 10ms.
-    pyflame -s 60 -r 0.01 PID
+    pyflame -s 60 -r 0.01 -p PID
 
 The default behavior is to sample for 1 second (equivalent to ``-s 1``), taking
 a snapshot every millisecond (equivalent to ``-r 0.001``).

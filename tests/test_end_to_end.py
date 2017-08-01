@@ -127,7 +127,7 @@ def communicate(proc):
 def test_monitor(dijkstra):
     """Basic test for the monitor mode."""
     proc = subprocess.Popen(
-        ['./src/pyflame', str(dijkstra.pid)],
+        ['./src/pyflame', '-p', str(dijkstra.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -143,7 +143,7 @@ def test_monitor(dijkstra):
 def test_non_gil(sleeper):
     """Basic test for non-GIL/native code processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', str(sleeper.pid)],
+        ['./src/pyflame', '-p', str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -159,7 +159,7 @@ def test_non_gil(sleeper):
 def test_threaded(threaded_sleeper):
     """Basic test for non-GIL/native code processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '--threads',
+        ['./src/pyflame', '--threads', '-p',
          str(threaded_sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -192,7 +192,7 @@ def test_threaded(threaded_sleeper):
 def test_unthreaded(threaded_busy):
     """Test only one process is profiled by default."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-s', '0',
+        ['./src/pyflame', '-s', '0', '-p',
          str(threaded_busy.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -204,10 +204,49 @@ def test_unthreaded(threaded_busy):
     assert len(lines) == 1
 
 
+def test_legacy_pid_handling(threaded_busy):
+    # test PID parsing when -p is not used
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-s', '0',
+         str(threaded_busy.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+    out, err = communicate(proc)
+    assert proc.returncode == 0
+    lines = out.strip().split('\n')
+    assert err.startswith('WARNING: ')
+    assert len(lines) == 1
+
+
+def test_legacy_pid_handling_too_many_pids():
+    # test PID parsing when -p is not used
+    proc = subprocess.Popen(
+        ['./src/pyflame', '1', '2'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+    out, err = communicate(proc)
+    assert proc.returncode == 1
+    assert err.startswith('Usage: ')
+
+
+def test_dash_t_and_dash_p():
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-p', '1', '-t', 'python', '--version'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+    out, err = communicate(proc)
+    assert 'mutually compatible' in err
+    assert proc.returncode == 1
+
+
 def test_exclude_idle(sleeper):
     """Basic test for idle processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-x', str(sleeper.pid)],
+        ['./src/pyflame', '-x', '-p',
+         str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -223,7 +262,7 @@ def test_exclude_idle(sleeper):
 @pytest.mark.skipif(sys.version_info < (3, 3), reason="requires Python 3.3+")
 def test_utf8_output(unicode_sleeper):
     proc = subprocess.Popen(
-        ['./src/pyflame', '-x',
+        ['./src/pyflame', '-x', '-p',
          str(unicode_sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -247,7 +286,7 @@ def test_utf8_output(unicode_sleeper):
 
 def test_exit_early(exit_early):
     proc = subprocess.Popen(
-        ['./src/pyflame', '-s', '10',
+        ['./src/pyflame', '-s', '10', '-p',
          str(exit_early.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
@@ -262,7 +301,7 @@ def test_exit_early(exit_early):
 
 def test_sample_not_python(not_python):
     proc = subprocess.Popen(
-        ['./src/pyflame', str(not_python.pid)],
+        ['./src/pyflame', '-p', str(not_python.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -358,12 +397,10 @@ def test_sample_extra_args():
     assert proc.returncode == 1
 
 
-@pytest.mark.parametrize('pid', [(1, ), (0, )])
-def test_permission_error(pid):
-    # pid 1 = EPERM
-    # pid 0 = ESRCH
+def test_permission_error():
+    # we should not be allowed to trace init
     proc = subprocess.Popen(
-        ['./src/pyflame', str(pid)],
+        ['./src/pyflame', '-p', '1'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -372,10 +409,24 @@ def test_permission_error(pid):
     assert proc.returncode == 1
 
 
+@pytest.mark.parametrize('pid', [(-1, ), (0, ), (1 << 64, )])
+def test_invalid_pid(pid):
+    # we should not be allowed to trace init
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-p', str(pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    out, err = communicate(proc)
+    assert not out
+    assert 'valid PID range' in err
+    assert proc.returncode == 1
+
+
 def test_include_ts(sleeper):
     """Basic test for timestamp processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-T', str(sleeper.pid)],
+        ['./src/pyflame', '-T', '-p',
+         str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -392,7 +443,7 @@ def test_include_ts(sleeper):
 def test_include_ts_exclude_idle(sleeper):
     """Basic test for timestamp processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-T', '-x',
+        ['./src/pyflame', '-T', '-x', '-p',
          str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

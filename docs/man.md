@@ -7,29 +7,42 @@ pyflame - A Ptracing Python Profiler
 
 # SYNOPSIS
 
-**pyflame** [**options**] *PID*
+**pyflame** [**options**] [**-p**|**--pid**] *PID*
 
 **pyflame** [**options**] [**-t**|**--trace**] *command* [*args*...]
 
 # DESCRIPTION
 
-**pyflame** profiles Python processes using **ptrace**(2) to extract stack
-information. There are two modes. In the default mode pyflame will attach to a
-running process to get profiling data. If, instead, the **-t** or **--trace**
-options are given, pyflame will instead interpret the rest of the command line
-as a command to run, and trace it to completion.
-
-The output of **pyflame** is intended to be used with Brendan Gregg's
-*flamegraph.pl* script, which can be found on GitHub
-at <https://github.com/brendangregg/FlameGraph>.
+**pyflame** is a Python profiler that created flame graphs. It uses
+**ptrace**(2) to extract stack information. The output of **pyflame** is
+intended to be used with Brendan Gregg's *flamegraph.pl* script, which can be
+found on GitHub at <https://github.com/brendangregg/FlameGraph>.
 
 # GENERAL OPTIONS
+
+There are two invocation forms. When **-p** *PID* is used, pyflame will attach
+to the running process specified by *PID* to collect profiling data. The meaning
+of this option is analogous to its meaning in commands like **strace**(1) or
+**gdb**(1).
+
+When **-t** is given, pyflame will instead go into "trace mode". In this mode,
+it interprets the rest of the command line as a command to run, and traces the
+command to completion. This is analogous to how **strace**(1) works when a PID
+is not specified.
 
 **-h**, **--help**
 :   Display a friendly help message.
 
 **-o**, **--output**=*FILENAME*
 :   Write profiling output to *FILENAME* (otherwise stdout is used).
+
+**-p**, **--pid**=*PID*
+:   Specify which *PID* to trace.
+
+    Older versions of pyflame received *PID* as a positional argument, where
+    *PID* was interpreted as the last argument. This usage mode still works, but
+    is considered deprecated. You should use **-p** or **--pid** when specifying
+    *PID*.
 
 **-s**, **--seconds**=*SECONDS*
 :   Profile the process for duration *SECONDS* before detaching. The default is
@@ -42,8 +55,8 @@ at <https://github.com/brendangregg/FlameGraph>.
     default value for *RATE* is 0.001, which samples every millisecond.
 
     Note that setting a low value for rate will increase the accuracy of
-    profiles, but it also increases the overhead introduced by Pyflame. The
-    default frequency used by Pyflame is relatively aggressive; a less
+    profiles, but it also increases the overhead introduced by pyflame. The
+    default frequency used by pyflame is relatively aggressive; a less
     aggressive value like **-r 0.01** may be more appropriate if you are
     profiling processes in production.
 

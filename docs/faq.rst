@@ -54,7 +54,7 @@ each thread is doing, like so:
 .. code:: bash
 
     # Get a point-in-time snapshot of what each thread is currently running.
-    pyflame -s 0 --threads PID
+    pyflame -s 0 --threads -p PID
 
 Are BSD / OS X / macOS Supported?
 ---------------------------------
