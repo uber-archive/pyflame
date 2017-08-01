@@ -87,5 +87,7 @@ AS_IF([test x"$enable_py26" = xyes -o x"$enable_py34" = xyes -o x"$enable_py36" 
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
-AC_REVISION([m4_esyscmd_s([git describe --always])])
+AC_DEFINE_UNQUOTED(PYFLAME_VERSION_STR,
+                   ["Pyflame $PACKAGE_VERSION (commit `cd $srcdir && git describe --always`) $target_os $target_cpu"],
+                    [A string containing build information.])
 AC_OUTPUT

@@ -208,7 +208,7 @@ int main(int argc, char **argv) {
         include_ts = true;
         break;
       case 'v':
-        std::cout << PACKAGE_STRING << "\n";
+        std::cout << PYFLAME_VERSION_STR << "\n";
         return 0;
         break;
       case 'x':
