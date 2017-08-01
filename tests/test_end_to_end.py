@@ -27,6 +27,7 @@ TS_IDLE_RE = re.compile(r'\(idle\)')
 # './tests/sleeper.py:<module>:31;./tests/sleeper.py:main:26;'
 TS_FLAMEGRAPH_RE = re.compile(r'[^[^\d]+\d+;]*')
 TS_RE = re.compile(r'\d+')
+
 SLEEP_A_RE = re.compile(r'.*:sleep_a:.*')
 SLEEP_B_RE = re.compile(r'.*:sleep_b:.*')
 
@@ -321,9 +322,8 @@ def test_sample_not_python(not_python):
     assert proc.returncode == 1
 
 
-@pytest.mark.parametrize('force_abi,trace_threads',
-                         [(False, False), (False, True), (True, False),
-                          (True, True)])
+@pytest.mark.parametrize('force_abi', [False, True])
+@pytest.mark.parametrize('trace_threads', [False, True])
 def test_trace(force_abi, trace_threads):
     args = ['./src/pyflame']
     if force_abi:
@@ -420,7 +420,7 @@ def test_permission_error():
     assert proc.returncode == 1
 
 
-@pytest.mark.parametrize('pid', [(-1, ), (0, ), (1 << 64, )])
+@pytest.mark.parametrize('pid', [-1, 0, 1 << 200])
 def test_invalid_pid(pid):
     # we should not be allowed to trace init
     proc = subprocess.Popen(
@@ -467,3 +467,19 @@ def test_include_ts_exclude_idle(sleeper):
     for line in lines:
         assert not TS_IDLE_RE.match(line)
         assert TS_FLAMEGRAPH_RE.match(line) or TS_RE.match(line)
+
+
+@pytest.mark.parametrize('flag', ['-v', '--version'])
+def test_version(flag):
+    """Test the version flag."""
+    proc = subprocess.Popen(
+        ['./src/pyflame', flag],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+    out, err = communicate(proc)
+    assert not err
+    assert proc.returncode == 0
+
+    version_re = re.compile(r'^pyflame \d+\.\d+\.\d+$')
+    assert version_re.match(out.strip())
