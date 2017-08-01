@@ -51,8 +51,8 @@ def python_command():
     return 'python%d' % (sys.version_info[0], )
 
 
-def python_proc(test_file, *args):
-    return proc([python_command(), './tests/%s' % (test_file, )] + args)
+def python_proc(test_file):
+    return proc([python_command(), './tests/%s' % (test_file, )])
 
 
 @pytest.yield_fixture
@@ -94,12 +94,6 @@ def exit_early():
 @pytest.yield_fixture
 def not_python():
     with proc(['./tests/sleep.sh'], wait_for_pid=False) as p:
-        yield p
-
-
-@pytest.yield_fixture
-def forker():
-    with python_proc('forker.py', '5') as p:
         yield p
 
 
@@ -491,7 +485,7 @@ def test_version(flag):
     assert version_re.match(out.strip())
 
 
-def test_follow_fork(forker):
+def test_follow_fork():
     proc = subprocess.Popen(
         ['./src/pyflame', '-f', '-t', 'python', 'tests/forker.py'],
         stdout=subprocess.PIPE,
