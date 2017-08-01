@@ -1,3 +1,9 @@
+pyflame (1.5.1) unstable; urgency=medium
+
+  * Fix the combination of -t and --threads (issue #93).
+
+ -- Evan Klitzke <evan@death.star>  Mon, 31 Jul 2017 18:09:40 -0700
+
 pyflame (1.5.0) unstable; urgency=medium
 
   * Much improved Unicode support for Python 3
