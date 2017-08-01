@@ -95,18 +95,13 @@ void PtraceDetach(pid_t pid) {
     ss << "Failed to detach PID " << pid << ": " << strerror(errno);
     throw PtraceException(ss.str());
   }
-#if 0
-  DoWait(pid);
-#endif
 }
 
 void PtraceInterrupt(pid_t pid) {
   if (ptrace(PTRACE_INTERRUPT, pid, 0, 0)) {
     throw PtraceException("Failed to PTRACE_INTERRUPT");
   }
-#if 1
   DoWait(pid);
-#endif
 }
 
 struct user_regs_struct PtraceGetRegs(pid_t pid) {
