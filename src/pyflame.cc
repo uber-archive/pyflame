@@ -328,7 +328,7 @@ finish_arg_parse:
       }
     }
     if (!detected) {
-      std::cerr << "Failed to detect libpython after timeout.\n";
+      std::cerr << "Failed to locate libpython within timeout period.\n";
       return 1;
     }
 

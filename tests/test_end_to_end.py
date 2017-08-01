@@ -318,7 +318,7 @@ def test_sample_not_python(not_python):
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert re.match('Failed to .* libpython', err)
+    assert err.startswith('Failed to locate libpython')
     assert proc.returncode == 1
 
 
@@ -351,7 +351,7 @@ def test_trace_not_python():
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert re.match('Failed to .* libpython', err)
+    assert err.startswith('Failed to locate libpython')
     assert proc.returncode == 1
 
 
