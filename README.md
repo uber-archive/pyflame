@@ -51,10 +51,10 @@ here's a quick guide:
 
 ```bash
 # Attach to PID 12345 and profile it for 1 second
-pyflame 12345
+pyflame -p 12345
 
 # Attach to PID 768 and profile it for 5 seconds, sampling every 0.01 seconds
-pyflame -s 5 -r 0.01 768
+pyflame -s 5 -r 0.01 -p 768
 
 # Run py.test against tests/, emitting sample data to prof.txt
 pyflame -o prof.txt -t py.test tests/
