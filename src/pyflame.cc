@@ -37,8 +37,9 @@
 
 using namespace pyflame;
 
-namespace {
-const char usage_str[] =
+typedef std::unordered_map<frames_t, size_t, FrameHash> buckets_t;
+
+static const char usage_str[] =
     ("Usage: pyflame [options] -p PID\n"
      "       pyflame [options] [-t|--trace] command arg1 arg2...\n"
      "\n"
@@ -56,9 +57,7 @@ const char usage_str[] =
      "  -v, --version        Show the version\n"
      "  -x, --exclude-idle   Exclude idle time from statistics\n");
 
-typedef std::unordered_map<frames_t, size_t, FrameHash> buckets_t;
-
-pid_t ParsePid(const char *pid_str) {
+static pid_t ParsePid(const char *pid_str) {
   long pid = std::strtol(pid_str, nullptr, 10);
   if (pid <= 0 || pid > std::numeric_limits<pid_t>::max()) {
     std::cerr << "PID " << pid << " is out of valid PID range.\n";
@@ -68,8 +67,8 @@ pid_t ParsePid(const char *pid_str) {
 }
 
 // Prints all stack traces
-void PrintFrames(std::ostream &out, const std::vector<FrameTS> &call_stacks,
-                 size_t idle) {
+static void PrintFrames(std::ostream &out,
+                        const std::vector<FrameTS> &call_stacks, size_t idle) {
   if (idle) {
     out << "(idle) " << idle << "\n";
   }
@@ -99,7 +98,8 @@ void PrintFrames(std::ostream &out, const std::vector<FrameTS> &call_stacks,
 }
 
 // Prints all stack traces with timestamps
-void PrintFramesTS(std::ostream &out, const std::vector<FrameTS> &call_stacks) {
+static void PrintFramesTS(std::ostream &out,
+                          const std::vector<FrameTS> &call_stacks) {
   for (const auto &call_stack : call_stacks) {
     out << std::chrono::duration_cast<std::chrono::microseconds>(
                call_stack.ts.time_since_epoch())
@@ -119,14 +119,31 @@ void PrintFramesTS(std::ostream &out, const std::vector<FrameTS> &call_stacks) {
   }
 }
 
-inline bool IsPyflame(const std::string &str) {
+static inline bool IsPyflame(const std::string &str) {
   return str.find("pyflame") != std::string::npos;
 }
-}  // namespace
+
+static const char short_opts[] = "ho:p:r:s:tTvx";
+
+static struct option long_opts[] = {{"abi", required_argument, 0, 'a'},
+                                    {"help", no_argument, 0, 'h'},
+                                    {"rate", required_argument, 0, 'r'},
+                                    {"seconds", required_argument, 0, 's'},
+#if ENABLE_THREADS
+                                    {"threads", no_argument, 0, 'L'},
+#endif
+                                    {"output", required_argument, 0, 'o'},
+                                    {"pid", required_argument, 0, 'p'},
+                                    {"trace", no_argument, 0, 't'},
+                                    {"timestamp", no_argument, 0, 'T'},
+                                    {"version", no_argument, 0, 'v'},
+                                    {"exclude-idle", no_argument, 0, 'x'},
+                                    {0, 0, 0, 0}};
 
 int main(int argc, char **argv) {
   PyABI abi{};
   pid_t pid = -1;
+  long abi_version;
   bool trace = false;
   bool include_idle = true;
   bool include_ts = false;
@@ -135,37 +152,15 @@ int main(int argc, char **argv) {
   double sample_rate = 0.001;
   std::ofstream output_file;
   for (;;) {
-    static struct option long_options[] = {
-      {"abi", required_argument, 0, 'a'},
-      {"help", no_argument, 0, 'h'},
-      {"rate", required_argument, 0, 'r'},
-      {"seconds", required_argument, 0, 's'},
-#if ENABLE_THREADS
-      {"threads", no_argument, 0, 'L'},
-#endif
-      {"output", required_argument, 0, 'o'},
-      {"pid", required_argument, 0, 'p'},
-      {"trace", no_argument, 0, 't'},
-      {"timestamp", no_argument, 0, 'T'},
-      {"version", no_argument, 0, 'v'},
-      {"exclude-idle", no_argument, 0, 'x'},
-      {0, 0, 0, 0}
-    };
     int option_index = 0;
-    int c =
-        getopt_long(argc, argv, "hp:r:s:tTvxo:", long_options, &option_index);
+    int c = getopt_long(argc, argv, short_opts, long_opts, &option_index);
     if (c == -1) {
       break;
     }
     switch (c) {
-      case 0:
-        if (long_options[option_index].flag != 0) {
-          // if the option set a flag, do nothing
-          break;
-        }
-        break;
       case 'a':
-        switch (std::strtol(optarg, nullptr, 10)) {
+        abi_version = std::strtol(optarg, nullptr, 10);
+        switch (abi_version) {
           case 26:
           case 27:
             abi = PyABI::Py26;
@@ -178,7 +173,8 @@ int main(int argc, char **argv) {
             abi = PyABI::Py36;
             break;
           default:
-            std::cerr << "Unknown ABI version, should be one of {26, 34, 36}\n";
+            std::cerr << "Unknown or unsupported ABI version: " << abi_version
+                      << "\n";
             return 1;
             break;
         }

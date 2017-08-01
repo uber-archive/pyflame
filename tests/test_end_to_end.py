@@ -242,6 +242,17 @@ def test_dash_t_and_dash_p():
     assert proc.returncode == 1
 
 
+def test_unsupported_abi():
+    proc = subprocess.Popen(
+        ['./src/pyflame', '--abi=0', '-p', '1'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+    out, err = communicate(proc)
+    assert err.startswith('Unknown or unsupported ABI ')
+    assert proc.returncode == 1
+
+
 def test_exclude_idle(sleeper):
     """Basic test for idle processes."""
     proc = subprocess.Popen(
