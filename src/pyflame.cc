@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
 
   static const char usage_str[] =
       ("Usage: pyflame [options] -p PID\n"
-       "       pyflame [options] [-t|--trace] command arg1 arg2...\n"
+       "       pyflame [options] -t command arg1 arg2...\n"
        "\n"
        "General Options:\n"
        "      --abi            Force a particular Python ABI (26, 34, 36)\n"
@@ -184,7 +184,7 @@ int main(int argc, char **argv) {
         }
         break;
       case 'h':
-        std::cout << usage_str;
+        std::cout << PYFLAME_VERSION_STR << "\n\n" << usage_str;
         return 0;
         break;
 #ifdef ENABLE_THREADS
