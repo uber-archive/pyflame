@@ -123,23 +123,6 @@ static inline bool IsPyflame(const std::string &str) {
   return str.find("pyflame") != std::string::npos;
 }
 
-static const char short_opts[] = "ho:p:r:s:tTvx";
-
-static struct option long_opts[] = {{"abi", required_argument, 0, 'a'},
-                                    {"help", no_argument, 0, 'h'},
-                                    {"rate", required_argument, 0, 'r'},
-                                    {"seconds", required_argument, 0, 's'},
-#if ENABLE_THREADS
-                                    {"threads", no_argument, 0, 'L'},
-#endif
-                                    {"output", required_argument, 0, 'o'},
-                                    {"pid", required_argument, 0, 'p'},
-                                    {"trace", no_argument, 0, 't'},
-                                    {"timestamp", no_argument, 0, 'T'},
-                                    {"version", no_argument, 0, 'v'},
-                                    {"exclude-idle", no_argument, 0, 'x'},
-                                    {0, 0, 0, 0}};
-
 int main(int argc, char **argv) {
   PyABI abi{};
   pid_t pid = -1;
@@ -151,9 +134,27 @@ int main(int argc, char **argv) {
   double seconds = 1;
   double sample_rate = 0.001;
   std::ofstream output_file;
+
+  static const char short_opts[] = "ho:p:r:s:tTvx";
+  static struct option long_opts[] = {
+    {"abi", required_argument, 0, 'a'},
+    {"help", no_argument, 0, 'h'},
+    {"rate", required_argument, 0, 'r'},
+    {"seconds", required_argument, 0, 's'},
+#if ENABLE_THREADS
+    {"threads", no_argument, 0, 'L'},
+#endif
+    {"output", required_argument, 0, 'o'},
+    {"pid", required_argument, 0, 'p'},
+    {"trace", no_argument, 0, 't'},
+    {"timestamp", no_argument, 0, 'T'},
+    {"version", no_argument, 0, 'v'},
+    {"exclude-idle", no_argument, 0, 'x'},
+    {0, 0, 0, 0}
+  };
+
   for (;;) {
-    int option_index = 0;
-    int c = getopt_long(argc, argv, short_opts, long_opts, &option_index);
+    int c = getopt_long(argc, argv, short_opts, long_opts, nullptr);
     if (c == -1) {
       break;
     }
