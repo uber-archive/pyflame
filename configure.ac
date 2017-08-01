@@ -67,6 +67,10 @@ AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([getpagesize memmove munmap strerror strtol strtoul])
 
+AC_DEFINE_UNQUOTED(PYFLAME_VERSION_STR,
+["Pyflame $PACKAGE_VERSION (commit `cd $srcdir && git describe --always`) $target_os $target_cpu"],
+[A string containing build information.])
+
 PKG_CHECK_MODULES([PY26], [python2], [enable_py26="yes"], [AC_MSG_WARN([Building without Python 2.6/2.7 support])])
 AM_CONDITIONAL([ENABLE_PY26], [test x"$enable_py26" = xyes])
 AM_COND_IF([ENABLE_PY26], [AC_DEFINE([ENABLE_PY26], [1], [Python 2.6/2.7 will be enabled])])
@@ -87,7 +91,4 @@ AS_IF([test x"$enable_py26" = xyes -o x"$enable_py34" = xyes -o x"$enable_py36" 
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
-AC_DEFINE_UNQUOTED(PYFLAME_VERSION_STR,
-                   ["Pyflame $PACKAGE_VERSION (commit `cd $srcdir && git describe --always`) $target_os $target_cpu"],
-                    [A string containing build information.])
 AC_OUTPUT
