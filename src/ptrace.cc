@@ -97,6 +97,7 @@ long PtracePeek(pid_t pid, unsigned long addr) {
   return data;
 }
 
+#if 0
 static long PtraceGetEventMsg(pid_t pid) {
   long who = -1;
   if (ptrace(PTRACE_GETEVENTMSG, pid, nullptr, (void *)&who) == -1) {
@@ -106,34 +107,50 @@ static long PtraceGetEventMsg(pid_t pid) {
   }
   return who;
 }
+#endif
 
-void WaitWithTimeout(const sigset_t *mask, const timespec *timeout) {
-  int status;
+void WaitWithTimeout(pid_t pid, const timespec &timeout) {
+  int ret;
+#if 0
+  assert(waitpid(pid, &ret, __WALL) >= 0);
+  std::cerr << "ret is " << ret << std::endl;
+#endif
   siginfo_t info;
+  sigset_t mask, orig;
+  assert(sigemptyset(&mask) == 0);
+  assert(sigaddset(&mask, SIGCHLD) == 0);
+  if (sigprocmask(SIG_BLOCK, &mask, &orig) < 0) {
+    perror("sigprocmask");
+    return;
+  }
   do {
-    const int signum = sigtimedwait(mask, &info, timeout);
-    std::cerr << "got a sigchld from " << info.si_pid
-              << ", status = " << info.si_status << std::endl;
-    if (signum == SIGCHLD) {
-      std::cerr << "waitpid is: " << waitpid(info.si_pid, &status, WNOHANG)
-                << std::endl;
-      std::cerr << "status is " << status << std::endl;
-      long who = PtraceGetEventMsg(info.si_pid);
-      std::cerr << "who = " << who << std::endl;
-    } else if (signum < 0) {
+    errno = 0;
+    ret = sigtimedwait(&mask, &info, &timeout);
+    if (ret > 0) {
+      std::cerr << "did sigtimedwait from " << info.si_pid << ", signo is "
+                << info.si_signo << ", ret = " << ret
+                << ", status = " << info.si_status << ", code is "
+                << info.si_code << std::endl;
+    } else if (ret < 0) {
+      std::cerr << "ret = " << ret << ", errno = " << errno << std::endl;
+      perror("sigtimedwait()");
       if (errno == EINTR) {
         continue;
       } else if (errno == EAGAIN) {
         std::cerr << "timeout\n";
-        return;  // timeout
+        goto restore;
       } else {
         perror("sigtimedwait");
-        return;
+        goto restore;
       }
     } else {
       assert(false);  // not reached
     }
   } while (1);
+restore:
+  if (sigprocmask(SIG_SETMASK, &orig, nullptr) < 0) {
+    perror("sigprocmask");
+  }
 }
 
 static void do_wait(pid_t pid) {
@@ -143,11 +160,6 @@ static void do_wait(pid_t pid) {
     ss << "Failed to waitpid(): " << strerror(errno);
     throw PtraceException(ss.str());
   }
-
-  if (status >> 8 == (SIGTRAP | (PTRACE_EVENT_FORK << 8))) {
-    std::cerr << "Intercepted fork.\n";
-  }
-
   if (WIFSTOPPED(status)) {
     int signum = WSTOPSIG(status);
     if (signum != SIGTRAP) {
@@ -182,7 +194,9 @@ void PtraceSingleStep(pid_t pid) {
 }
 
 static void PtraceSetOptions(pid_t pid, long flags) {
-  if (ptrace(PTRACE_SETOPTIONS, pid, flags, 0) == -1) {
+  std::cerr << "calling PTRACE_SETOPTIONS on pid " << pid << " with flags "
+            << flags << std::endl;
+  if (ptrace(PTRACE_SETOPTIONS, pid, 0, flags) == -1) {
     std::ostringstream ss;
     ss << "Failed to PTRACE_SETOPTIONS: " << strerror(errno);
     throw PtraceException(ss.str());

@@ -43,11 +43,16 @@ def main():
 
     sys.stdout.write(str(os.getpid()) + '\n')
     sys.stdout.flush()
+    time.sleep(0.5)
 
+    sys.stdout.write('parent {} calling fork now\n'.format(os.getpid()))
+    sys.stdout.flush()
     pid = os.fork()
     if pid == 0:
         spawn(args.count)
     else:
+        sys.stdout.write('parent waiting for {} now\n'.format(pid))
+        sys.stdout.flush()
         os.waitpid(pid, 0)
 
 

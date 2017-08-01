@@ -34,7 +34,7 @@ void PtraceDetach(pid_t pid);
 // set the follow fork flag
 void PtraceFollowFork(pid_t pid);
 
-void WaitWithTimeout(const sigset_t *mask, const timespec *timeout);
+void WaitWithTimeout(pid_t pid, const timespec &timeout);
 
 // get regs from a process
 struct user_regs_struct PtraceGetRegs(pid_t pid);

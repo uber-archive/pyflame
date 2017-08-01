@@ -305,14 +305,7 @@ finish_arg_parse:
   }
 
   std::vector<FrameTS> call_stacks;
-  sigset_t mask, orig_mask;
-  sigemptyset(&mask);
-  sigaddset(&mask, SIGCHLD);
-  if (sigprocmask(SIG_BLOCK, &mask, &orig_mask) < 0) {
-    perror("sigprocmask");
-    return 1;
-  }
-  const struct timespec wait_timeout { .tv_sec = 0, .tv_nsec = 1000000 };
+  const struct timespec wait_timeout { .tv_sec = 1, .tv_nsec = 0 };
 
   size_t idle = 0;
   try {
@@ -352,7 +345,7 @@ finish_arg_parse:
         break;
       }
       PtraceDetach(pid);
-      WaitWithTimeout(&mask, &wait_timeout);
+      WaitWithTimeout(pid, wait_timeout);
       PtraceAttach(pid);
     }
     if (!include_ts) {
