@@ -32,12 +32,16 @@ shift "$((OPTIND-1))"
 
 # Run tests using pip; $1 = python version
 run_pip_tests() {
+  local activated=0
   if [ -z "${VIRTUAL_ENV}" ]; then
     rm -rf "${ENVDIR}"
     virtualenv -q -p "$1" "${ENVDIR}" &>/dev/null
 
     # shellcheck source=/dev/null
     . "${ENVDIR}/bin/activate"
+    activated=1
+  else
+    echo "Warning: reusing virtualenv"
   fi
   echo -n "Running test suite against interpreter "
   "$1" --version
@@ -46,6 +50,9 @@ run_pip_tests() {
 
   find tests/ -name '*.pyc' -delete
   py.test -q tests/
+  if [ "$activated" -eq 1 ]; then
+    deactivate
+  fi
 }
 
 # Make a best effort to run the tests against some Python version.
