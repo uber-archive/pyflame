@@ -481,5 +481,6 @@ def test_version(flag):
     assert not err
     assert proc.returncode == 0
 
-    version_re = re.compile(r'^pyflame \d+\.\d+\.\d+$')
+    version_re = re.compile(
+        r'^Pyflame \d+\.\d+\.\d+ \(commit [\w]+\) \S+ \S+$')
     assert version_re.match(out.strip())
