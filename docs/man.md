@@ -25,13 +25,6 @@ at <https://github.com/brendangregg/FlameGraph>.
 
 # GENERAL OPTIONS
 
-**--abi**=*VERSION*
-:   Force a particular Python ABI. This is an advanced option, only needed in
-    edge cases when profiling embedded Python builds (e.g. uWSGI). The version
-
-**--threads**
-:   Enable profiling multi-threaded Python apps.
-
 **-h**, **--help**
 :   Display a friendly help message.
 
@@ -60,15 +53,31 @@ at <https://github.com/brendangregg/FlameGraph>.
     interpreted as a command plus arguments to the command). This is analogous
     to **strace**(1) in its default mode.
 
-**-T**, **--timestamp**
-:   Print the timestamp for each stack. This is useful for generating "flame
-    chart" profiles.
-
 **-v**, **--version**
 :   Print the version.
 
 **-x**, **--exclude-idle**
 :   Exclude "idle" time from output.
+
+**--threads**
+:   Enable profiling multi-threaded Python apps.
+
+## ADVANCED OPTIONS
+
+The following options are less commonly used.
+
+**-T**, **--timestamp**
+:   Print the timestamp for each stack. This is useful for generating "flame
+    chart" profiles. Generally regular flame graphs are encouraged, since the
+    timestamp flame charts are harder to use.
+
+**--abi**=*VERSION*
+:   Force a particular Python ABI. This option should only be needed in edge
+    cases when profiling embedded Python builds (e.g. uWSGI), and only if
+    pyflame doesn't automatically detect the correct ABI. *VERSION* should be a
+    two digit integer consisting of the Python major and minor version, e.g. 27
+    for Python 2.7 or 36 for Python 3.6.
+
 
 # ONLINE DOCUMENTATION
 

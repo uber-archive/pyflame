@@ -27,20 +27,6 @@ Gregg\[aq]s \f[I]flamegraph.pl\f[] script, which can be found on GitHub
 at <https://github.com/brendangregg/FlameGraph>.
 .SH GENERAL OPTIONS
 .TP
-.B \f[B]\-\-abi\f[]=\f[I]VERSION\f[]
-Force a particular Python ABI.
-This is an advanced option, only needed in edge cases when profiling
-embedded Python builds (e.g.
-uWSGI).
-The version
-.RS
-.RE
-.TP
-.B \f[B]\-\-threads\f[]
-Enable profiling multi\-threaded Python apps.
-.RS
-.RE
-.TP
 .B \f[B]\-h\f[], \f[B]\-\-help\f[]
 Display a friendly help message.
 .RS
@@ -85,12 +71,6 @@ This is analogous to \f[B]strace\f[](1) in its default mode.
 .RS
 .RE
 .TP
-.B \f[B]\-T\f[], \f[B]\-\-timestamp\f[]
-Print the timestamp for each stack.
-This is useful for generating "flame chart" profiles.
-.RS
-.RE
-.TP
 .B \f[B]\-v\f[], \f[B]\-\-version\f[]
 Print the version.
 .RS
@@ -98,6 +78,34 @@ Print the version.
 .TP
 .B \f[B]\-x\f[], \f[B]\-\-exclude\-idle\f[]
 Exclude "idle" time from output.
+.RS
+.RE
+.TP
+.B \f[B]\-\-threads\f[]
+Enable profiling multi\-threaded Python apps.
+.RS
+.RE
+.SS ADVANCED OPTIONS
+.PP
+The following options are less commonly used.
+.TP
+.B \f[B]\-T\f[], \f[B]\-\-timestamp\f[]
+Print the timestamp for each stack.
+This is useful for generating "flame chart" profiles.
+Generally regular flame graphs are encouraged, since the timestamp flame
+charts are harder to use.
+.RS
+.RE
+.TP
+.B \f[B]\-\-abi\f[]=\f[I]VERSION\f[]
+Force a particular Python ABI.
+This option should only be needed in edge cases when profiling embedded
+Python builds (e.g.
+uWSGI), and only if pyflame doesn\[aq]t automatically detect the correct
+ABI.
+\f[I]VERSION\f[] should be a two digit integer consisting of the Python
+major and minor version, e.g.
+27 for Python 2.7 or 36 for Python 3.6.
 .RS
 .RE
 .SH ONLINE DOCUMENTATION
