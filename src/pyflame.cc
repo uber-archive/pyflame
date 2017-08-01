@@ -33,7 +33,6 @@
 #include "./pyfrob.h"
 #include "./symbol.h"
 #include "./thread.h"
-#include "./version.h"
 
 using namespace pyflame;
 
@@ -209,8 +208,7 @@ int main(int argc, char **argv) {
         include_ts = true;
         break;
       case 'v':
-        std::cout << PACKAGE_STRING << "\n\n";
-        std::cout << kBuildNote << "\n";
+        std::cout << PACKAGE_STRING << "\n";
         return 0;
         break;
       case 'x':
