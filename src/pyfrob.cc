@@ -195,7 +195,7 @@ std::string PyFrob::Status() const {
   return line;
 }
 
-std::vector<Thread> PyFrob::GetThreads(void) {
+std::vector<Thread> PyFrob::GetThreads(void) const {
   return get_threads_(pid_, addrs_, enable_threads_);
 }
 }  // namespace pyflame

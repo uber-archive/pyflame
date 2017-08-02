@@ -37,7 +37,7 @@ class PyFrob {
   int DetectABI(PyABI abi);
 
   // Get the current frame list.
-  std::vector<Thread> GetThreads(void);
+  std::vector<Thread> GetThreads(void) const;
 
   // Useful when debugging.
   std::string Status() const;
