@@ -49,7 +49,9 @@ static const char usage_str[] =
      "\n"
      "General Options:\n"
      "      --abi            Force a particular Python ABI (26, 34, 36)\n"
+#ifdef ENABLE_THREADS
      "      --threads        Enable multi-threading support\n"
+#endif
      "  -h, --help           Show help\n"
      "  -p, --pid=PID        The PID to trace\n"
      "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
