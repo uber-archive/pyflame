@@ -38,6 +38,15 @@
 #include "./symbol.h"
 #include "./thread.h"
 
+// Maximum number of times to retry checking for Python symbols when -p is used.
+#define MAX_ATTACH_RETRIES 1
+
+// Maximum number of times to retry checking for Python symbols when -t is used.
+#define MAX_TRACE_RETRIES 50
+
+// Microseconds in a second.
+#define MICROSECONDS_PER_SEC 1000000
+
 using namespace pyflame;
 
 typedef std::unordered_map<frames_t, size_t, FrameHash> buckets_t;
@@ -53,9 +62,10 @@ static pid_t ParsePid(const char *pid_str) {
 
 // Prints all stack traces
 static void PrintFrames(std::ostream &out,
-                        const std::vector<FrameTS> &call_stacks, size_t idle) {
-  if (idle) {
-    out << "(idle) " << idle << "\n";
+                        const std::vector<FrameTS> &call_stacks,
+                        size_t idle_count) {
+  if (idle_count) {
+    out << "(idle) " << idle_count << "\n";
   }
   // Put the call stacks into buckets
   buckets_t buckets;
@@ -237,8 +247,6 @@ finish_arg_parse:
     std::cerr << "Options -t and -p are not mutually compatible.\n";
     return 1;
   }
-  const std::chrono::microseconds interval{
-      static_cast<long>(sample_rate * 1000000)};
   std::ostream *output = &std::cout;
   if (output_file.is_open()) {
     output = &output_file;
@@ -259,7 +267,7 @@ finish_arg_parse:
       perror("fork()");
       return 1;
     } else if (pid == 0) {
-      // child; run the command
+      // Child: request to be traced.
       PtraceTraceme();
       if (execvp(argv[optind], argv + optind)) {
         std::cerr << "execvp() failed for: " << argv[optind]
@@ -267,6 +275,11 @@ finish_arg_parse:
         return 1;
       }
     } else {
+      // Parent: we trace the child until it's exec'ed the new process before
+      // proceeding. For a dynamically linked Python build, there's still a race
+      // condition between when the exec() happens and when symbols are
+      // available. But there's no point in polling the child until it's at
+      // least had a chance to run exec.
       pid_t child = waitpid(0, nullptr, 0);
       assert(child == pid);
       PtraceSetOptions(pid, PTRACE_O_TRACEEXEC);
@@ -284,6 +297,8 @@ finish_arg_parse:
           return 1;
         }
       }
+      // We can only use PtraceInterrupt, used later in the main loop, if the
+      // process was seized. So we reattach and seize.
       PtraceDetach(pid);
       PtraceSeize(pid);
     }
@@ -311,24 +326,35 @@ finish_arg_parse:
   PtraceInterrupt(pid);
 
   std::vector<FrameTS> call_stacks;
-  size_t idle = 0;
+  size_t idle_count = 0;
+  const std::chrono::microseconds interval{
+      static_cast<long>(sample_rate * MICROSECONDS_PER_SEC)};
   try {
     PyFrob frobber(pid, enable_threads);
 
-    bool detected = false;
-    for (size_t i = 0; i < 50; i++) {
-      try {
-        frobber.DetectABI(abi);
-        detected = true;
+    // When tracing a dynamically linked Python build, it may take a while for
+    // ld.so to actually load symbols into the process. Therefore we retry
+    // probing in a loop, until the symbols are loaded. A more reliable way of
+    // doing this would be to break at entry to a known static function (e.g.
+    // Py_Main), but this isn't reliable in all cases. For instance,
+    // /usr/bin/python{,3} will start at Py_Main, but uWSGI will not.
+    try {
+      const size_t max_retries = trace ? MAX_TRACE_RETRIES : MAX_ATTACH_RETRIES;
+      for (size_t i = 0;;) {
+        if (frobber.DetectABI(abi)) {
+          if (++i >= max_retries) {
+            std::cerr << "Failed to locate libpython within timeout period.\n";
+            return 1;
+          }
+          PtraceCont(pid);
+          std::this_thread::sleep_for(interval);
+          PtraceInterrupt(pid);
+          continue;
+        }
         break;
-      } catch (const FatalException &exc) {
-        PtraceCont(pid);
-        std::this_thread::sleep_for(interval);
-        PtraceInterrupt(pid);
       }
-    }
-    if (!detected) {
-      std::cerr << "Failed to locate libpython within timeout period.\n";
+    } catch (const FatalException &exc) {
+      std::cerr << exc.what() << "\n";
       return 1;
     }
 
@@ -344,7 +370,7 @@ finish_arg_parse:
       // Only true for non-GIL stacks that we couldn't find a way to profile
       // Currently this means stripped builds on non-AMD64 archs
       if (threads.empty() && include_idle) {
-        idle++;
+        idle_count++;
         // Time stamp empty call stacks only if required. Since lots of time
         // the process will be idle, this is a good optimization to have
         if (include_ts) {
@@ -364,16 +390,16 @@ finish_arg_parse:
       PtraceInterrupt(pid);
     }
     if (!include_ts) {
-      PrintFrames(*output, call_stacks, idle);
+      PrintFrames(*output, call_stacks, idle_count);
     } else {
       PrintFramesTS(*output, call_stacks);
     }
   } catch (const PtraceException &exc) {
     // If the process terminates early then we just print the stack traces up
     // until that point in time.
-    if (!call_stacks.empty() || idle) {
+    if (!call_stacks.empty() || idle_count) {
       if (!include_ts) {
-        PrintFrames(*output, call_stacks, idle);
+        PrintFrames(*output, call_stacks, idle_count);
       } else {
         PrintFramesTS(*output, call_stacks);
       }
