@@ -9,7 +9,7 @@
 # flags, and frob3{4,6}.cc are compiled with python3.4/3.6 flags.
 
 bin_PROGRAMS = pyflame
-pyflame_SOURCES = aslr.cc frame.cc thread.cc namespace.cc posix.cc ptrace.cc pyflame.cc pyfrob.cc symbol.cc
+pyflame_SOURCES = aslr.cc frame.cc thread.cc namespace.cc posix.cc prober.cc ptrace.cc pyflame.cc pyfrob.cc symbol.cc
 pyflame_LDADD =
 
 noinst_LTLIBRARIES =
