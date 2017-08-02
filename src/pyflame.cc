@@ -343,23 +343,20 @@ finish_arg_parse:
       for (size_t i = 0;;) {
         if (frobber.DetectABI(abi)) {
           if (++i >= max_retries) {
-            goto fail;
+            std::cerr << "Failed to locate libpython within timeout period.\n";
+            return 1;
           }
           PtraceCont(pid);
           std::this_thread::sleep_for(interval);
           PtraceInterrupt(pid);
           continue;
         }
-        goto success;
+        break;
       }
-    fail:
-      std::cerr << "Failed to locate libpython within timeout period.\n";
-      return 1;
     } catch (const FatalException &exc) {
       std::cerr << exc.what() << "\n";
       return 1;
     }
-  success:
 
     const std::chrono::microseconds interval{
         static_cast<long>(sample_rate * 1000000)};
