@@ -139,7 +139,7 @@ int Prober::ParseOpts(int argc, char **argv) {
     {"output", required_argument, 0, 'o'},
     {"pid", required_argument, 0, 'p'},
     {"trace", no_argument, 0, 't'},
-    {"timestamp", no_argument, 0, 'T'},
+    {"flamechart", no_argument, 0, 'T'},
     {"version", no_argument, 0, 'v'},
     {"exclude-idle", no_argument, 0, 'x'},
     {0, 0, 0, 0}
