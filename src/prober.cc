@@ -82,7 +82,7 @@ static void PrintFrames(std::ostream &out,
       bucket->second++;
     }
   }
-  // process the frames
+  // Process the frames
   for (const auto &kv : buckets) {
     if (kv.first.empty()) {
       std::cerr << "fatal error\n";
@@ -261,8 +261,7 @@ int Prober::InitiatePtrace(int optind, char **argv) {
       }
     } else {
       // Parent: we trace the child until it's exec'ed the new process before
-      // proceeding. For a dynamically linked Python build, there's still a
-      // race
+      // proceeding. For a dynamically linked Python build, there's still a race
       // condition between when the exec() happens and when symbols are
       // available. But there's no point in polling the child until it's at
       // least had a chance to run exec.
@@ -331,8 +330,8 @@ int Prober::ProbeLoop(const PyFrob &frobber) {
       // Currently this means stripped builds on non-AMD64 archs
       if (threads.empty() && include_idle_) {
         idle_count++;
-        // Time stamp empty call stacks only if required. Since lots of time
-        // the process will be idle, this is a good optimization to have
+        // Timestamp empty call stacks only if required. Since lots of time the
+        // process will be idle, this is a good optimization to have.
         if (include_ts_) {
           call_stacks.push_back({now, {}});
         }
@@ -376,11 +375,11 @@ int Prober::ProbeLoop(const PyFrob &frobber) {
 
 int Prober::FindSymbols(PyFrob *frobber) {
   // When tracing a dynamically linked Python build, it may take a while for
-  // ld.so to actually load symbols into the process. Therefore we retry
-  // probing in a loop, until the symbols are loaded. A more reliable way of
-  // doing this would be to break at entry to a known static function (e.g.
-  // Py_Main), but this isn't reliable in all cases. For instance,
-  // /usr/bin/python{,3} will start at Py_Main, but uWSGI will not.
+  // ld.so to actually load symbols into the process. Therefore we retry probing
+  // in a loop, until the symbols are loaded. A more reliable way of doing this
+  // would be to break at entry to a known static function (e.g. Py_Main), but
+  // this isn't reliable in all cases. For instance, /usr/bin/python{,3} will
+  // start at Py_Main, but uWSGI will not.
   try {
     for (size_t i = 0;;) {
       if (frobber->DetectABI(abi_)) {
