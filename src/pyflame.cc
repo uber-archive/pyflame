@@ -184,13 +184,93 @@ struct Options {
       }
     }
   finish_arg_parse:
-    if (trace && pid != -1) {
-      std::cerr << "Options -t and -p are not mutually compatible.\n";
-      return 1;
+    if (trace) {
+      if (pid != -1) {
+        std::cerr << "Options -t and -p are not mutually compatible.\n";
+        return 1;
+      }
+      if (optind == argc) {
+        std::cerr << usage_str;
+        return 1;
+      }
+      trace_target = argv[optind];
+    } else if (pid == -1) {
+      // Users should use -p to supply the PID to trace. However, older versions
+      // of Pyflame used a convention where the PID to trace was the final
+      // argument to the pyflame command. This code path handles this legacy use
+      // case, to preserve backward compatibility.
+      if (optind != argc - 1 || (pid = ParsePid(argv[optind])) == -1) {
+        std::cerr << usage_str;
+        return 1;
+      }
+      std::cerr
+          << "WARNING: Specifying a PID to trace without -p is deprecated; "
+             "see Pyflame issue #99 for details.\n ";
     }
     interval = std::chrono::microseconds{
         static_cast<long>(sample_rate * MICROSECONDS_PER_SEC)};
     return -1;
+  }
+
+  int InitiatePtrace(int optind, char **argv) {
+    if (trace) {
+      if (trace_target.find("pyflame") != std::string::npos) {
+        std::cerr << "You tried to pyflame a pyflame, naughty!\n";
+        return 1;
+      }
+      // In trace mode, all of the remaining arguments are a command to run. We
+      // fork and have the child run the command; the parent traces.
+      pid = fork();
+      if (pid == -1) {
+        perror("fork()");
+        return 1;
+      } else if (pid == 0) {
+        // Child: request to be traced.
+        PtraceTraceme();
+        if (execvp(trace_target.c_str(), argv + optind)) {
+          std::cerr << "execvp() failed for: " << trace_target
+                    << ", err = " << strerror(errno) << "\n";
+          return 1;
+        }
+      } else {
+        // Parent: we trace the child until it's exec'ed the new process before
+        // proceeding. For a dynamically linked Python build, there's still a
+        // race
+        // condition between when the exec() happens and when symbols are
+        // available. But there's no point in polling the child until it's at
+        // least had a chance to run exec.
+        pid_t child = waitpid(0, nullptr, 0);
+        assert(child == pid);
+        PtraceSetOptions(pid, PTRACE_O_TRACEEXEC);
+        PtraceCont(pid);
+        int status = 0;
+        while (!SawEventExec(status)) {
+          pid_t p = waitpid(-1, &status, 0);
+          if (p == -1) {
+            perror("waitpid()");
+            return 1;
+          }
+          if (WIFEXITED(status)) {
+            std::cerr << "Child process exited with status: "
+                      << WEXITSTATUS(status) << "\n";
+            return 1;
+          }
+        }
+        // We can only use PtraceInterrupt, used later in the main loop, if the
+        // process was seized. So we reattach and seize.
+        PtraceDetach(pid);
+        PtraceSeize(pid);
+      }
+    } else {
+      try {
+        PtraceSeize(pid);
+      } catch (const PtraceException &err) {
+        std::cerr << "Failed to seize PID " << pid << "\n";
+        return 1;
+      }
+    }
+    PtraceInterrupt(pid);
+    return 0;
   }
 
   PyABI abi;
@@ -203,6 +283,7 @@ struct Options {
   double sample_rate;
   std::chrono::microseconds interval;
   std::string output_file;
+  std::string trace_target;
 };
 
 // Prints all stack traces
@@ -340,84 +421,9 @@ int main(int argc, char **argv) {
   if (ret != -1) {
     return ret;
   }
-  if (opts.trace) {
-    if (optind == argc) {
-      std::cerr << usage_str;
-      return 1;
-    }
-    std::string target(argv[optind]);
-    if (target.find("pyflame") != std::string::npos) {
-      std::cerr << "You tried to pyflame a pyflame, naughty!\n";
-      return 1;
-    }
-    // In trace mode, all of the remaining arguments are a command to run. We
-    // fork and have the child run the command; the parent traces.
-    opts.pid = fork();
-    if (opts.pid == -1) {
-      perror("fork()");
-      return 1;
-    } else if (opts.pid == 0) {
-      // Child: request to be traced.
-      PtraceTraceme();
-      if (execvp(target.c_str(), argv + optind)) {
-        std::cerr << "execvp() failed for: " << target
-                  << ", err = " << strerror(errno) << "\n";
-        return 1;
-      }
-    } else {
-      // Parent: we trace the child until it's exec'ed the new process before
-      // proceeding. For a dynamically linked Python build, there's still a
-      // race
-      // condition between when the exec() happens and when symbols are
-      // available. But there's no point in polling the child until it's at
-      // least had a chance to run exec.
-      pid_t child = waitpid(0, nullptr, 0);
-      assert(child == opts.pid);
-      PtraceSetOptions(opts.pid, PTRACE_O_TRACEEXEC);
-      PtraceCont(opts.pid);
-      int status = 0;
-      while (!SawEventExec(status)) {
-        pid_t p = waitpid(-1, &status, 0);
-        if (p == -1) {
-          perror("waitpid()");
-          return 1;
-        }
-        if (WIFEXITED(status)) {
-          std::cerr << "Child process exited with status: "
-                    << WEXITSTATUS(status) << "\n";
-          return 1;
-        }
-      }
-      // We can only use PtraceInterrupt, used later in the main loop, if the
-      // process was seized. So we reattach and seize.
-      PtraceDetach(opts.pid);
-      PtraceSeize(opts.pid);
-    }
-  } else {
-    if (opts.pid == -1) {
-      // Users should use -p to supply the PID to trace. However, older
-      // versions
-      // of Pyflame used a convention where the PID to trace was the final
-      // argument to the pyflame command. This code path handles this legacy
-      // use
-      // case, to preserve backward compatibility.
-      if (optind != argc - 1 ||
-          (opts.pid = opts.ParsePid(argv[optind])) == -1) {
-        std::cerr << usage_str;
-        return 1;
-      }
-      std::cerr
-          << "WARNING: Specifying a PID to trace without -p is deprecated; "
-             "see Pyflame issue #99 for details.\n ";
-    }
-    try {
-      PtraceSeize(opts.pid);
-    } catch (const PtraceException &err) {
-      std::cerr << "Failed to seize PID " << opts.pid << "\n";
-      return 1;
-    }
+  if (opts.InitiatePtrace(optind, argv)) {
+    return 1;
   }
-  PtraceInterrupt(opts.pid);
 
   // When tracing a dynamically linked Python build, it may take a while for
   // ld.so to actually load symbols into the process. Therefore we retry
