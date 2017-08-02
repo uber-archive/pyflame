@@ -338,23 +338,28 @@ finish_arg_parse:
     // doing this would be to break at entry to a known static function (e.g.
     // Py_Main), but this isn't reliable in all cases. For instance,
     // /usr/bin/python{,3} will start at Py_Main, but uWSGI will not.
-    bool detected = false;
-    const size_t max_retries = trace ? MAX_TRACE_RETRIES : MAX_ATTACH_RETRIES;
-    for (size_t i = 0; i < max_retries; i++) {
-      try {
-        frobber.DetectABI(abi);
-        detected = true;
-        break;
-      } catch (const FatalException &exc) {
-        PtraceCont(pid);
-        std::this_thread::sleep_for(interval);
-        PtraceInterrupt(pid);
+    try {
+      const size_t max_retries = trace ? MAX_TRACE_RETRIES : MAX_ATTACH_RETRIES;
+      for (size_t i = 0;;) {
+        if (frobber.DetectABI(abi)) {
+          if (++i >= max_retries) {
+            goto fail;
+          }
+          PtraceCont(pid);
+          std::this_thread::sleep_for(interval);
+          PtraceInterrupt(pid);
+          continue;
+        }
+        goto success;
       }
-    }
-    if (!detected) {
+    fail:
       std::cerr << "Failed to locate libpython within timeout period.\n";
       return 1;
+    } catch (const FatalException &exc) {
+      std::cerr << exc.what() << "\n";
+      return 1;
     }
+  success:
 
     const std::chrono::microseconds interval{
         static_cast<long>(sample_rate * 1000000)};

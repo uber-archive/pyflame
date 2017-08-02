@@ -39,7 +39,7 @@ PyAddresses AddressesFromLibPython(pid_t pid, const std::string &libpython,
   if (offset == 0) {
     std::ostringstream ss;
     ss << "Failed to locate libpython named " << libpython;
-    throw FatalException(ss.str());
+    throw SymbolException(ss.str());
   }
 
   ELF pyelf;
@@ -47,7 +47,7 @@ PyAddresses AddressesFromLibPython(pid_t pid, const std::string &libpython,
   pyelf.Parse();
   const PyAddresses addrs = pyelf.GetAddresses(abi);
   if (addrs.empty()) {
-    throw FatalException("Failed to locate addresses");
+    throw SymbolException("Failed to locate addresses");
   }
   return addrs + offset;
 }
@@ -127,9 +127,13 @@ FROB_FUNCS
 #endif
 
 // Fill the addrs_ member
-void PyFrob::set_addrs_(PyABI *abi) {
+int PyFrob::set_addrs_(PyABI *abi) {
   Namespace ns(pid_);
-  addrs_ = Addrs(pid_, &ns, abi);
+  try {
+    addrs_ = Addrs(pid_, &ns, abi);
+  } catch (const SymbolException &exc) {
+    return 1;
+  }
 #if ENABLE_THREADS
   // If we didn't find the interp_head address, but we did find the public
   // PyInterpreterState_Head
@@ -140,16 +144,15 @@ void PyFrob::set_addrs_(PyABI *abi) {
         PtraceCallFunction(pid_, addrs_.interp_head_fn_addr);
   }
 #endif
+  return 0;
 }
 
-void PyFrob::DetectABI(PyABI abi) {
+int PyFrob::DetectABI(PyABI abi) {
   // Set up the function pointers. By default, we auto-detect the ABI. If an ABI
   // is explicitly passed to us, then use that one (even though it could be
   // wrong)!
-  if (abi == PyABI::Unknown) {
-    set_addrs_(&abi);
-  } else {
-    set_addrs_(nullptr);
+  if (set_addrs_(abi == PyABI::Unknown ? &abi : nullptr)) {
+    return 1;
   }
   switch (abi) {
     case PyABI::Unknown:
@@ -180,6 +183,7 @@ void PyFrob::DetectABI(PyABI abi) {
   if (addrs_.empty()) {
     throw FatalException("DetectABI(): addrs_ is unexpectedly empty.");
   }
+  return 0;
 }
 
 std::string PyFrob::Status() const {
