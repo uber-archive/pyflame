@@ -45,21 +45,24 @@ static const char usage_str[] =
     ("Usage: pyflame [options] -p PID\n"
      "       pyflame [options] -t command arg1 arg2...\n"
      "\n"
-     "General Options:\n"
-     "      --abi            Force a particular Python ABI (26, 34, 36)\n"
+     "Common Options:\n"
 #ifdef ENABLE_THREADS
-     "      --threads        Enable multi-threading support\n"
+     "  --threads            Enable multi-threading support\n"
 #endif
      "  -h, --help           Show help\n"
+     "  -o, --output=PATH    Output to file path\n"
      "  -p, --pid=PID        The PID to trace\n"
-     "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
      "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
      "(default 0.001)\n"
-     "  -o, --output=PATH    Output to file path\n"
+     "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
      "  -t, --trace          Trace a child process\n"
-     "  -T, --timestamp      Include timestamps for each stacktrace\n"
      "  -v, --version        Show the version\n"
-     "  -x, --exclude-idle   Exclude idle time from statistics\n");
+     "  -x, --exclude-idle   Exclude idle time from statistics\n"
+     "\n"
+     "Advanced Options:\n"
+     "  --abi                Force a particular Python ABI (26, 34, 36)\n"
+     "  --flamechart         Include timestamps for generating Chrome "
+     "\"flamecharts\"\n");
 
 static inline std::chrono::microseconds ToMicroseconds(double val) {
   return std::chrono::microseconds{static_cast<long>(val * 1000000)};
@@ -124,7 +127,7 @@ static void PrintFramesTS(std::ostream &out,
 }
 
 int Prober::ParseOpts(int argc, char **argv) {
-  static const char short_opts[] = "ho:p:r:s:tTvx";
+  static const char short_opts[] = "ho:p:r:s:tvx";
   static struct option long_opts[] = {
     {"abi", required_argument, 0, 'a'},
     {"help", no_argument, 0, 'h'},

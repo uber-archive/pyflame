@@ -79,11 +79,6 @@ is not specified.
 
 The following options are less commonly used.
 
-**-T**, **--timestamp**
-:   Print the timestamp for each stack. This is useful for generating "flame
-    chart" profiles. Generally regular flame graphs are encouraged, since the
-    timestamp flame charts are harder to use.
-
 **--abi**=*VERSION*
 :   Force a particular Python ABI. This option should only be needed in edge
     cases when profiling embedded Python builds (e.g. uWSGI), and only if
@@ -91,6 +86,10 @@ The following options are less commonly used.
     two digit integer consisting of the Python major and minor version, e.g. 27
     for Python 2.7 or 36 for Python 3.6.
 
+**--flamechart**
+:   Print the timestamp for each stack. This is useful for generating "flame
+    chart" profiles. Generally regular flame graphs are encouraged, since the
+    timestamp flame charts are harder to use.
 
 # ONLINE DOCUMENTATION
 
