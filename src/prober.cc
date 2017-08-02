@@ -41,8 +41,6 @@
 #include "./thread.h"
 
 // Microseconds in a second.
-#define MICROSECONDS_PER_SEC 1000000
-
 static const char usage_str[] =
     ("Usage: pyflame [options] -p PID\n"
      "       pyflame [options] -t command arg1 arg2...\n"
@@ -62,6 +60,10 @@ static const char usage_str[] =
      "  -T, --timestamp      Include timestamps for each stacktrace\n"
      "  -v, --version        Show the version\n"
      "  -x, --exclude-idle   Exclude idle time from statistics\n");
+
+static inline std::chrono::microseconds ToMicroseconds(double val) {
+  return std::chrono::microseconds{static_cast<long>(val * 1000000)};
+}
 
 namespace pyflame {
 
@@ -236,8 +238,7 @@ finish_arg_parse:
     std::cerr << "WARNING: Specifying a PID to trace without -p is deprecated; "
                  "see Pyflame issue #99 for details.\n ";
   }
-  interval_ = std::chrono::microseconds{
-      static_cast<long>(sample_rate_ * MICROSECONDS_PER_SEC)};
+  interval_ = ToMicroseconds(sample_rate_);
   return -1;
 }
 
@@ -320,9 +321,7 @@ int Prober::ProbeLoop(const PyFrob &frobber) {
   std::vector<FrameTS> call_stacks;
   size_t idle_count = 0;
   bool check_end = seconds_ >= 0;
-  auto end = std::chrono::system_clock::now() +
-             std::chrono::microseconds(
-                 static_cast<long>(seconds_ * MICROSECONDS_PER_SEC));
+  auto end = std::chrono::system_clock::now() + ToMicroseconds(seconds_);
   try {
     for (;;) {
       auto now = std::chrono::system_clock::now();
