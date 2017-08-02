@@ -43,7 +43,7 @@ class Prober {
 
   int ParseOpts(int argc, char **argv);
 
-  int InitiatePtrace(int optind, char **argv);
+  int InitiatePtrace(char **argv);
 
   int FindSymbols(PyFrob *frobber);
 

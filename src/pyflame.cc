@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   if (ret != -1) {
     return ret;
   }
-  if (prober.InitiatePtrace(optind, argv)) {
+  if (prober.InitiatePtrace(argv)) {
     return 1;
   }
   PyFrob frobber(prober.pid(), prober.enable_threads());

@@ -241,7 +241,7 @@ finish_arg_parse:
   return -1;
 }
 
-int Prober::InitiatePtrace(int optind, char **argv) {
+int Prober::InitiatePtrace(char **argv) {
   if (trace_) {
     if (trace_target_.find("pyflame") != std::string::npos) {
       std::cerr << "You tried to pyflame a pyflame, naughty!\n";
