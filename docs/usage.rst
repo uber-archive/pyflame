@@ -109,14 +109,14 @@ stamp output format, useful for generating `"flame charts"
 inverted flame graph) that are viewable in Chrome. In some cases, the flame
 chart format is easier to understand.
 
-To generate a flame chart, use ``pyflame -T``, and then pass the output to
-``utils/flame-chart-json`` to convert the output into the JSON format required
-by the Chrome CPU profiler:
+To generate a flame chart, use ``pyflame --flamechart``, and then pass the
+output to ``utils/flame-chart-json`` to convert the output into the JSON format
+required by the Chrome CPU profiler:
 
 .. code:: bash
 
     # Generate flame chart data viewable in Chrome.
-    pyflame -T [other pyflame options] | flame-chart-json > foo.cpuprofile
+    pyflame --flamechart [other pyflame options] | flame-chart-json > foo.cpuprofile
 
 Read the following `Chrome DevTools article
 <https://developers.google.com/web/updates/2016/12/devtools-javascript-cpu-profile-migration>`__

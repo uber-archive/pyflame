@@ -436,7 +436,7 @@ def test_invalid_pid(pid):
 def test_include_ts(sleeper):
     """Basic test for timestamp processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-T', '-p',
+        ['./src/pyflame', '--flamechart', '-p',
          str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -454,7 +454,7 @@ def test_include_ts(sleeper):
 def test_include_ts_exclude_idle(sleeper):
     """Basic test for timestamp processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-T', '-x', '-p',
+        ['./src/pyflame', '--flamechart', '-x', '-p',
          str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
