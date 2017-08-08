@@ -1,7 +1,9 @@
 sudo: required
-compiler: gcc
 dist: trusty
 language: cpp
+compiler:
+  - gcc
+  - clang
 
 # This is kind of hacky, so it deserves an explanation.
 #
