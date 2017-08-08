@@ -36,6 +36,13 @@ MISSING_THREADS = not (platform.architecture()[0] == '64bit' and
                        platform.machine in ('i386', 'x86_64'))
 
 
+def test_build_environment():
+    if os.environ.get('ARCH') == 'i386':
+        assert platform.architecture()[0] == '32bit'
+    elif os.environ.get('ARCH') == 'amd64':
+        assert platform.architecture()[0] == '64bit'
+
+
 @contextlib.contextmanager
 def proc(argv, wait_for_pid=True):
     # start the process and wait for it to print its pid... we explicitly do
