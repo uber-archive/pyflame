@@ -133,7 +133,7 @@ def test_monitor(dijkstra):
         stderr=subprocess.PIPE,
         universal_newlines=True)
     out, err = communicate(proc)
-    assert not err
+    assert not err, sys.executable
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
