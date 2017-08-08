@@ -46,11 +46,11 @@ Pyflame like so:
     ./autogen.sh
     ./configure      # Plus any options like --prefix.
     make
-    make test        # Optional, test the build! Should take < 1 minute.
+    make check       # Optional, test the build! Should take < 1 minute.
     make install     # Optional, install into the configure prefix.
 
 The Pyflame executable produced by the ``make`` command will be located at
-``src/pyflame``. Note that the ``make test`` command requires that you have the
+``src/pyflame``. Note that the ``make check`` command requires that you have the
 ``virtualenv`` command installed. You can also sanity check your build with a
 command like:
 

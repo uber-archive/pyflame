@@ -39,7 +39,7 @@ To run the full test suite locally:
 .. code:: bash
 
     # Run the Pyflame test suite.
-    make test
+    make check
 
 If you change any of the Python files in the ``tests/`` directory, please run
 your changes through `YAPF <https://github.com/google/yapf>`__ before submitting

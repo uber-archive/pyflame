@@ -8,6 +8,6 @@ man1_MANS = docs/pyflame.man
 clean-local:
 	rm -f core.* pyflame
 
-.PHONY: test
-test:
-	./runtests.sh
+.PHONY: check
+check:
+	./runtests.sh -v
