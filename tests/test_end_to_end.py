@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import contextlib
+import os
 import platform
 import pytest
 import re
@@ -36,11 +37,19 @@ MISSING_THREADS = not (platform.architecture()[0] == '64bit' and
                        platform.machine in ('i386', 'x86_64'))
 
 
-def test_build_environment():
-    if os.environ.get('ARCH') == 'i386':
+@pytest.mark.skipif(
+    os.environ.get('TRAVIS') != 'true',
+    reason='Sanity check is only run on Travis.')
+def test_travis_build_environment():
+    """Sanity checks of the Travis test environment itself."""
+    arch = os.environ['ARCH']
+    if arch == 'i386':
         assert platform.architecture()[0] == '32bit'
-    elif os.environ.get('ARCH') == 'amd64':
+    elif arch == 'amd64':
         assert platform.architecture()[0] == '64bit'
+    else:
+        assert False, 'Unknown ARCH'
+    assert 'python%d.%d' % sys.version_info[:2] == os.environ['PYVERSION']
 
 
 @contextlib.contextmanager
