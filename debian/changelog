@@ -1,3 +1,9 @@
+pyflame (1.5.4) unstable; urgency=medium
+
+  * More fixes for 32-bit Pyflame builds.
+
+ -- Evan Klitzke <evan@death.star>  Tue, 08 Aug 2017 00:16:42 -0700
+
 pyflame (1.5.3) unstable; urgency=medium
 
   * Fix 32-bit builds.

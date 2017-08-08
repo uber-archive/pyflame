@@ -1,5 +1,5 @@
 AC_PREREQ([2.68])
-AC_INIT([pyflame], [1.5.3], [evan@eklitzke.org])
+AC_INIT([pyflame], [1.5.4], [evan@eklitzke.org])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -14,10 +14,14 @@ AS_CASE([$host_os],
 AS_IF([test x"$host_cpu" = xx86_64],
       [AC_MSG_NOTICE([x86-64 system, threads will be supported])
        AC_DEFINE([ENABLE_THREADS], [1], [Threads are enabled.])
+       AC_DEFINE([USE_ELF64], [1], [Expect 64-bit ELF symbols.])
       ],
       [AC_MSG_NOTICE([Threading support will be disabled (only works on x86-64)])
        AC_DEFINE([ENABLE_THREADS], [0], [Threads are enabled.])
+       AC_DEFINE([USE_ELF64], [0], [Expect 64-bit ELF symbols.])
       ])
+
+AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [CPU of target architecture.])
 
 AM_INIT_AUTOMAKE([dist-bzip2 foreign subdir-objects -Wall -Werror])
 
@@ -69,9 +73,10 @@ AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([getpagesize memmove munmap strerror strtol strtoul])
 
-AC_DEFINE_UNQUOTED(PYFLAME_VERSION_STR,
-["Pyflame $PACKAGE_VERSION (commit `cd $srcdir && git describe --always`) $host_os $host_cpu"],
-[A string containing build information.])
+AC_DEFINE_UNQUOTED(
+  [PYFLAME_VERSION_STR],
+  ["Pyflame $PACKAGE_VERSION (commit `cd $srcdir && git describe --always`) $host_os $host_cpu"],
+  [A string containing build information.])
 
 PKG_CHECK_MODULES([PY26], [python2], [enable_py26="yes"], [AC_MSG_WARN([Building without Python 2.6/2.7 support])])
 AM_CONDITIONAL([ENABLE_PY26], [test x"$enable_py26" = xyes])
