@@ -65,4 +65,4 @@ script:
   - ./configure $CONFIGUREOPTS
   - make $MAKEOPTS
   - file ./src/pyflame
-  - ./runtests.sh "$PYVERSION"
+  - ./runtests.sh -x "$PYVERSION"
