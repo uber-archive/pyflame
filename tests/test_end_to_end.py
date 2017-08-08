@@ -219,9 +219,9 @@ def test_legacy_pid_handling(threaded_busy):
         stderr=subprocess.PIPE,
         universal_newlines=True)
     out, err = communicate(proc)
+    assert err.startswith('WARNING: ')
     assert proc.returncode == 0
     lines = out.strip().split('\n')
-    assert err.startswith('WARNING: ')
     assert len(lines) == 1
 
 
