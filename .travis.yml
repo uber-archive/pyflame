@@ -1,31 +1,65 @@
 sudo: required
 compiler: gcc
 dist: trusty
-language: python
+language: cpp
 
-python:
-  - "2.6"
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
+# This is kind of hacky, so it deserves an explanation.
+#
+# We want to test all supported Python builds against both 32-bit and 64-bit
+# builds. The Travis build matrix for old Python versions is completely busted,
+# there are missing files, and they do gross stuff to the environment, like
+# trying to install everything into virtualenvs. Therefore, we need to install
+# the Python releases maintained in ppa:fkrull/deadsnakes.
+#
+# The i386 Python 2.x releases from ppa:fkrull/deadsnakes put their .pc files
+# in the wrong place. For some reason forcing PKG_CONFIG_PATH doesn't help, so
+# we manually export the flags. Pull requests welcome, if anyone figure out a
+# less bad way to do this.
+#
+# The tests don't work for the i386 builds at all, because Travis only lets you
+# run things on amd64 hosts. There are a couple of other projects using Travis
+# that are using qemu to run i386 tests, but that sounds really slow and
+# complicated. Again, pull requests welcome if anyone figures out how to test
+# the i386 builds.
+env:
+  global:
+    - MAKEOPTS=-j3
+  matrix:
+    - ARCH=i386 PYVERSION=python2.6 PY26_CFLAGS=-I/usr/include/python2.6 PY26_LIBS=-lpython2.6
+    - ARCH=i386 PYVERSION=python2.7 PY26_CFLAGS=-I/usr/include/python2.7 PY26_LIBS=-lpython2.7
+    - ARCH=i386 PYVERSION=python3.4
+    - ARCH=i386 PYVERSION=python3.5
+    - ARCH=i386 PYVERSION=python3.6
+    - ARCH=amd64 PYVERSION=python2.6
+    - ARCH=amd64 PYVERSION=python2.7
+    - ARCH=amd64 PYVERSION=python3.4
+    - ARCH=amd64 PYVERSION=python3.5
+    - ARCH=amd64 PYVERSION=python3.6
 
 addons:
   apt:
     sources:
-      # Needed only because the Travis VMs don't have python-3.6.pc
-      - sourceline: 'ppa:jonathonf/python-3.6'
+      - sourceline: 'ppa:fkrull/deadsnakes'
     packages:
       - autotools-dev
-      - g++
       - pkg-config
-      - python-dev
-      - python3-dev
-      - python3.6-dev
+
+install:
+  - travis_retry sudo dpkg --add-architecture "$ARCH"
+  - travis_retry sudo apt-get update
+  - travis_retry sudo apt-get install "${PYVERSION}"{,-minimal,-dev}:"${ARCH}"
+  - |
+    if [ "$ARCH" == "i386" ]; then
+      sudo apt-get install g++{,-multilib} pkg-config:"${ARCH}"
+      export CFLAGS=-m32
+      export CXXFLAGS=-m32
+      export CONFIGUREOPTS="--host=i686-pc-linux-gnu"
+    fi
 
 script:
   - sudo sysctl kernel.yama.ptrace_scope=0
   - ./autogen.sh
-  - ./configure
-  - make
-  - ./runtests.sh python
+  - ./configure $CONFIGUREOPTS
+  - make $MAKEOPTS
+  - file ./src/pyflame
+  - if [ "$ARCH" == "amd64" ]; then ./runtests.sh "$PYVERSION"; fi

@@ -4,12 +4,14 @@ AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/pyflame.cc])
-AC_CANONICAL_TARGET
 
-# Fail early if the user tries to build on BSD/OS X
-AS_IF([test x"$target_os" = xlinux-gnu], [], [AC_MSG_ERROR([Pyflame can only be built for Linux hosts])])
+# Fail early if the user tries to build for BSD/OS X
+AC_CANONICAL_HOST
+AS_CASE([$host_os],
+        [linux-gnu*], [],
+        [AC_MSG_ERROR([Pyflame can only be built for Linux hosts])])
 
-AS_IF([test x"$target_cpu" = xx86_64],
+AS_IF([test x"$host_cpu" = xx86_64],
       [AC_MSG_NOTICE([x86-64 system, threads will be supported])
        AC_DEFINE([ENABLE_THREADS], [1], [Threads are enabled.])
       ],
@@ -68,7 +70,7 @@ AC_FUNC_MMAP
 AC_CHECK_FUNCS([getpagesize memmove munmap strerror strtol strtoul])
 
 AC_DEFINE_UNQUOTED(PYFLAME_VERSION_STR,
-["Pyflame $PACKAGE_VERSION (commit `cd $srcdir && git describe --always`) $target_os $target_cpu"],
+["Pyflame $PACKAGE_VERSION (commit `cd $srcdir && git describe --always`) $host_os $host_cpu"],
 [A string containing build information.])
 
 PKG_CHECK_MODULES([PY26], [python2], [enable_py26="yes"], [AC_MSG_WARN([Building without Python 2.6/2.7 support])])
