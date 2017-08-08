@@ -49,6 +49,8 @@ install:
   - travis_retry sudo dpkg --add-architecture "$ARCH"
   - travis_retry sudo apt-get update
   - travis_retry sudo apt-get install "${PYVERSION}"{,-minimal,-dev}:"${ARCH}"
+  - dpkg -L "${PYVERSION}:${ARCH}"
+  - dpkg -L "${PYVERSION}-minimal:${ARCH}"
   - |
     if [ "$ARCH" == "i386" ]; then
       sudo apt-get install g++{,-multilib} pkg-config:"${ARCH}"
