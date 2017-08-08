@@ -65,8 +65,12 @@ void ELF::Open(const std::string &target, Namespace *ns) {
     ss << "File " << target << " does not have correct ELF magic header";
     throw FatalException(ss.str());
   }
-  if (hdr()->e_ident[EI_CLASS] != ARCH_ELFCLASS) {
-    throw FatalException("ELF class does not match host architecture");
+  int elf_class = hdr()->e_ident[EI_CLASS];
+  if (elf_class != ARCH_ELFCLASS) {
+    std::ostringstream ss;
+    ss << "Target ELF file has EI_CLASS=" << elf_class
+       << ", but for this architecture we expected EI_CLASS=" << ARCH_ELFCLASS;
+    throw FatalException(ss.str());
   }
 }
 

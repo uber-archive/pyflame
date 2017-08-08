@@ -15,6 +15,8 @@
 # limitations under the License.
 
 import contextlib
+import os
+import platform
 import pytest
 import re
 import subprocess
@@ -30,6 +32,25 @@ TS_RE = re.compile(r'\d+')
 
 SLEEP_A_RE = re.compile(r'.*:sleep_a:.*')
 SLEEP_B_RE = re.compile(r'.*:sleep_b:.*')
+
+MISSING_THREADS = not (platform.architecture()[0] == '64bit' and
+                       platform.machine in ('i386', 'x86_64'))
+
+
+@pytest.mark.skipif(
+    os.environ.get('TRAVIS') != 'true',
+    reason='Sanity check is only run on Travis.')
+def test_travis_build_environment():
+    """Sanity checks of the Travis test environment itself."""
+    arch = os.environ['ARCH']
+    if arch == 'i386':
+        assert platform.architecture()[0] == '32bit'
+    elif arch == 'amd64':
+        assert platform.architecture()[0] == '64bit'
+    else:
+        assert False, 'Unknown ARCH'
+    assert 'python%d.%d' % sys.version_info[:2] == os.environ['PYVERSION']
+    assert not sys.executable.startswith('/opt')
 
 
 @contextlib.contextmanager
@@ -47,12 +68,8 @@ def proc(argv, wait_for_pid=True):
         proc.kill()
 
 
-def python_command():
-    return 'python%d' % (sys.version_info[0], )
-
-
 def python_proc(test_file):
-    return proc([python_command(), './tests/%s' % (test_file, )])
+    return proc([sys.executable, './tests/%s' % (test_file, )])
 
 
 @pytest.yield_fixture
@@ -157,6 +174,7 @@ def test_non_gil(sleeper):
         assert_flamegraph(line, allow_idle=True)
 
 
+@pytest.mark.skipif(MISSING_THREADS, reason='build does not have threads')
 def test_threaded(threaded_sleeper):
     """Basic test for non-GIL/native code processes."""
     proc = subprocess.Popen(
@@ -214,9 +232,9 @@ def test_legacy_pid_handling(threaded_busy):
         stderr=subprocess.PIPE,
         universal_newlines=True)
     out, err = communicate(proc)
+    assert err.startswith('WARNING: ')
     assert proc.returncode == 0
     lines = out.strip().split('\n')
-    assert err.startswith('WARNING: ')
     assert len(lines) == 1
 
 
@@ -318,12 +336,14 @@ def test_sample_not_python(not_python):
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert err.startswith('Failed to locate libpython')
+    assert (err.startswith('Failed to locate libpython') or
+            err.startswith('Target ELF file has EI_CLASS'))
     assert proc.returncode == 1
 
 
 @pytest.mark.parametrize('force_abi', [False, True])
-@pytest.mark.parametrize('trace_threads', [False, True])
+@pytest.mark.parametrize('trace_threads', [False]
+                         if MISSING_THREADS else [False, True])
 def test_trace(force_abi, trace_threads):
     args = ['./src/pyflame']
     if force_abi:
@@ -331,7 +351,7 @@ def test_trace(force_abi, trace_threads):
         args.extend(['--abi', abi_string])
     if trace_threads:
         args.append('--threads')
-    args.extend(['-t', python_command(), 'tests/exit_early.py', '-s'])
+    args.extend(['-t', sys.executable, 'tests/exit_early.py', '-s'])
 
     proc = subprocess.Popen(
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -351,7 +371,8 @@ def test_trace_not_python():
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert err.startswith('Failed to locate libpython')
+    assert (err.startswith('Failed to locate libpython') or
+            err.startswith('Target ELF file has EI_CLASS'))
     assert proc.returncode == 1
 
 
@@ -420,7 +441,7 @@ def test_permission_error():
     assert proc.returncode == 1
 
 
-@pytest.mark.parametrize('pid', [-1, 0, 1 << 200])
+@pytest.mark.parametrize('pid', [-1, 0, 1 << 200, 'not a pid'])
 def test_invalid_pid(pid):
     # we should not be allowed to trace init
     proc = subprocess.Popen(
@@ -429,7 +450,7 @@ def test_invalid_pid(pid):
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert 'valid PID range' in err
+    assert err.startswith('Failed to seize PID ') or 'valid PID range' in err
     assert proc.returncode == 1
 
 

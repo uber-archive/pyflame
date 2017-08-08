@@ -13,11 +13,16 @@ set -e
 ENVDIR="./.test_env"
 trap 'rm -rf ${ENVDIR}' EXIT
 
-while getopts ":hx" opt; do
+VERBOSE=0
+
+while getopts ":hvx" opt; do
   case $opt in
     h)
       echo "Usage: $0 [-h] [-x] python..."
       exit 1
+      ;;
+    v)
+      VERBOSE=1
       ;;
     x)
       set -x
@@ -29,6 +34,14 @@ while getopts ":hx" opt; do
 done
 
 shift "$((OPTIND-1))"
+
+pytest() {
+  if [ "$VERBOSE" -eq 0 ]; then
+    py.test -q "$@"
+  else
+    py.test -v "$@"
+  fi
+}
 
 # Run tests using pip; $1 = python version
 run_pip_tests() {
@@ -49,7 +62,7 @@ run_pip_tests() {
   pip install -q pytest
 
   find tests/ -name '*.pyc' -delete
-  py.test -q tests/
+  pytest tests/
   if [ "$activated" -eq 1 ]; then
     deactivate
   fi
