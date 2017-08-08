@@ -52,7 +52,7 @@ def proc(argv, wait_for_pid=True):
 
 
 def python_command():
-    return 'python%d' % (sys.version_info[0], )
+    return 'python%d.%d' % sys.version_info[0:2]
 
 
 def python_proc(test_file):
