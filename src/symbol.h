@@ -22,23 +22,22 @@
 #include <string>
 #include <vector>
 
+#include "./config.h"
 #include "./exc.h"
 #include "./namespace.h"
 
-#if (__WORDSIZE == 64)
+#if USE_ELF64
 #define ehdr_t Elf64_Ehdr
 #define shdr_t Elf64_Shdr
 #define dyn_t Elf64_Dyn
 #define sym_t Elf64_Sym
 #define ARCH_ELFCLASS ELFCLASS64
-#elif (__WORDSIZE == 32)
+#else
 #define ehdr_t Elf32_Ehdr
 #define shdr_t Elf32_Shdr
 #define dyn_t Elf32_Dyn
 #define sym_t Elf32_Sym
 #define ARCH_ELFCLASS ELFCLASS32
-#else
-static_assert(false, "unknown build environment");
 #endif
 
 namespace pyflame {

@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import contextlib
+import platform
 import pytest
 import re
 import subprocess
@@ -30,6 +31,9 @@ TS_RE = re.compile(r'\d+')
 
 SLEEP_A_RE = re.compile(r'.*:sleep_a:.*')
 SLEEP_B_RE = re.compile(r'.*:sleep_b:.*')
+
+MISSING_THREADS = not (platform.architecture()[0] == '64bit' and
+                       platform.machine in ('i386', 'x86_64'))
 
 
 @contextlib.contextmanager
@@ -157,6 +161,7 @@ def test_non_gil(sleeper):
         assert_flamegraph(line, allow_idle=True)
 
 
+@pytest.mark.skipif(MISSING_THREADS, reason='build does not have threads')
 def test_threaded(threaded_sleeper):
     """Basic test for non-GIL/native code processes."""
     proc = subprocess.Popen(
@@ -318,12 +323,14 @@ def test_sample_not_python(not_python):
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert err.startswith('Failed to locate libpython')
+    assert (err.startswith('Failed to locate libpython') or
+            err.startswith('Target ELF file has EI_CLASS '))
     assert proc.returncode == 1
 
 
 @pytest.mark.parametrize('force_abi', [False, True])
-@pytest.mark.parametrize('trace_threads', [False, True])
+@pytest.mark.parametrize('trace_threads', [False]
+                         if MISSING_THREADS else [False, True])
 def test_trace(force_abi, trace_threads):
     args = ['./src/pyflame']
     if force_abi:
@@ -351,7 +358,8 @@ def test_trace_not_python():
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert err.startswith('Failed to locate libpython')
+    assert (err.startswith('Failed to locate libpython') or
+            err.startswith('Target ELF file has EI_CLASS '))
     assert proc.returncode == 1
 
 
@@ -429,7 +437,7 @@ def test_invalid_pid(pid):
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert 'valid PID range' in err
+    assert err.startswith('Failed to seize PID ') or 'valid PID range' in err
     assert proc.returncode == 1
 
 
