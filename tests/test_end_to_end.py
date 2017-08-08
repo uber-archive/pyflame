@@ -51,6 +51,10 @@ def proc(argv, wait_for_pid=True):
         proc.kill()
 
 
+def guess_python_cmd():
+    return 'python%d.%d' % sys.version_info[:2]
+
+
 def python_proc(test_file):
     return proc([sys.executable, './tests/%s' % (test_file, )])
 
@@ -334,7 +338,7 @@ def test_trace(force_abi, trace_threads):
         args.extend(['--abi', abi_string])
     if trace_threads:
         args.append('--threads')
-    args.extend(['-t', sys.executable, 'tests/exit_early.py', '-s'])
+    args.extend(['-t', guess_python_cmd(), 'tests/exit_early.py', '-s'])
 
     proc = subprocess.Popen(
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
