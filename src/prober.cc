@@ -68,6 +68,14 @@ static inline std::chrono::microseconds ToMicroseconds(double val) {
   return std::chrono::microseconds{static_cast<long>(val * 1000000)};
 }
 
+static inline bool EndsWith(std::string const &value,
+                            std::string const &ending) {
+  if (ending.size() > value.size()) {
+    return false;
+  }
+  return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
+
 namespace pyflame {
 
 typedef std::unordered_map<frames_t, size_t, FrameHash> buckets_t;
@@ -247,7 +255,7 @@ finish_arg_parse:
 
 int Prober::InitiatePtrace(char **argv) {
   if (trace_) {
-    if (trace_target_.find("pyflame") != std::string::npos) {
+    if (EndsWith(trace_target_, "/pyflame")) {
       std::cerr << "You tried to pyflame a pyflame, naughty!\n";
       return 1;
     }
