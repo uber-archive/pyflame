@@ -51,12 +51,8 @@ def proc(argv, wait_for_pid=True):
         proc.kill()
 
 
-def python_command():
-    return 'python%d.%d' % sys.version_info[0:2]
-
-
 def python_proc(test_file):
-    return proc([python_command(), './tests/%s' % (test_file, )])
+    return proc([sys.executable, './tests/%s' % (test_file, )])
 
 
 @pytest.yield_fixture
