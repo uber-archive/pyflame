@@ -97,6 +97,11 @@ void PtraceDetach(pid_t pid) {
   }
 }
 
+// Like PtraceDetach(), but ignore errors.
+static inline void SafeDetach(pid_t pid) noexcept {
+  ptrace(PTRACE_DETACH, pid, 0, 0);
+}
+
 void PtraceInterrupt(pid_t pid) {
   if (ptrace(PTRACE_INTERRUPT, pid, 0, 0)) {
     throw PtraceException("Failed to PTRACE_INTERRUPT");
@@ -289,11 +294,6 @@ long PtraceCallFunction(pid_t pid, unsigned long addr) {
   PtraceSetRegs(pid, oldregs);
   return newregs.rax;
 };
-
-// Like PtraceDetach(), but ignore errors.
-static inline void SafeDetach(pid_t pid) noexcept {
-  ptrace(PTRACE_DETACH, pid, 0, 0);
-}
 
 void PtraceCleanup(pid_t pid) noexcept {
   // Clean up the memory area allocated by AllocPage().
