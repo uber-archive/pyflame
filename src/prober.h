@@ -34,6 +34,7 @@ class Prober {
       : abi_(PyABI::Unknown),
         pid_(-1),
         trace_(false),
+        follow_(false),
         include_idle_(true),
         include_ts_(false),
         enable_threads_(false),
@@ -56,6 +57,7 @@ class Prober {
   PyABI abi_;
   pid_t pid_;
   bool trace_;
+  bool follow_;
   bool include_idle_;
   bool include_ts_;
   bool enable_threads_;

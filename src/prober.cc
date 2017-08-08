@@ -16,6 +16,8 @@
 
 #include <getopt.h>
 #include <sys/ptrace.h>
+#include <sys/select.h>
+#include <sys/signalfd.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -49,6 +51,7 @@ static const char usage_str[] =
 #ifdef ENABLE_THREADS
      "  --threads            Enable multi-threading support\n"
 #endif
+     "  -f, --follow         Follow forked subprocesses\n"
      "  -h, --help           Show help\n"
      "  -o, --output=PATH    Output to file path\n"
      "  -p, --pid=PID        The PID to trace\n"
@@ -127,9 +130,10 @@ static void PrintFramesTS(std::ostream &out,
 }
 
 int Prober::ParseOpts(int argc, char **argv) {
-  static const char short_opts[] = "ho:p:r:s:tvx";
+  static const char short_opts[] = "fho:p:r:s:tvx";
   static struct option long_opts[] = {
     {"abi", required_argument, 0, 'a'},
+    {"follow", no_argument, 0, 'f'},
     {"help", no_argument, 0, 'h'},
     {"rate", required_argument, 0, 'r'},
     {"seconds", required_argument, 0, 's'},
@@ -172,6 +176,9 @@ int Prober::ParseOpts(int argc, char **argv) {
             return 1;
             break;
         }
+        break;
+      case 'f':
+        follow_ = true;
         break;
       case 'h':
         std::cout << PYFLAME_VERSION_STR << "\n\n" << usage_str;
@@ -302,6 +309,7 @@ int Prober::InitiatePtrace(char **argv) {
     }
   }
   PtraceInterrupt(pid_);
+  PtraceSetOptions(pid_, PTRACE_O_TRACEEXEC);
   return 0;
 }
 
@@ -319,6 +327,19 @@ int Prober::ProbeLoop(const PyFrob &frobber) {
       return 1;
     }
     output = file_ptr.get();
+  }
+  sigset_t mask;
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGCHLD);
+  if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
+    perror("sigprocmask");
+    return 1;
+  }
+
+  int sfd = signalfd(-1, &mask, 0);
+  if (sfd == -1) {
+    perror("signalfd");
+    return 1;
   }
 
   std::vector<FrameTS> call_stacks;
@@ -345,11 +366,46 @@ int Prober::ProbeLoop(const PyFrob &frobber) {
         call_stacks.push_back({now, thread.frames()});
       }
 
-      if ((check_end) && (now + interval_ >= end)) {
+      if (check_end && (now + interval_ >= end)) {
         break;
       }
       PtraceCont(pid_);
-      std::this_thread::sleep_for(interval_);
+
+      fd_set set;
+      FD_ZERO(&set);
+      FD_SET(sfd, &set);
+      timeval tv{.tv_sec = 1, .tv_usec = 0};
+
+      for (;;) {
+        int retval = select(sfd + 1, &set, nullptr, nullptr, &tv);
+        if (retval == -1) {
+          perror("select");
+          return 1;
+        } else if (retval) {
+          // Ready to wait.
+          int status;
+          if (waitpid(-1, &status, WNOHANG) < 0) {
+            perror("waitpid");
+            return 1;
+          }
+          std::cerr << "did a waitpid, retval = " << retval << ", status = 0x"
+                    << std::hex << status << "\n";
+          std::cerr << "WIFEXTED = " << WIFEXITED(status) << "\n";
+          std::cerr << "WIFSIGNALED = " << WIFSIGNALED(status) << "\n";
+          std::cerr << "WIFSTOPPED = " << WIFSTOPPED(status) << "\n";
+          std::cerr << "WIFCONTINUED = " << WIFCONTINUED(status) << "\n";
+          if (WIFSTOPPED(status)) {
+            std::cerr << "WSTOPSIG = " << WSTOPSIG(status) << "\n";
+          }
+          if (status >> 8 == (SIGTRAP | (PTRACE_EVENT_EXEC << 8))) {
+            std::cerr << "GOT ONE!\n";
+          }
+          FD_SET(sfd, &set);
+        } else {
+          break;
+        }
+      }
+
       PtraceInterrupt(pid_);
     }
     if (!include_ts_) {
