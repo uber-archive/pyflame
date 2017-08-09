@@ -15,6 +15,7 @@
 #include "./ptrace.h"
 
 #include <dirent.h>
+#include <cassert>
 #include <cerrno>
 #include <cstring>
 #include <fstream>
@@ -35,23 +36,35 @@
 namespace pyflame {
 int DoWait(pid_t pid, int options) {
   int status;
-  if (waitpid(pid, &status, options) == -1) {
-    std::ostringstream ss;
-    ss << "Failed to waitpid(): " << strerror(errno);
-    throw PtraceException(ss.str());
-  }
-  if (WIFSTOPPED(status)) {
-    int signum = WSTOPSIG(status);
-    if (signum != SIGTRAP) {
-      std::ostringstream ss;
-      ss << "Failed to waitpid(), unexpectedly got status: "
-         << strsignal(signum);
+  std::ostringstream ss;
+  for (;;) {
+    pid_t progeny = waitpid(pid, &status, options);
+    if (progeny == -1) {
+      ss << "Failed to waitpid(): " << strerror(errno);
       throw PtraceException(ss.str());
     }
-  } else {
-    std::ostringstream ss;
-    ss << "Failed to waitpid(), unexpectedly got status: " << status;
-    throw PtraceException(ss.str());
+    assert(progeny == pid);
+    if (WIFSTOPPED(status)) {
+      int signum = WSTOPSIG(status);
+      if (signum == SIGTRAP) {
+        break;
+      } else if (signum == SIGCHLD) {
+        ss << "Received SIGCHLD from PID " << pid;
+        throw TerminateException(ss.str());
+      }
+      ss << "waitpid() indicated a WIFSTOPPED process, but got unexpected "
+            "signal "
+         << signum;
+      throw PtraceException(ss.str());
+    } else if (WIFEXITED(status)) {
+      ss << "Child process " << pid << " exited with status "
+         << WEXITSTATUS(status);
+      throw TerminateException(ss.str());
+    } else {
+      ss << "Child process " << pid
+         << " returned an unexpected waitpid() code: " << status;
+      throw PtraceException(ss.str());
+    }
   }
   return status;
 }
