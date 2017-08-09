@@ -330,6 +330,7 @@ int Prober::ProbeLoop(const PyFrob &frobber) {
   }
 
   std::vector<FrameTS> call_stacks;
+  int return_code = 0;
   size_t idle_count = 0;
   bool check_end = seconds_ >= 0;
   auto end = std::chrono::system_clock::now() + ToMicroseconds(seconds_);
@@ -353,36 +354,35 @@ int Prober::ProbeLoop(const PyFrob &frobber) {
         call_stacks.push_back({now, thread.frames()});
       }
 
-      if ((check_end) && (now + interval_ >= end)) {
+      if (check_end && (now + interval_ >= end)) {
         break;
       }
       PtraceCont(pid_);
       std::this_thread::sleep_for(interval_);
       PtraceInterrupt(pid_);
     }
+  } catch (const TerminateException &exc) {
+    goto finish;
+  } catch (const PtraceException &exc) {
+    // If the process terminates early then we just print the stack traces up
+    // until that point in time.
+    std::cerr << "Unexpected ptrace(2) exception: " << exc.what() << "\n";
+    return_code = 1;
+    goto finish;
+  } catch (const std::exception &exc) {
+    std::cerr << "Unexpected generic exception: " << exc.what() << "\n";
+    return_code = 1;
+    goto finish;
+  }
+finish:
+  if (!call_stacks.empty() || idle_count) {
     if (!include_ts_) {
       PrintFrames(*output, call_stacks, idle_count);
     } else {
       PrintFramesTS(*output, call_stacks);
     }
-  } catch (const PtraceException &exc) {
-    // If the process terminates early then we just print the stack traces up
-    // until that point in time.
-    if (!call_stacks.empty() || idle_count) {
-      if (!include_ts_) {
-        PrintFrames(*output, call_stacks, idle_count);
-      } else {
-        PrintFramesTS(*output, call_stacks);
-      }
-    } else {
-      std::cerr << exc.what() << std::endl;
-      return 1;
-    }
-  } catch (const std::exception &exc) {
-    std::cerr << exc.what() << std::endl;
-    return 1;
   }
-  return 0;
+  return return_code;
 }
 
 int Prober::FindSymbols(PyFrob *frobber) {

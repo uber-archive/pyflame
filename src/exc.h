@@ -18,6 +18,15 @@
 #include <string>
 
 namespace pyflame {
+// An expected exception, indicating that Pyflame can exit with status 0.
+class TerminateException : public std::runtime_error {
+ public:
+  explicit TerminateException(const std::string &what_arg)
+      : std::runtime_error(what_arg) {}
+};
+
+// An unexpected exception, indicating that Pyflame should exit with non-zero
+// status.
 class FatalException : public std::runtime_error {
  public:
   explicit FatalException(const std::string &what_arg)

@@ -21,6 +21,7 @@ import pytest
 import re
 import subprocess
 import sys
+import time
 
 IDLE_RE = re.compile(r'^\(idle\) \d+$')
 FLAMEGRAPH_RE = re.compile(r'^(.+) (\d+)$')
@@ -114,7 +115,7 @@ def not_python():
         yield p
 
 
-def assert_flamegraph(line, allow_idle=False):
+def assert_flamegraph(line, allow_idle):
     if allow_idle and IDLE_RE.match(line):
         return
     m = FLAMEGRAPH_RE.match(line)
@@ -131,6 +132,22 @@ def assert_flamegraph(line, allow_idle=False):
         # be caught by the test suite.
         if fname.startswith('./tests/'):
             assert 1 <= line_num < 300
+
+
+def assert_unique(lines, allow_idle=False):
+    seen = set()
+    for line in lines:
+        if line in seen:
+            assert False, 'saw line {!r} twice in lines {!r}'.format(
+                line, lines)
+        seen.add(line)
+        assert_flamegraph(line, allow_idle=allow_idle)
+        yield line
+
+
+def consume_unique(lines, allow_idle=False):
+    for line in assert_unique(lines, allow_idle=allow_idle):
+        pass
 
 
 def communicate(proc):
@@ -154,8 +171,7 @@ def test_monitor(dijkstra):
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    for line in lines:
-        assert_flamegraph(line)
+    consume_unique(lines)
 
 
 def test_non_gil(sleeper):
@@ -170,8 +186,7 @@ def test_non_gil(sleeper):
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    for line in lines:
-        assert_flamegraph(line, allow_idle=True)
+    consume_unique(lines, allow_idle=True)
 
 
 @pytest.mark.skipif(MISSING_THREADS, reason='build does not have threads')
@@ -190,7 +205,7 @@ def test_threaded(threaded_sleeper):
     assert lines.pop(-1) == ''  # output should end in a newline
     a_count = 0
     b_count = 0
-    for line in lines:
+    for line in assert_unique(lines):
         if SLEEP_A_RE.match(line):
             assert_flamegraph(line)
             a_count += 1
@@ -285,8 +300,7 @@ def test_exclude_idle(sleeper):
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    for line in lines:
-        assert_flamegraph(line)
+    consume_unique(lines)
 
 
 @pytest.mark.skipif(sys.version_info < (3, 3), reason="requires Python 3.3+")
@@ -310,8 +324,7 @@ def test_utf8_output(unicode_sleeper):
 
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    for line in lines:
-        assert_flamegraph(line)
+    consume_unique(lines)
 
 
 def test_exit_early(exit_early):
@@ -325,8 +338,7 @@ def test_exit_early(exit_early):
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    for line in lines:
-        assert_flamegraph(line, allow_idle=True)
+    consume_unique(lines, allow_idle=True)
 
 
 def test_sample_not_python(not_python):
@@ -360,8 +372,7 @@ def test_trace(force_abi, trace_threads):
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    for line in lines:
-        assert_flamegraph(line, allow_idle=True)
+    consume_unique(lines, allow_idle=True)
 
 
 def test_trace_not_python():
@@ -467,7 +478,7 @@ def test_include_ts(sleeper):
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    for line in lines:
+    for line in lines:  # DO NOT USE assert_unique HERE
         assert TS_FLAMEGRAPH_RE.match(line) or TS_RE.match(
             line) or TS_IDLE_RE.match(line)
 
@@ -485,7 +496,7 @@ def test_include_ts_exclude_idle(sleeper):
     assert proc.returncode == 0
     lines = out.split('\n')
     assert lines.pop(-1) == ''  # output should end in a newline
-    for line in lines:
+    for line in lines:  # DO NOT USE assert_unique HERE
         assert not TS_IDLE_RE.match(line)
         assert TS_FLAMEGRAPH_RE.match(line) or TS_RE.match(line)
 
@@ -505,3 +516,20 @@ def test_version(flag):
     version_re = re.compile(
         r'^Pyflame \d+\.\d+\.\d+ \(commit [\w]+\) \S+ \S+$')
     assert version_re.match(out.strip())
+
+
+def test_trace_forker():
+    t0 = time.time()
+    proc = subprocess.Popen(
+        ['./src/pyflame', '-t', sys.executable, 'tests/forker.py'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+    out, err = communicate(proc)
+    elapsed = time.time() - t0
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
+    assert lines.pop(-1) == ''  # output should end in a newline
+    consume_unique(lines, allow_idle=True)
+    assert elapsed >= 0.5
