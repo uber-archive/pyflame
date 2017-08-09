@@ -1,9 +1,7 @@
 sudo: required
 dist: trusty
 language: cpp
-compiler:
-  - gcc
-  - clang
+compiler: gcc
 
 # This is kind of hacky, so it deserves an explanation.
 #
@@ -28,7 +26,7 @@ env:
     - MAKEOPTS=-j3
   matrix:
     - ARCH=i386 PYVERSION=python2.6 PY26_CFLAGS=-I/usr/include/python2.6 PY26_LIBS=-lpython2.6
-    - ARCH=i386 PYVERSION=python2.7 PY26_CFLAGS=-I/usr/include/python2.7 PY26_LIBS=-lpython2.7
+    #- ARCH=i386 PYVERSION=python2.7 PY26_CFLAGS=-I/usr/include/python2.7 PY26_LIBS=-lpython2.7   # currently broken due to travis horkage
     - ARCH=i386 PYVERSION=python3.4
     - ARCH=i386 PYVERSION=python3.5
     - ARCH=i386 PYVERSION=python3.6
