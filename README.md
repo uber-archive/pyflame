@@ -64,6 +64,33 @@ In all of these cases you will get flame graph data on stdout (or to a file if
 you used `-o`). This data is in the format expected by `flamegraph.pl`, which
 you can find [here](https://github.com/brendangregg/FlameGraph).
 
+#### Full Demo
+
+Here's a simple end-to-end demonstration, that you can use to generate a flame
+graph from one of the Python programs included in the Pyflame test suite. After
+building Pyflame with `make`, run:
+
+```bash
+# Get a copy of flamegraph.pl
+git clone https://github.com/brendangregg/FlameGraph
+
+# Profile the dijkstra.py program included in Pyflame's test suite
+./src/pyflame -t python tests/dijkstra.py -qn 1000 | ./FlameGraph/flamegraph.pl > out.svg
+
+# Open out.svg in Firefox; note that you can interact with the graph!
+firefox ./out.svg
+```
+
+If you did everything correctly, the `out.svg` file should look
+something
+[like this](https://storage.googleapis.com/eklitzke-shared/dijkstra.svg). Note
+that you can interact with the graph, by clicking on elements to zoom in on
+subcomponents, or by typing Ctrl-F to open up
+a
+[search dialog](http://www.brendangregg.com/blog/2015-08-11/flame-graph-search.html).
+Brendan Gregg's flame graph repository includes many other tools for filtering
+and processing flame graph data, refer to the docs for more information.
+
 ## FAQ
 
 The full FAQ is [here](https://pyflame.readthedocs.io/en/latest/faq.html).
