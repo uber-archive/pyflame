@@ -323,22 +323,29 @@ void PtraceCleanup(pid_t pid) noexcept {
       // Prepare to run munmap(2) syscall.
       PauseChildThreads(pid);
       PtracePoke(pid, oldregs.rip, syscall_x86);
+    do_munmap:
       PtraceSetRegs(pid, newregs);
 
       // Actually call munmap(2), and check the return value.
       PtraceSingleStep(pid);
-      if (PtraceGetRegs(pid).rax == 0) {
-        probe_ = 0;
-      } else {
-        std::cerr << "Warning: failed to munmap(2) trampoline page! Please "
-                     "report this on GitHub.\n";
+      const long rax = PtraceGetRegs(pid).rax;
+      switch (rax) {
+        case 0:
+          probe_ = 0;
+          break;
+        case EAGAIN:
+          goto do_munmap;
+          break;
+        default:
+          std::cerr << "Warning: failed to munmap(2) trampoline page, %rax = "
+                    << rax << "\n";
+          break;
       }
 
       // Clean up and resume the child threads.
       PtracePoke(pid, oldregs.rip, orig_code);
       PtraceSetRegs(pid, oldregs);
       ResumeChildThreads(pid);
-
     } catch (...) {
       // If the process has already exited, then we'll get a ptrace error, which
       // can be safely ignored. This *should* happen at the initial
