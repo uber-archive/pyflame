@@ -49,8 +49,8 @@ int DoWait(pid_t pid, int options) {
       if (signum == SIGTRAP) {
         break;
       } else if (signum == SIGCHLD) {
-        ss << "Received SIGCHLD from PID " << pid;
-        throw TerminateException(ss.str());
+        PtraceCont(pid);  // see issue #122
+        continue;
       }
       ss << "waitpid() indicated a WIFSTOPPED process, but got unexpected "
             "signal "

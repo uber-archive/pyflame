@@ -119,7 +119,7 @@ def assert_flamegraph(line, allow_idle):
     if allow_idle and IDLE_RE.match(line):
         return
     m = FLAMEGRAPH_RE.match(line)
-    assert m is not None
+    assert m is not None, 'line {!r} did not match!'.format(line)
     parts, count = m.groups()
     count = int(count, 10)
     assert count >= 1
@@ -138,8 +138,8 @@ def assert_unique(lines, allow_idle=False):
     seen = set()
     for line in lines:
         if line in seen:
-            assert False, 'saw line {!r} twice in lines {!r}'.format(
-                line, lines)
+            assert False, 'saw line {!r} twice in lines {!r}'.format(line,
+                                                                     lines)
         seen.add(line)
         assert_flamegraph(line, allow_idle=allow_idle)
         yield line
@@ -193,8 +193,7 @@ def test_non_gil(sleeper):
 def test_threaded(threaded_sleeper):
     """Basic test for non-GIL/native code processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '--threads', '-p',
-         str(threaded_sleeper.pid)],
+        ['./src/pyflame', '--threads', '-p', str(threaded_sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -226,8 +225,7 @@ def test_threaded(threaded_sleeper):
 def test_unthreaded(threaded_busy):
     """Test only one process is profiled by default."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-s', '0', '-p',
-         str(threaded_busy.pid)],
+        ['./src/pyflame', '-s', '0', '-p', str(threaded_busy.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -241,8 +239,7 @@ def test_unthreaded(threaded_busy):
 def test_legacy_pid_handling(threaded_busy):
     # test PID parsing when -p is not used
     proc = subprocess.Popen(
-        ['./src/pyflame', '-s', '0',
-         str(threaded_busy.pid)],
+        ['./src/pyflame', '-s', '0', str(threaded_busy.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -290,8 +287,7 @@ def test_unsupported_abi():
 def test_exclude_idle(sleeper):
     """Basic test for idle processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-x', '-p',
-         str(sleeper.pid)],
+        ['./src/pyflame', '-x', '-p', str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -306,8 +302,7 @@ def test_exclude_idle(sleeper):
 @pytest.mark.skipif(sys.version_info < (3, 3), reason="requires Python 3.3+")
 def test_utf8_output(unicode_sleeper):
     proc = subprocess.Popen(
-        ['./src/pyflame', '-x', '-p',
-         str(unicode_sleeper.pid)],
+        ['./src/pyflame', '-x', '-p', str(unicode_sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -329,8 +324,7 @@ def test_utf8_output(unicode_sleeper):
 
 def test_exit_early(exit_early):
     proc = subprocess.Popen(
-        ['./src/pyflame', '-s', '10', '-p',
-         str(exit_early.pid)],
+        ['./src/pyflame', '-s', '10', '-p', str(exit_early.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -468,8 +462,7 @@ def test_invalid_pid(pid):
 def test_include_ts(sleeper):
     """Basic test for timestamp processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '--flamechart', '-p',
-         str(sleeper.pid)],
+        ['./src/pyflame', '--flamechart', '-p', str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -486,8 +479,7 @@ def test_include_ts(sleeper):
 def test_include_ts_exclude_idle(sleeper):
     """Basic test for timestamp processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '--flamechart', '-x', '-p',
-         str(sleeper.pid)],
+        ['./src/pyflame', '--flamechart', '-x', '-p', str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -533,3 +525,22 @@ def test_trace_forker():
     assert lines.pop(-1) == ''  # output should end in a newline
     consume_unique(lines, allow_idle=True)
     assert elapsed >= 0.5
+
+
+def test_sigchld():
+    t0 = time.time()
+    proc = subprocess.Popen(
+        [
+            './src/pyflame', '-t', 'python', './tests/sleeper.py', '-t', '2',
+            '-f'
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    out, err = communicate(proc)
+    elapsed = time.time() - t0
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
+    assert lines.pop(-1) == ''  # output should end in a newline
+    consume_unique(lines, allow_idle=True)
+    assert elapsed >= 2
