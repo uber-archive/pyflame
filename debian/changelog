@@ -1,3 +1,9 @@
+pyflame (1.5.7) unstable; urgency=medium
+
+  * Make it possible to package pyflame for conda
+
+ -- Evan Klitzke <evan@death.star>  Wed, 11 Oct 2017 18:58:19 -0700
+
 pyflame (1.5.6) unstable; urgency=medium
 
   * Fix minor issue w/ EAGAIN during munmap

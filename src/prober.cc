@@ -279,7 +279,7 @@ finish_arg_parse:
 
 int Prober::InitiatePtrace(char **argv) {
   if (trace_) {
-    if (EndsWith(trace_target_, "/pyflame")) {
+    if (EndsWith(trace_target_, "pyflame")) {
       std::cerr << "You tried to pyflame a pyflame, naughty!\n";
       return 1;
     }

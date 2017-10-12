@@ -159,10 +159,22 @@ def communicate(proc):
     return out, err
 
 
+def path_to_pyflame():
+    """Path to pyflame.
+
+    Generally we prefer the executable built in the src/ directory. On Conda
+    the tests are run in a chroot without the source code, so we fall back to
+    the "system" installation if it looks like no executable has been built.
+    """
+    if os.path.exists('./src/pyflame'):
+        return './src/pyflame'
+    return 'pyflame'
+
+
 def test_monitor(dijkstra):
     """Basic test for the monitor mode."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-p', str(dijkstra.pid)],
+        [path_to_pyflame(), '-p', str(dijkstra.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -177,7 +189,7 @@ def test_monitor(dijkstra):
 def test_non_gil(sleeper):
     """Basic test for non-GIL/native code processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-p', str(sleeper.pid)],
+        [path_to_pyflame(), '-p', str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -193,7 +205,7 @@ def test_non_gil(sleeper):
 def test_threaded(threaded_sleeper):
     """Basic test for non-GIL/native code processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '--threads', '-p', str(threaded_sleeper.pid)],
+        [path_to_pyflame(), '--threads', '-p', str(threaded_sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -225,7 +237,7 @@ def test_threaded(threaded_sleeper):
 def test_unthreaded(threaded_busy):
     """Test only one process is profiled by default."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-s', '0', '-p', str(threaded_busy.pid)],
+        [path_to_pyflame(), '-s', '0', '-p', str(threaded_busy.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -239,7 +251,7 @@ def test_unthreaded(threaded_busy):
 def test_legacy_pid_handling(threaded_busy):
     # test PID parsing when -p is not used
     proc = subprocess.Popen(
-        ['./src/pyflame', '-s', '0', str(threaded_busy.pid)],
+        [path_to_pyflame(), '-s', '0', str(threaded_busy.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -253,7 +265,7 @@ def test_legacy_pid_handling(threaded_busy):
 def test_legacy_pid_handling_too_many_pids():
     # test PID parsing when -p is not used
     proc = subprocess.Popen(
-        ['./src/pyflame', '1', '2'],
+        [path_to_pyflame(), '1', '2'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -264,7 +276,7 @@ def test_legacy_pid_handling_too_many_pids():
 
 def test_dash_t_and_dash_p():
     proc = subprocess.Popen(
-        ['./src/pyflame', '-p', '1', '-t', 'python', '--version'],
+        [path_to_pyflame(), '-p', '1', '-t', 'python', '--version'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -275,7 +287,7 @@ def test_dash_t_and_dash_p():
 
 def test_unsupported_abi():
     proc = subprocess.Popen(
-        ['./src/pyflame', '--abi=0', '-p', '1'],
+        [path_to_pyflame(), '--abi=0', '-p', '1'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -287,7 +299,7 @@ def test_unsupported_abi():
 def test_exclude_idle(sleeper):
     """Basic test for idle processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '-x', '-p', str(sleeper.pid)],
+        [path_to_pyflame(), '-x', '-p', str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -302,7 +314,7 @@ def test_exclude_idle(sleeper):
 @pytest.mark.skipif(sys.version_info < (3, 3), reason="requires Python 3.3+")
 def test_utf8_output(unicode_sleeper):
     proc = subprocess.Popen(
-        ['./src/pyflame', '-x', '-p', str(unicode_sleeper.pid)],
+        [path_to_pyflame(), '-x', '-p', str(unicode_sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -324,7 +336,7 @@ def test_utf8_output(unicode_sleeper):
 
 def test_exit_early(exit_early):
     proc = subprocess.Popen(
-        ['./src/pyflame', '-s', '10', '-p', str(exit_early.pid)],
+        [path_to_pyflame(), '-s', '10', '-p', str(exit_early.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -337,7 +349,7 @@ def test_exit_early(exit_early):
 
 def test_sample_not_python(not_python):
     proc = subprocess.Popen(
-        ['./src/pyflame', '-p', str(not_python.pid)],
+        [path_to_pyflame(), '-p', str(not_python.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -351,7 +363,7 @@ def test_sample_not_python(not_python):
 @pytest.mark.parametrize('trace_threads', [False]
                          if MISSING_THREADS else [False, True])
 def test_trace(force_abi, trace_threads):
-    args = ['./src/pyflame']
+    args = [path_to_pyflame()]
     if force_abi:
         abi_string = '%d%d' % sys.version_info[:2]
         args.extend(['--abi', abi_string])
@@ -371,7 +383,7 @@ def test_trace(force_abi, trace_threads):
 
 def test_trace_not_python():
     proc = subprocess.Popen(
-        ['./src/pyflame', '-t', './tests/sleep.sh'],
+        [path_to_pyflame(), '-t', './tests/sleep.sh'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -383,7 +395,7 @@ def test_trace_not_python():
 
 def test_pyflame_a_pyflame():
     proc = subprocess.Popen(
-        ['./src/pyflame', '-t', './src/pyflame'],
+        [path_to_pyflame(), '-t', path_to_pyflame()],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -394,7 +406,7 @@ def test_pyflame_a_pyflame():
 
 def test_pyflame_nonexistent_file():
     proc = subprocess.Popen(
-        ['./src/pyflame', '-t', '/no/such/file'],
+        [path_to_pyflame(), '-t', '/no/such/file'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -405,7 +417,7 @@ def test_pyflame_nonexistent_file():
 
 def test_trace_no_arg():
     proc = subprocess.Popen(
-        ['./src/pyflame', '-t'],
+        [path_to_pyflame(), '-t'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -416,7 +428,7 @@ def test_trace_no_arg():
 
 def test_sample_no_arg():
     proc = subprocess.Popen(
-        ['./src/pyflame'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        [path_to_pyflame()], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
     assert err.startswith('Usage: ')
@@ -425,7 +437,7 @@ def test_sample_no_arg():
 
 def test_sample_extra_args():
     proc = subprocess.Popen(
-        ['./src/pyflame', 'foo', 'bar'],
+        [path_to_pyflame(), 'foo', 'bar'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -437,7 +449,7 @@ def test_sample_extra_args():
 def test_permission_error():
     # we should not be allowed to trace init
     proc = subprocess.Popen(
-        ['./src/pyflame', '-p', '1'],
+        [path_to_pyflame(), '-p', '1'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -450,7 +462,7 @@ def test_permission_error():
 def test_invalid_pid(pid):
     # we should not be allowed to trace init
     proc = subprocess.Popen(
-        ['./src/pyflame', '-p', str(pid)],
+        [path_to_pyflame(), '-p', str(pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -462,7 +474,7 @@ def test_invalid_pid(pid):
 def test_include_ts(sleeper):
     """Basic test for timestamp processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '--flamechart', '-p', str(sleeper.pid)],
+        [path_to_pyflame(), '--flamechart', '-p', str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -479,7 +491,7 @@ def test_include_ts(sleeper):
 def test_include_ts_exclude_idle(sleeper):
     """Basic test for timestamp processes."""
     proc = subprocess.Popen(
-        ['./src/pyflame', '--flamechart', '-x', '-p', str(sleeper.pid)],
+        [path_to_pyflame(), '--flamechart', '-x', '-p', str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -497,7 +509,7 @@ def test_include_ts_exclude_idle(sleeper):
 def test_version(flag):
     """Test the version flag."""
     proc = subprocess.Popen(
-        ['./src/pyflame', flag],
+        [path_to_pyflame(), flag],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -513,7 +525,7 @@ def test_version(flag):
 def test_trace_forker():
     t0 = time.time()
     proc = subprocess.Popen(
-        ['./src/pyflame', '-t', sys.executable, 'tests/forker.py'],
+        [path_to_pyflame(), '-t', sys.executable, 'tests/forker.py'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -531,7 +543,7 @@ def test_sigchld():
     t0 = time.time()
     proc = subprocess.Popen(
         [
-            './src/pyflame', '-t', 'python', './tests/sleeper.py', '-t', '2',
+            path_to_pyflame(), '-t', 'python', './tests/sleeper.py', '-t', '2',
             '-f'
         ],
         stdout=subprocess.PIPE,
