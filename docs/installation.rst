@@ -81,6 +81,15 @@ distros. Uploads of these packages tend to lag the official Pyflame releases, so
 you are **strongly encouraged to check the pre-built version** to ensure that it
 is not too old. If you want the newest version of Pyflame, build from source.
 
+Conda
+~~~~~
+
+`Evan Klitzke <https://github.com/eklitzke>`__ maintains a Conda package of
+Pyflame. To install it:
+
+.. code:: bash
+    conda install -c eklitzke pyflame
+
 Ubuntu PPA
 ~~~~~~~~~~
 
