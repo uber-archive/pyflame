@@ -82,3 +82,12 @@ See [here](https://pyflame.readthedocs.io/en/latest/faq.html#what-are-these-ptra
 ### How Do I Profile Threaded Applications?
 
 Use the `--threads` option.
+
+### What Information Should I Include In Bug Reports?
+
+Please include the following information in bug reports:
+
+ * The exact output of `pyflame -v`
+ * The version of the Python interpreter you are tracing
+ * The exact error message displayed by Pyflame
+ * If possible, a test script or way to reproduce the error.
