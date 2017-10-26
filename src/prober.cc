@@ -376,8 +376,8 @@ int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
   size_t idle_count = 0;
   bool check_end = seconds_ >= 0;
   auto end = std::chrono::system_clock::now() + ToMicroseconds(seconds_);
-  try {
-    for (;;) {
+  for (;;) {
+    try {
       auto now = std::chrono::system_clock::now();
       std::vector<Thread> threads = frobber.GetThreads();
 
@@ -402,19 +402,17 @@ int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
       PtraceCont(pid_);
       std::this_thread::sleep_for(interval_);
       PtraceInterrupt(pid_);
+    } catch (const TerminateException &exc) {
+      goto finish;
+    } catch (const PtraceException &exc) {
+      // If the process terminates early then we just print the stack traces up
+      // until that point in time.
+      std::cerr << "Unexpected ptrace(2) exception: " << exc.what() << "\n";
+    } catch (const std::exception &exc) {
+      std::cerr << "Unexpected generic exception: " << exc.what() << "\n";
+      return_code = 1;
+      goto finish;
     }
-  } catch (const TerminateException &exc) {
-    goto finish;
-  } catch (const PtraceException &exc) {
-    // If the process terminates early then we just print the stack traces up
-    // until that point in time.
-    std::cerr << "Unexpected ptrace(2) exception: " << exc.what() << "\n";
-    return_code = 1;
-    goto finish;
-  } catch (const std::exception &exc) {
-    std::cerr << "Unexpected generic exception: " << exc.what() << "\n";
-    return_code = 1;
-    goto finish;
   }
 finish:
   if (!call_stacks.empty() || idle_count) {
