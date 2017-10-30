@@ -33,6 +33,7 @@ class Prober {
   Prober()
       : abi_(PyABI::Unknown),
         pid_(-1),
+        dump_(false),
         trace_(false),
         include_idle_(true),
         include_ts_(false),
@@ -47,7 +48,7 @@ class Prober {
 
   int FindSymbols(PyFrob *frobber);
 
-  int ProbeLoop(const PyFrob &frobber);
+  int Run(const PyFrob &frobber);
 
   inline bool enable_threads() const { return enable_threads_; }
   inline pid_t pid() const { return pid_; }
@@ -55,6 +56,7 @@ class Prober {
  private:
   PyABI abi_;
   pid_t pid_;
+  bool dump_;
   bool trace_;
   bool include_idle_;
   bool include_ts_;
@@ -66,6 +68,10 @@ class Prober {
   std::string trace_target_;
 
   pid_t ParsePid(const char *pid_str);
+
+  int ProbeLoop(const PyFrob &frobber, std::ostream *out);
+
+  int DumpStacks(const PyFrob &frobber, std::ostream *out);
 
   inline size_t MaxRetries() const {
     return trace_ ? MAX_TRACE_RETRIES : MAX_ATTACH_RETRIES;

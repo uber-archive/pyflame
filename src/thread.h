@@ -33,10 +33,11 @@ class Thread {
       : id_(other.id_),
         is_current_(other.is_current_),
         frames_(other.frames_) {}
-  Thread(const long id, const bool is_current, const std::vector<Frame> frames)
+  Thread(const unsigned long id, const bool is_current,
+         const std::vector<Frame> frames)
       : id_(id), is_current_(is_current), frames_(frames) {}
 
-  inline const long id() const { return id_; }
+  inline const unsigned long id() const { return id_; }
   inline const bool is_current() const { return is_current_; }
   inline const std::vector<Frame> &frames() const { return frames_; }
 
@@ -46,7 +47,7 @@ class Thread {
   }
 
  private:
-  long id_;
+  unsigned long id_;
   bool is_current_;
   std::vector<Frame> frames_;
 };

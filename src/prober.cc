@@ -48,6 +48,9 @@ static const char usage_str[] =
      "Common Options:\n"
 #ifdef ENABLE_THREADS
      "  --threads            Enable multi-threading support\n"
+     "  -d, --dump           Dump stacks from all threads (implies --threads)\n"
+#else
+     "  -d, --dump           Dump the current interpreter stack\n"
 #endif
      "  -h, --help           Show help\n"
      "  -o, --output=PATH    Output to file path\n"
@@ -159,9 +162,10 @@ static void PrintFramesTS(std::ostream &out,
 }
 
 int Prober::ParseOpts(int argc, char **argv) {
-  static const char short_opts[] = "ho:p:r:s:tvx";
+  static const char short_opts[] = "dho:p:r:s:tvx";
   static struct option long_opts[] = {
     {"abi", required_argument, 0, 'a'},
+    {"dump", no_argument, 0, 'd'},
     {"help", no_argument, 0, 'h'},
     {"rate", required_argument, 0, 'r'},
     {"seconds", required_argument, 0, 's'},
@@ -205,6 +209,12 @@ int Prober::ParseOpts(int argc, char **argv) {
             break;
         }
         break;
+      case 'd':
+        dump_ = true;
+#if ENABLE_THREADS
+        enable_threads_ = true;
+#endif
+        break;
       case 'h':
         std::cout << PYFLAME_VERSION_STR << "\n\n" << usage_str;
         return 0;
@@ -247,16 +257,20 @@ int Prober::ParseOpts(int argc, char **argv) {
         // getopt_long should already have printed an error message
         break;
       default:
+        std::cerr << "unrecognized command line flag: " << optarg << "\n";
         abort();
     }
   }
 finish_arg_parse:
   if (trace_) {
-    if (pid_ != -1) {
+    if (dump_) {
+      std::cerr << "Options -t and -d are not mutually compatible.\n";
+      return 1;
+    } else if (pid_ != -1) {
       std::cerr << "Options -t and -p are not mutually compatible.\n";
       return 1;
-    }
-    if (optind == argc) {
+    } else if (optind == argc) {
+      std::cerr << "Option -t requires a command to run.\n\n";
       std::cerr << usage_str;
       return 1;
     }
@@ -271,7 +285,7 @@ finish_arg_parse:
       return 1;
     }
     std::cerr << "WARNING: Specifying a PID to trace without -p is deprecated; "
-                 "see Pyflame issue #99 for details.\n ";
+                 "see Pyflame issue #99 for details.\n";
   }
   interval_ = ToMicroseconds(sample_rate_);
   return -1;
@@ -337,8 +351,7 @@ int Prober::InitiatePtrace(char **argv) {
   return 0;
 }
 
-// Main loop to probe the Python process.
-int Prober::ProbeLoop(const PyFrob &frobber) {
+int Prober::Run(const PyFrob &frobber) {
   std::unique_ptr<std::ofstream> file_ptr;
   std::ostream *output;
   if (output_file_.empty()) {
@@ -346,13 +359,18 @@ int Prober::ProbeLoop(const PyFrob &frobber) {
   } else {
     file_ptr.reset(new std::ofstream);
     file_ptr->open(output_file_, std::ios::out | std::ios::trunc);
-    if (!file_ptr->is_open()) {
+    if (file_ptr->is_open()) {
+      output = file_ptr.get();
+    } else {
       std::cerr << "cannot open file \"" << output_file_ << "\" as output\n";
       return 1;
     }
-    output = file_ptr.get();
   }
+  return dump_ ? DumpStacks(frobber, output) : ProbeLoop(frobber, output);
+}
 
+// Main loop to probe the Python process.
+int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
   std::vector<FrameTS> call_stacks;
   int return_code = 0;
   size_t idle_count = 0;
@@ -401,12 +419,23 @@ int Prober::ProbeLoop(const PyFrob &frobber) {
 finish:
   if (!call_stacks.empty() || idle_count) {
     if (!include_ts_) {
-      PrintFrames(*output, call_stacks, idle_count);
+      PrintFrames(*out, call_stacks, idle_count);
     } else {
-      PrintFramesTS(*output, call_stacks);
+      PrintFramesTS(*out, call_stacks);
     }
   }
   return return_code;
+}
+
+int Prober::DumpStacks(const PyFrob &frobber, std::ostream *out) {
+  std::vector<Thread> threads = frobber.GetThreads();
+  for (size_t i = 0; i < threads.size(); i++) {
+    *out << threads[i];
+    if (i < threads.size() - 1) {
+      *out << "\n";
+    }
+  }
+  return 0;
 }
 
 int Prober::FindSymbols(PyFrob *frobber) {

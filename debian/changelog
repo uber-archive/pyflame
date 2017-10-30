@@ -1,3 +1,9 @@
+pyflame (1.6.0) unstable; urgency=medium
+
+  * Add a -d/--dump command to Pyflame
+
+ -- Evan Klitzke <evan@death.star>  Wed, 01 Nov 2017 00:28:56 -0400
+
 pyflame (1.5.7) unstable; urgency=medium
 
   * Make it possible to package pyflame for conda

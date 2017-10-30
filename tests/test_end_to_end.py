@@ -34,8 +34,8 @@ TS_RE = re.compile(r'\d+')
 SLEEP_A_RE = re.compile(r'.*:sleep_a:.*')
 SLEEP_B_RE = re.compile(r'.*:sleep_b:.*')
 
-MISSING_THREADS = not (platform.architecture()[0] == '64bit' and
-                       platform.machine in ('i386', 'x86_64'))
+MISSING_THREADS = not (platform.architecture()[0] == '64bit'
+                       and platform.machine in ('i386', 'x86_64'))
 
 
 @pytest.mark.skipif(
@@ -69,13 +69,20 @@ def proc(argv, wait_for_pid=True):
         proc.kill()
 
 
-def python_proc(test_file):
-    return proc([sys.executable, './tests/%s' % (test_file, )])
+def python_proc(test_file, *args):
+    argv = [sys.executable, './tests/%s' % (test_file, )]
+    return proc(argv + [str(x) for x in args])
 
 
 @pytest.yield_fixture
 def dijkstra():
     with python_proc('dijkstra.py') as p:
+        yield p
+
+
+@pytest.yield_fixture
+def threaded_dijkstra():
+    with python_proc('dijkstra.py', '-t', 4) as p:
         yield p
 
 
@@ -138,8 +145,8 @@ def assert_unique(lines, allow_idle=False):
     seen = set()
     for line in lines:
         if line in seen:
-            assert False, 'saw line {!r} twice in lines {!r}'.format(line,
-                                                                     lines)
+            assert False, 'saw line {!r} twice in lines {!r}'.format(
+                line, lines)
         seen.add(line)
         assert_flamegraph(line, allow_idle=allow_idle)
         yield line
@@ -205,7 +212,8 @@ def test_non_gil(sleeper):
 def test_threaded(threaded_sleeper):
     """Basic test for non-GIL/native code processes."""
     proc = subprocess.Popen(
-        [path_to_pyflame(), '--threads', '-p', str(threaded_sleeper.pid)],
+        [path_to_pyflame(), '--threads', '-p',
+         str(threaded_sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -237,7 +245,8 @@ def test_threaded(threaded_sleeper):
 def test_unthreaded(threaded_busy):
     """Test only one process is profiled by default."""
     proc = subprocess.Popen(
-        [path_to_pyflame(), '-s', '0', '-p', str(threaded_busy.pid)],
+        [path_to_pyflame(), '-s', '0', '-p',
+         str(threaded_busy.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -251,7 +260,8 @@ def test_unthreaded(threaded_busy):
 def test_legacy_pid_handling(threaded_busy):
     # test PID parsing when -p is not used
     proc = subprocess.Popen(
-        [path_to_pyflame(), '-s', '0', str(threaded_busy.pid)],
+        [path_to_pyflame(), '-s', '0',
+         str(threaded_busy.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -271,7 +281,7 @@ def test_legacy_pid_handling_too_many_pids():
         universal_newlines=True)
     out, err = communicate(proc)
     assert proc.returncode == 1
-    assert err.startswith('Usage: ')
+    assert 'Usage: ' in err
 
 
 def test_dash_t_and_dash_p():
@@ -299,7 +309,8 @@ def test_unsupported_abi():
 def test_exclude_idle(sleeper):
     """Basic test for idle processes."""
     proc = subprocess.Popen(
-        [path_to_pyflame(), '-x', '-p', str(sleeper.pid)],
+        [path_to_pyflame(), '-x', '-p',
+         str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -314,7 +325,8 @@ def test_exclude_idle(sleeper):
 @pytest.mark.skipif(sys.version_info < (3, 3), reason="requires Python 3.3+")
 def test_utf8_output(unicode_sleeper):
     proc = subprocess.Popen(
-        [path_to_pyflame(), '-x', '-p', str(unicode_sleeper.pid)],
+        [path_to_pyflame(), '-x', '-p',
+         str(unicode_sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -336,7 +348,8 @@ def test_utf8_output(unicode_sleeper):
 
 def test_exit_early(exit_early):
     proc = subprocess.Popen(
-        [path_to_pyflame(), '-s', '10', '-p', str(exit_early.pid)],
+        [path_to_pyflame(), '-s', '10', '-p',
+         str(exit_early.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
@@ -354,8 +367,8 @@ def test_sample_not_python(not_python):
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert (err.startswith('Failed to locate libpython') or
-            err.startswith('Target ELF file has EI_CLASS'))
+    assert (err.startswith('Failed to locate libpython')
+            or err.startswith('Target ELF file has EI_CLASS'))
     assert proc.returncode == 1
 
 
@@ -388,8 +401,8 @@ def test_trace_not_python():
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert (err.startswith('Failed to locate libpython') or
-            err.startswith('Target ELF file has EI_CLASS'))
+    assert (err.startswith('Failed to locate libpython')
+            or err.startswith('Target ELF file has EI_CLASS'))
     assert proc.returncode == 1
 
 
@@ -422,7 +435,7 @@ def test_trace_no_arg():
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert err.startswith('Usage: ')
+    assert 'Usage: ' in err
     assert proc.returncode == 1
 
 
@@ -474,7 +487,8 @@ def test_invalid_pid(pid):
 def test_include_ts(sleeper):
     """Basic test for timestamp processes."""
     proc = subprocess.Popen(
-        [path_to_pyflame(), '--flamechart', '-p', str(sleeper.pid)],
+        [path_to_pyflame(), '--flamechart', '-p',
+         str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -491,7 +505,8 @@ def test_include_ts(sleeper):
 def test_include_ts_exclude_idle(sleeper):
     """Basic test for timestamp processes."""
     proc = subprocess.Popen(
-        [path_to_pyflame(), '--flamechart', '-x', '-p', str(sleeper.pid)],
+        [path_to_pyflame(), '--flamechart', '-x', '-p',
+         str(sleeper.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True)
@@ -556,3 +571,23 @@ def test_sigchld():
     assert lines.pop(-1) == ''  # output should end in a newline
     consume_unique(lines, allow_idle=True)
     assert elapsed >= 2
+
+
+@pytest.mark.skipif(MISSING_THREADS, reason='build does not have threads')
+def test_thread_dump(threaded_dijkstra):
+    time.sleep(0.5)
+    proc = subprocess.Popen(
+        [path_to_pyflame(), '-d', '-p',
+         str(threaded_dijkstra.pid)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    out, err = communicate(proc)
+    assert not err
+
+    THREAD_RE = re.compile(r'^\d+\*?:')
+    threads = 0
+    for line in out.split('\n'):
+        print(line)
+        if THREAD_RE.match(line):
+            threads += 1
+    assert threads == 5
