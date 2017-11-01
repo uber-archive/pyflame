@@ -16,7 +16,11 @@
 
 namespace pyflame {
 std::ostream &operator<<(std::ostream &os, const Thread &thread) {
-  os << thread.id() << ':' << std::endl;
+  os << thread.id();
+  if (thread.is_current()) {
+    os << '*';
+  }
+  os << ':' << std::endl;
   for (const auto &frame : thread.frames()) {
     os << frame << std::endl;
   }

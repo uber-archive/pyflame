@@ -30,6 +30,9 @@ it interprets the rest of the command line as a command to run, and traces the
 command to completion. This is analogous to how **strace**(1) works when a PID
 is not specified.
 
+**-d**, **--dump**
+:   Dump stacks from all threads (implies **--threads**).
+
 **-h**, **--help**
 :   Display a friendly help message.
 

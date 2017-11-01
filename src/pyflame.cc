@@ -34,5 +34,5 @@ int main(int argc, char **argv) {
   }
 
   // Probe in a loop.
-  return prober.ProbeLoop(frobber);
+  return prober.Run(frobber);
 }

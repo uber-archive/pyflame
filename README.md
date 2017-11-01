@@ -85,3 +85,7 @@ See [here](https://pyflame.readthedocs.io/en/latest/faq.html#what-are-these-ptra
 ### How Do I Profile Threaded Applications?
 
 Use the `--threads` option.
+
+### Is There A Way To Just Dump Stack Traces?
+
+Yes, use the `-d` option.
