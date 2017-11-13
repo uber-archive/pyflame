@@ -1,3 +1,9 @@
+pyflame (1.6.2) unstable; urgency=medium
+
+  * More test suite updates for RPM packaging.
+
+ -- Evan Klitzke <evan@localhost>  Mon, 13 Nov 2017 12:22:07 -0800
+
 pyflame (1.6.1) unstable; urgency=medium
 
   * Allow building without git version.
