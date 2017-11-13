@@ -533,7 +533,7 @@ def test_version(flag):
     assert proc.returncode == 0
 
     version_re = re.compile(
-        r'^Pyflame \d+\.\d+\.\d+ \(commit [\w]+\) \S+ \S+ \(ABI list: .+\)$')
+        r'^Pyflame \d+\.\d+\.\d+ (\(commit [\w]+\) )?\S+ \S+ \(ABI list: .+\)$')
     assert version_re.match(out.strip())
 
 
