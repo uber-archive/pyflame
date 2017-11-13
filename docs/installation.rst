@@ -83,6 +83,17 @@ distros. Uploads of these packages tend to lag the official Pyflame releases, so
 you are **strongly encouraged to check the pre-built version** to ensure that it
 is not too old. If you want the newest version of Pyflame, build from source.
 
+Fedora
+~~~~~~
+
+`Evan Klitzke <https://github.com/eklitzke>`__ maintains a COPR for
+Pyflame:
+
+.. code:: bash
+
+    dnf copr enable eklitzke/pyflame
+    dnf install pyflame
+
 Conda
 ~~~~~
 
