@@ -14,6 +14,7 @@ ENVDIR="./.test_env"
 trap 'rm -rf ${ENVDIR}' EXIT
 
 VERBOSE=0
+export PYVERSION
 
 while getopts ":hvx" opt; do
   case $opt in
@@ -45,10 +46,13 @@ pytest() {
 
 # Run tests using pip; $1 = python version
 run_pip_tests() {
-  local activated=0
+  local activated
   if [ -z "${VIRTUAL_ENV}" ]; then
     rm -rf "${ENVDIR}"
-    virtualenv -q -p "$1" "${ENVDIR}" &>/dev/null
+    if ! virtualenv -q -p "$1" "${ENVDIR}" &>/dev/null; then
+      echo "Error: failed to create virtualenv"
+      return 1
+    fi
 
     # shellcheck source=/dev/null
     . "${ENVDIR}/bin/activate"
@@ -56,13 +60,13 @@ run_pip_tests() {
   else
     echo "Warning: reusing virtualenv"
   fi
-  echo -n "Running test suite against interpreter "
-  "$1" --version
 
-  pip install -q pytest
+  PYVERSION=$(python -c 'import sys; print(sys.version_info[0])')
+  echo "Running test suite against interpreter $("$1" --version 2>&1)"
 
   find tests/ -name '*.pyc' -delete
-  pytest tests/
+  pip install -q pytest
+  pytest -v tests/
   if [ "$activated" -eq 1 ]; then
     deactivate
   fi
@@ -72,18 +76,31 @@ run_pip_tests() {
 try_pip_tests() {
   if command -v "$1" &>/dev/null; then
     run_pip_tests "$1"
+  else
+    echo "skipping $1 tests (no such command)"
   fi
 }
 
 # Tests run when building RPMs are not allowed to use virtualenv.
 run_rpm_tests() {
-  py.test-2 tests/
-  py.test-3 tests/
+  for pytest in py.test-2 py.test-2.7; do
+    if exists "$pytest"; then
+      PYVERSION=2 "$pytest" -v tests/
+      break
+    fi
+  done
+
+  for pytest in py.test-3 py.test-3.4; do
+    if exists "$pytest"; then
+      PYVERSION=3 "$pytest" -v tests/
+      break
+    fi
+  done
 }
 
 if [ $# -eq 0 ]; then
-  try_pip_tests python2
-  try_pip_tests python3
+  PYVERSION=2 try_pip_tests python2
+  PYVERSION=3 try_pip_tests python3
 elif [ "$1" = "rpm" ]; then
   run_rpm_tests
 else
