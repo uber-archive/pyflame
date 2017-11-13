@@ -1,5 +1,5 @@
 AC_PREREQ([2.68])
-AC_INIT([pyflame], [1.6.0], [evan@eklitzke.org])
+AC_INIT([pyflame], [1.6.1], [evan@eklitzke.org])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -73,9 +73,14 @@ AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([getpagesize memmove munmap strerror strtol strtoul])
 
+gitcommit=`cd $srcdir && git describe --always`
+AS_IF([test x"$gitcommit" = x],
+      [versionstr="Pyflame $PACKAGE_VERSION $host_os $host_cpu"],
+      [versionstr="Pyflame $PACKAGE_VERSION (commit $gitcommit) $host_os $host_cpu"])
+
 AC_DEFINE_UNQUOTED(
   [PYFLAME_VERSION_STR],
-  ["Pyflame $PACKAGE_VERSION (commit `cd $srcdir && git describe --always`) $host_os $host_cpu"],
+  ["$versionstr"],
   [A string containing build information.])
 
 PKG_CHECK_MODULES([PY26], [python2], [enable_py26="yes"], [AC_MSG_WARN([Building without Python 2.6/2.7 support])])
