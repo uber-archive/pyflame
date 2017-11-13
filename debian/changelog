@@ -1,3 +1,9 @@
+pyflame (1.6.3) unstable; urgency=medium
+
+  * Fix running the tests on ASCII filesystems.
+
+ -- Evan Klitzke <evan@localhost>  Mon, 13 Nov 2017 13:27:44 -0800
+
 pyflame (1.6.2) unstable; urgency=medium
 
   * More test suite updates for RPM packaging.
