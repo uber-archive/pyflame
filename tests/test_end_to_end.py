@@ -54,6 +54,14 @@ def test_travis_build_environment():
     assert not sys.executable.startswith('/opt')
 
 
+@pytest.mark.skipif(
+    os.environ.get('PYVERSION') not in '23',
+    reason='PYVERSION not set.')
+def test_rpm_build_environment():
+    """Sanity checks of the RPM test environment."""
+    assert int(os.environ['PYVERSION']) == sys.version_info[0]
+
+
 @contextlib.contextmanager
 def proc(argv, wait_for_pid=True):
     # start the process and wait for it to print its pid... we explicitly do
