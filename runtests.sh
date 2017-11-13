@@ -36,6 +36,10 @@ done
 
 shift "$((OPTIND-1))"
 
+exists() {
+  command -v "$1" &>/dev/null
+}
+
 pytest() {
   if [ "$VERBOSE" -eq 0 ]; then
     py.test -q "$@"
