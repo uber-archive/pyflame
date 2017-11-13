@@ -55,10 +55,11 @@ def test_travis_build_environment():
 
 
 @pytest.mark.skipif(
-    os.environ.get('PYVERSION') not in '23', reason='PYVERSION not set.')
+    os.environ.get('PYMAJORVERSION') not in '23',
+    reason='PYMAJORVERSION not set.')
 def test_rpm_build_environment():
     """Sanity checks of the RPM test environment."""
-    assert int(os.environ['PYVERSION']) == sys.version_info[0]
+    assert int(os.environ['PYMAJORVERSION']) == sys.version_info[0]
 
 
 @contextlib.contextmanager

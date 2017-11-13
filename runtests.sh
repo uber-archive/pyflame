@@ -14,7 +14,7 @@ ENVDIR="./.test_env"
 trap 'rm -rf ${ENVDIR}' EXIT
 
 VERBOSE=0
-export PYVERSION
+export PYMAJORVERSION
 
 while getopts ":hvx" opt; do
   case $opt in
@@ -65,7 +65,7 @@ run_pip_tests() {
     echo "Warning: reusing virtualenv"
   fi
 
-  PYVERSION=$(python -c 'import sys; print(sys.version_info[0])')
+  PYMAJORVERSION=$(python -c 'import sys; print(sys.version_info[0])')
   echo "Running test suite against interpreter $("$1" --version 2>&1)"
 
   find tests/ -name '*.pyc' -delete
@@ -89,22 +89,22 @@ try_pip_tests() {
 run_rpm_tests() {
   for pytest in py.test-2 py.test-2.7; do
     if exists "$pytest"; then
-      PYVERSION=2 "$pytest" -v tests/
+      PYMAJORVERSION=2 "$pytest" -v tests/
       break
     fi
   done
 
   for pytest in py.test-3 py.test-3.4; do
     if exists "$pytest"; then
-      PYVERSION=3 "$pytest" -v tests/
+      PYMAJORVERSION=3 "$pytest" -v tests/
       break
     fi
   done
 }
 
 if [ $# -eq 0 ]; then
-  PYVERSION=2 try_pip_tests python2
-  PYVERSION=3 try_pip_tests python3
+  PYMAJORVERSION=2 try_pip_tests python2
+  PYMAJORVERSION=3 try_pip_tests python3
 elif [ "$1" = "rpm" ]; then
   run_rpm_tests
 else
