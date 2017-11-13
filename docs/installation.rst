@@ -26,8 +26,8 @@ to profile both Python 2 and Python 3 processes.
     # Install build dependencies on Debian or Ubuntu.
     sudo apt-get install autoconf automake autotools-dev g++ pkg-config python-dev python3-dev libtool make
 
-Fedora
-~~~~~~
+Fedora/CentOS
+~~~~~~~~~~~~~~~
 
 Again, you technically only need one of ``python-devel`` and
 ``python3-devel``, although installing both is recommended.
@@ -83,8 +83,8 @@ distros. Uploads of these packages tend to lag the official Pyflame releases, so
 you are **strongly encouraged to check the pre-built version** to ensure that it
 is not too old. If you want the newest version of Pyflame, build from source.
 
-Fedora
-~~~~~~
+Fedora/CentOS
+~~~~~~~~~~~~~~~
 
 `Evan Klitzke <https://github.com/eklitzke>`__ maintains a COPR for
 Pyflame:
