@@ -1,14 +1,14 @@
 Source: pyflame
 Priority: extra
 Maintainer: Evan Klitzke <evan@eklitzke.org>
-Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf, pkg-config, python-dev, g++ (>= 4.0)
+Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf, pkg-config, python-dev, python3-dev, g++ (>= 4.0)
 Standards-Version: 3.9.8
 Section: devel
 X-Python-Version: >= 2.6
 
 Package: pyflame
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libstdc++6, python
+Depends: ${shlibs:Depends}, ${misc:Depends}, libstdc++6
 Recommends: strace
 Description: Python flamegraph profiling tool
  Pyflame is a novel Python profiling tool that uses ptrace(2) to instrument
