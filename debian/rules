@@ -14,3 +14,4 @@
 
 # Need to make this work on Precise somehow...
 override_dh_auto_test:
+	./runtests.sh rpm

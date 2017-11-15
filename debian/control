@@ -1,7 +1,7 @@
 Source: pyflame
 Priority: optional
 Maintainer: Evan Klitzke <evan@eklitzke.org>
-Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf, pkg-config, python-dev, python3-dev, g++ (>= 4.0)
+Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf, pkg-config, python-dev, python3-dev, g++ (>= 4.0), python-pytest, python3-pytest
 Standards-Version: 4.1.1
 Section: devel
 X-Python-Version: >= 2.6
