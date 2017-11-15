@@ -87,7 +87,7 @@ try_pip_tests() {
 
 # Tests run when building RPMs are not allowed to use virtualenv.
 run_rpm_tests() {
-  for pytest in py.test-2 py.test-2.7; do
+  for pytest in py.test py.test-2 py.test-2.7; do
     if exists "$pytest"; then
       PYMAJORVERSION=2 "$pytest" -v tests/
       break
