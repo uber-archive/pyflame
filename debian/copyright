@@ -1,9 +1,10 @@
-Format: http://dep.debian.net/deps/dep5
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: pyflame
+Upstream-Contact: Evan Klitzke <evan@eklitzke.org>
 Source: https://github.com/uber/pyflame
 
 Files: *
-Copyright: 2016 Uber Technologies, Inc.
+Copyright: 2016-2017 Uber Technologies, Inc.
 License: Apache-2.0
 
 License: Apache-2.0
