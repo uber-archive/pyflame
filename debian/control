@@ -5,6 +5,7 @@ Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf, pkg-config, p
 Standards-Version: 4.1.1
 Section: devel
 X-Python-Version: >= 2.6
+Vcs-Git: https://github.com/uber/pyflame
 
 Package: pyflame
 Architecture: any
