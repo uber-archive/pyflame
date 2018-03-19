@@ -30,7 +30,7 @@ install:
 # use an explicit /usr/bin path when running the tests.
 script:
   - ./autogen.sh
-  - ./configure
+  - ./configure --disable-silent-rules --enable-werror
   - make $MAKEOPTS
   - file ./src/pyflame
   - ./runtests.sh -v /usr/bin/"${PYVERSION}"

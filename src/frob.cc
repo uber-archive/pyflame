@@ -16,6 +16,13 @@
 // frob3.cc, which define PYFLAME_PY_VERSION. Since Makefile.am for more
 // information.
 
+#include <Python.h>
+#include <frameobject.h>
+
+#if PYFLAME_PY_VERSION >= 34
+#include <unicodeobject.h>
+#endif
+
 #include <sys/types.h>
 #include <algorithm>
 #include <cstddef>
@@ -24,13 +31,6 @@
 #include <limits>
 #include <sstream>
 #include <string>
-
-#include <Python.h>
-#include <frameobject.h>
-
-#if PYFLAME_PY_VERSION >= 34
-#include <unicodeobject.h>
-#endif
 
 #include "./config.h"
 #include "./exc.h"
