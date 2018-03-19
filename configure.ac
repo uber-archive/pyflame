@@ -5,6 +5,9 @@ AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/pyflame.cc])
 
+# Detect errors with pkg-tools macro expansion
+m4_pattern_forbid([^PKG_])
+
 # Fail early if the user tries to build for BSD/OS X
 AC_CANONICAL_HOST
 AS_CASE([$host_os],
