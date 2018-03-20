@@ -2,6 +2,8 @@
 #
 # Generate a git commit tag.
 
+set -x
+
 if [ $# -ne 1 ]; then
   echo "usage: gen-gitcommit.sh OUTPUT"
   exit
