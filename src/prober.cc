@@ -39,6 +39,7 @@
 #include "./pyfrob.h"
 #include "./symbol.h"
 #include "./thread.h"
+#include "./version.h"
 
 // Microseconds in a second.
 static const char usage_str[] =
@@ -66,30 +67,6 @@ static const char usage_str[] =
      "  --abi                Force a particular Python ABI (26, 34, 36)\n"
      "  --flamechart         Include timestamps for generating Chrome "
      "\"flamecharts\"\n");
-
-// The ABIs supported in this Pyflame build.
-static const int build_abis[] = {
-#ifdef ENABLE_PY26
-    26,
-#endif
-#ifdef ENABLE_PY34
-    34,
-#endif
-#ifdef ENABLE_PY36
-    36,
-#endif
-};
-
-static_assert(sizeof(build_abis) > 0, "No Python ABIs detected!");
-
-static inline void ShowVersion(std::ostream &out) {
-  const size_t sz = sizeof(build_abis) / sizeof(int);
-  out << PYFLAME_VERSION_STR << " (ABI list: ";
-  for (size_t i = 0; i < sz - 1; i++) {
-    out << build_abis[i] << " ";
-  }
-  out << build_abis[sz - 1] << ")\n";
-}
 
 static inline std::chrono::microseconds ToMicroseconds(double val) {
   return std::chrono::microseconds{static_cast<long>(val * 1000000)};
@@ -216,7 +193,7 @@ int Prober::ParseOpts(int argc, char **argv) {
 #endif
         break;
       case 'h':
-        std::cout << PYFLAME_VERSION_STR << "\n\n" << usage_str;
+        std::cout << usage_str;
         return 0;
         break;
 #ifdef ENABLE_THREADS

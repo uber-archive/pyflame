@@ -8,10 +8,17 @@
 # The libtool magic here makes it so that frob26.cc is compiled with python2
 # flags, and frob3{4,6}.cc are compiled with python3.4/3.6 flags.
 
-bin_PROGRAMS = pyflame
-pyflame_SOURCES = aslr.cc frame.cc thread.cc namespace.cc posix.cc prober.cc ptrace.cc pyflame.cc pyfrob.cc symbol.cc
-pyflame_LDADD =
+.PHONY: build.h
+build.h:
+	@$(top_builddir)/utils/gen-gitcommit.sh "$(abs_top_builddir)/src/build.h"
 
+version.$(OBJEXT): build.h
+
+PYFLAME_H = aslr.h exc.h frame.h thread.h namespace.h posix.h prober.h ptrace.h pyfrob.h setns.h symbol.h version.h
+
+bin_PROGRAMS = pyflame
+pyflame_SOURCES = $(PYFLAME_H) aslr.cc frame.cc thread.cc namespace.cc posix.cc prober.cc ptrace.cc pyflame.cc pyfrob.cc symbol.cc version.cc
+pyflame_LDADD =
 noinst_LTLIBRARIES =
 
 if ENABLE_PY26
