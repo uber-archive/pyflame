@@ -51,6 +51,7 @@ pytest() {
 # Run tests using pip; $1 = python version
 run_pip_tests() {
   local activated
+  activated=0
   if [ -z "${VIRTUAL_ENV}" ]; then
     rm -rf "${ENVDIR}"
     if ! virtualenv -q -p "$1" "${ENVDIR}" &>/dev/null; then

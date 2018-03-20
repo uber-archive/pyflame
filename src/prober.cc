@@ -33,6 +33,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "./build.h"
 #include "./config.h"
 #include "./exc.h"
 #include "./ptrace.h"
@@ -82,9 +83,10 @@ static const int build_abis[] = {
 
 static_assert(sizeof(build_abis) > 0, "No Python ABIs detected!");
 
-static inline void ShowVersion(std::ostream &out) {
+static void ShowVersion(std::ostream &out) {
+  out << "Pyflame " PACKAGE_VERSION BUILDTAG
+      << " " PYFLAME_HOST_OS " " PYFLAME_HOST_CPU << " (ABI list: ";
   const size_t sz = sizeof(build_abis) / sizeof(int);
-  out << PYFLAME_VERSION_STR << " (ABI list: ";
   for (size_t i = 0; i < sz - 1; i++) {
     out << build_abis[i] << " ";
   }
@@ -216,7 +218,7 @@ int Prober::ParseOpts(int argc, char **argv) {
 #endif
         break;
       case 'h':
-        std::cout << PYFLAME_VERSION_STR << "\n\n" << usage_str;
+        std::cout << usage_str;
         return 0;
         break;
 #ifdef ENABLE_THREADS

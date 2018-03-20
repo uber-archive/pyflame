@@ -35,10 +35,11 @@ SLEEP_A_RE = re.compile(r'.*:sleep_a:.*')
 SLEEP_B_RE = re.compile(r'.*:sleep_b:.*')
 
 MISSING_THREADS = platform.machine() != 'x86_64'
+IN_TRAVIS = bool(os.environ.get('TRAVIS') == 'true')
 
 
 @pytest.mark.skipif(
-    os.environ.get('TRAVIS') != 'true',
+    not IN_TRAVIS,
     reason='Sanity check is only run on Travis.')
 def test_travis_build_environment():
     """Sanity checks of the Travis test environment itself."""
@@ -536,9 +537,14 @@ def test_version(flag):
     assert not err
     assert proc.returncode == 0
 
-    version_re = re.compile(
-        r'^Pyflame \d+\.\d+\.\d+ (\(commit [\w]+\) )?\S+ \S+ \(ABI list: .+\)$'
-    )
+    SUFFIX = r' \S+ \S+ \(ABI list: .+\)$'
+    GIT_RE = r'^Pyflame \d+\.\d+\.\d+ \(git [\w]+\)'
+    DIST_RE = r'^Pyflame \d+\.\d+\.\d+( \(git [\w]+\))?'
+
+    if IN_TRAVIS:
+        version_re = re.compile(GIT_RE + SUFFIX)
+    else:
+        version_re = re.compile(DIST_RE + SUFFIX)
     assert version_re.match(out.strip())
 
 

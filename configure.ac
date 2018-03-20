@@ -26,8 +26,6 @@ AS_IF([test x"$host_cpu" = xx86_64],
        AC_DEFINE([USE_ELF64], [0], [Expect 64-bit ELF symbols.])
       ])
 
-AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [CPU of target architecture.])
-
 AM_INIT_AUTOMAKE([dist-bzip2 foreign subdir-objects])
 
 dnl make the compilation flags quiet unless V=1 is used
@@ -90,15 +88,8 @@ AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([getpagesize memmove munmap strerror strtol strtoul])
 
-gitcommit=`cd $srcdir && git describe --always`
-AS_IF([test x"$gitcommit" = x],
-      [versionstr="Pyflame $PACKAGE_VERSION $host_os $host_cpu"],
-      [versionstr="Pyflame $PACKAGE_VERSION (commit $gitcommit) $host_os $host_cpu"])
-
-AC_DEFINE_UNQUOTED(
-  [PYFLAME_VERSION_STR],
-  ["$versionstr"],
-  [A string containing build information.])
+AC_DEFINE_UNQUOTED(PYFLAME_HOST_OS, ["$host_os"], [The host OS Pyflame was built for])
+AC_DEFINE_UNQUOTED(PYFLAME_HOST_CPU, ["$host_cpu"], [The host CPU Pyflame was built for])
 
 enable_py26=no
 PKG_CHECK_MODULES([PY26], [python2], [enable_py26="yes"], [AC_MSG_WARN([Building without Python 2.6/2.7 support])])
