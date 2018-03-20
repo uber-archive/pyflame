@@ -34,8 +34,7 @@ TS_RE = re.compile(r'\d+')
 SLEEP_A_RE = re.compile(r'.*:sleep_a:.*')
 SLEEP_B_RE = re.compile(r'.*:sleep_b:.*')
 
-MISSING_THREADS = not (platform.architecture()[0] == '64bit'
-                       and platform.machine in ('i386', 'x86_64'))
+MISSING_THREADS = platform.machine() != 'x86_64'
 
 
 @pytest.mark.skipif(
@@ -43,13 +42,6 @@ MISSING_THREADS = not (platform.architecture()[0] == '64bit'
     reason='Sanity check is only run on Travis.')
 def test_travis_build_environment():
     """Sanity checks of the Travis test environment itself."""
-    arch = os.environ['ARCH']
-    if arch == 'i386':
-        assert platform.architecture()[0] == '32bit'
-    elif arch == 'amd64':
-        assert platform.architecture()[0] == '64bit'
-    else:
-        assert False, 'Unknown ARCH'
     assert 'python%d.%d' % sys.version_info[:2] == os.environ['PYVERSION']
     assert not sys.executable.startswith('/opt')
 
@@ -234,10 +226,10 @@ def test_threaded(threaded_sleeper):
     b_count = 0
     for line in assert_unique(lines):
         if SLEEP_A_RE.match(line):
-            assert_flamegraph(line)
+            assert_flamegraph(line, True)
             a_count += 1
         elif SLEEP_B_RE.match(line):
-            assert_flamegraph(line)
+            assert_flamegraph(line, True)
             b_count += 1
 
     # We must see both threads.
