@@ -19,3 +19,5 @@ configure
 config.h
 stamp-h1
 \.test_env/
+libtool.m4
+lt*.m4
