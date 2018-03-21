@@ -56,7 +56,7 @@ static const char usage_str[] =
      "  -o, --output=PATH    Output to file path\n"
      "  -p, --pid=PID        The PID to trace\n"
      "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
-     "(default 0.001)\n"
+     "(default 0.01)\n"
      "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
      "  -t, --trace          Trace a child process\n"
      "  -v, --version        Show the version\n"
