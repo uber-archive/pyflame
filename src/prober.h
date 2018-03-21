@@ -39,7 +39,7 @@ class Prober {
         include_ts_(false),
         enable_threads_(false),
         seconds_(1),
-        sample_rate_(0.001) {}
+        sample_rate_(0.01) {}
   Prober(const Prober &other) = delete;
 
   int ParseOpts(int argc, char **argv);

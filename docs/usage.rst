@@ -34,7 +34,7 @@ You can also change the sample time with ``-s``, and the sampling frequency with
     pyflame -s 60 -r 0.01 -p PID
 
 The default behavior is to sample for 1 second (equivalent to ``-s 1``), taking
-a snapshot every millisecond (equivalent to ``-r 0.001``).
+a snapshot every ten milliseconds (equivalent to ``-r 0.01``).
 
 Attaching To Docker/Containerized Processes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

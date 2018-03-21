@@ -53,9 +53,9 @@ is not specified.
 
 **-r**, **--rate**=*RATE*
 :   Sample the process at this frequency. The argument *RATE* is interpreted as
-    a fractional value, measured in seconds. For example, **-r 0.01** would mean
-    to sample the process every 0.01 seconds (i.e. every 10 milliseconds). The
-    default value for *RATE* is 0.001, which samples every millisecond.
+    a fractional value, measured in seconds. For example, **-r 0.1** would mean
+    to sample the process every 0.1 seconds (i.e. every 100 milliseconds). The
+    default value for *RATE* is 0.01, which samples every ten milliseconds.
 
     Note that setting a low value for rate will increase the accuracy of
     profiles, but it also increases the overhead introduced by pyflame. The
