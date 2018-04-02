@@ -110,9 +110,12 @@ typedef std::unordered_map<frames_t, size_t, FrameHash> buckets_t;
 // Prints all stack traces
 static void PrintFrames(std::ostream &out,
                         const std::vector<FrameTS> &call_stacks,
-                        size_t idle_count) {
+                        size_t idle_count, size_t failed_count) {
   if (idle_count) {
     out << "(idle) " << idle_count << "\n";
+  }
+  if (failed_count) {
+    out << "(failed) "  << failed_count << "\n";
   }
   // Put the call stacks into buckets
   buckets_t buckets;
@@ -150,6 +153,10 @@ static void PrintFramesTS(std::ostream &out,
     // Handle idle
     if (call_stack.frames.empty()) {
       out << "(idle)\n";
+      continue;
+    }
+    if (call_stack.frames.size() == 1 && call_stack.frames.front().file() == "(failed)") {
+      out << "(failed)\n";
       continue;
     }
     // Print the call stack
@@ -374,11 +381,12 @@ int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
   std::vector<FrameTS> call_stacks;
   int return_code = 0;
   size_t idle_count = 0;
+  size_t failed_count = 0;
   bool check_end = seconds_ >= 0;
   auto end = std::chrono::system_clock::now() + ToMicroseconds(seconds_);
   for (;;) {
+    auto now = std::chrono::system_clock::now();
     try {
-      auto now = std::chrono::system_clock::now();
       std::vector<Thread> threads = frobber.GetThreads();
 
       // Only true for non-GIL stacks that we couldn't find a way to profile
@@ -403,10 +411,15 @@ int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
       std::this_thread::sleep_for(interval_);
       PtraceInterrupt(pid_);
     } catch (const TerminateException &exc) {
-      goto finish;
-    } catch (const PtraceException &exc) {
       // If the process terminates early then we just print the stack traces up
       // until that point in time.
+      goto finish;
+    } catch (const PtraceException &exc) {
+      failed_count++;
+      if (include_ts_) {
+        // include the exact failures in the call stacks
+        call_stacks.push_back({now, {{"(failed)", exc.what(), 0}}});
+      }
       std::cerr << "Unexpected ptrace(2) exception: " << exc.what() << "\n";
     } catch (const std::exception &exc) {
       std::cerr << "Unexpected generic exception: " << exc.what() << "\n";
@@ -415,9 +428,9 @@ int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
     }
   }
 finish:
-  if (!call_stacks.empty() || idle_count) {
+  if (!call_stacks.empty() || idle_count || failed_count) {
     if (!include_ts_) {
-      PrintFrames(*out, call_stacks, idle_count);
+      PrintFrames(*out, call_stacks, idle_count, failed_count);
     } else {
       PrintFramesTS(*out, call_stacks);
     }
