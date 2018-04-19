@@ -1,3 +1,10 @@
+pyflame (1.6.4-1.1) unstable; urgency=medium
+
+  * Decrease sample rate
+  * Continue on ptrace errors
+
+ -- Evan Klitzke <evan@bitcoin.lan>  Wed, 18 Apr 2018 17:48:50 -0700
+
 pyflame (1.6.3-1) unstable; urgency=medium
 
   * Fix running the tests on ASCII filesystems.
