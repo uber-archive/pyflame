@@ -1,0 +1,9 @@
+*.debhelper
+*.log
+*.substvars
+*-dbg/
+autoreconf*
+files
+pyflame/
+tmp/
+
