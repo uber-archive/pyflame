@@ -1,0 +1,6 @@
+* NEWS (user visible changes)
+
+**  1.6.4 (2018-04-18)
+
+   - Change default sample rate from 1ms to 10ms (Evan Klitzke)
+   - Improved handling of ptrace errors (Steven Karas)
