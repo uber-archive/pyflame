@@ -563,8 +563,8 @@ def test_sigchld():
     t0 = time.time()
     proc = subprocess.Popen(
         [
-            path_to_pyflame(), '-t', 'python', './tests/sleeper.py', '-t', '2',
-            '-f'
+            path_to_pyflame(), '-t', sys.executable, './tests/sleeper.py',
+            '-t', '2', '-f'
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
