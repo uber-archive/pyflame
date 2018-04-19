@@ -1,20 +1,18 @@
 Source: pyflame
-Priority: extra
-Maintainer: Evan Klitzke <evan@uber.com>
-Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf, pkg-config, python-dev, g++
-Standards-Version: 3.9.3
-Section: libs
+Priority: optional
+Maintainer: Evan Klitzke <evan@eklitzke.org>
+Build-Depends: debhelper (>= 9.0.0), autotools-dev, dh-autoreconf, pkg-config, python-dev, python3-dev, g++ (>= 4.0), python-pytest, python3-pytest
+Standards-Version: 4.1.1
+Section: devel
 X-Python-Version: >= 2.6
+Vcs-Git: https://github.com/uber/pyflame
 
 Package: pyflame
 Architecture: any
-Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}, libstdc++6, python
-Description: Python flamegraph tool
-
-Package: pyflame-dbg
-Architecture: any
-Multi-Arch: same
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${pyflame:Version}
-Recommends: python-dbg
-Description: Python flamegraph tool (debug package)
+Depends: ${shlibs:Depends}, ${misc:Depends}, libstdc++6
+Recommends: strace
+Description: Python flamegraph profiling tool
+ Pyflame is a novel Python profiling tool that uses ptrace(2) to instrument
+ processes. It is capable of attaching to already-running processes, or
+ profiling new processes from the start, much like strace. Pyflame emits data in
+ the standard flamegraph format.
