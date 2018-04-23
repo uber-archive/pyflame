@@ -90,14 +90,9 @@ AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MMAP
 AC_CHECK_FUNCS([getpagesize memmove munmap strerror strtol strtoul])
 
-gitcommit=`cd $srcdir && git describe --always`
-AS_IF([test x"$gitcommit" = x],
-      [versionstr="Pyflame $PACKAGE_VERSION $host_os $host_cpu"],
-      [versionstr="Pyflame $PACKAGE_VERSION (commit $gitcommit) $host_os $host_cpu"])
-
 AC_DEFINE_UNQUOTED(
   [PYFLAME_VERSION_STR],
-  ["$versionstr"],
+  ["Pyflame $PACKAGE_VERSION $host_os $host_cpu"],
   [A string containing build information.])
 
 enable_py26=no
