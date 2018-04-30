@@ -24,7 +24,8 @@ import sys
 import time
 
 IDLE_RE = re.compile(r'^\(idle\) \d+$')
-FLAMEGRAPH_RE = re.compile(r'^(.+) (\d+)$')
+FLAMEGRAPH_RE = re.compile(r'^((?:[^:]+:[^:]+:\d+)(?:;[^:]+:[^:]+:\d+)*) (\d+)$')
+FLAMEGRAPH_NONUMBER_RE = re.compile(r'^((?:[^:]+:[^:]+)(?:;[^:]+:[^:]+)*) (\d+)$')
 TS_IDLE_RE = re.compile(r'\(idle\)')
 # Matches strings of the form
 # './tests/sleeper.py:<module>:31;./tests/sleeper.py:main:26;'
@@ -126,17 +127,24 @@ def not_python():
         yield p
 
 
-def assert_flamegraph(line, allow_idle):
+def assert_flamegraph(line, allow_idle, line_re=FLAMEGRAPH_RE):
     if allow_idle and IDLE_RE.match(line):
         return
-    m = FLAMEGRAPH_RE.match(line)
+    m = line_re.match(line)
     assert m is not None, 'line {!r} did not match!'.format(line)
     parts, count = m.groups()
     count = int(count, 10)
     assert count >= 1
+
     for part in parts.split(';'):
-        fname, func, line_num = part.split(':')
-        line_num = int(line_num, 10)
+        tokens = part.split(':')
+
+        if len(tokens) == 2:
+            fname, func = tokens
+            line_num = 1
+        else:
+            fname, func, line_num = tokens
+            line_num = int(line_num, 10)
 
         # Make a best effort to sanity check the line number. This logic could
         # definitely be improved, since right now an off-by-one error wouldn't
@@ -145,19 +153,19 @@ def assert_flamegraph(line, allow_idle):
             assert 1 <= line_num < 300
 
 
-def assert_unique(lines, allow_idle=False):
+def assert_unique(lines, allow_idle=False, line_re=FLAMEGRAPH_RE):
     seen = set()
     for line in lines:
         if line in seen:
             assert False, 'saw line {!r} twice in lines {!r}'.format(
                 line, lines)
         seen.add(line)
-        assert_flamegraph(line, allow_idle=allow_idle)
+        assert_flamegraph(line, allow_idle=allow_idle, line_re=line_re)
         yield line
 
 
-def consume_unique(lines, allow_idle=False):
-    for line in assert_unique(lines, allow_idle=allow_idle):
+def consume_unique(lines, allow_idle=False, line_re=FLAMEGRAPH_RE):
+    for line in assert_unique(lines, allow_idle=allow_idle, line_re=line_re):
         pass
 
 
@@ -603,3 +611,22 @@ def test_thread_dump(threaded_dijkstra):
         if THREAD_RE.match(line):
             threads += 1
     assert threads == 5
+
+def test_no_line_numbers(dijkstra):
+    """Basic test for --no-line-numbers"""
+    proc = subprocess.Popen(
+        [path_to_pyflame(), '-p',
+         str(dijkstra.pid), "--no-line-numbers"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+    out, err = communicate(proc)
+    assert not err
+    assert proc.returncode == 0
+    lines = out.split('\n')
+    assert lines.pop(-1) == ''  # output should end in a newline
+
+    # With no line numbers included there can be duplicate lines,
+    # but flamegraph.pl performs deduplication as well
+    for line in lines:
+        assert_flamegraph(line, allow_idle=True, line_re=FLAMEGRAPH_NONUMBER_RE)
