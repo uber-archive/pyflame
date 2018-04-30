@@ -36,6 +36,10 @@ SLEEP_B_RE = re.compile(r'.*:sleep_b:.*')
 
 MISSING_THREADS = platform.machine() != 'x86_64'
 
+IS_DOCKER = False
+""" Returns: True if running in a Docker container, else False """
+with open('/proc/1/cgroup', 'rt') as ifh:
+    IS_DOCKER = 'docker' in ifh.read()
 
 @pytest.mark.skipif(
     os.environ.get('TRAVIS') != 'true',
@@ -463,6 +467,9 @@ def test_sample_extra_args():
     assert proc.returncode == 1
 
 
+@pytest.mark.skipif(
+    IS_DOCKER,
+    reason='There is not init process in Docker')
 def test_permission_error():
     # we should not be allowed to trace init
     proc = subprocess.Popen(
