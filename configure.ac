@@ -92,7 +92,7 @@ AC_CHECK_FUNCS([getpagesize memmove munmap strerror strtol strtoul])
 
 AC_DEFINE_UNQUOTED(
   [PYFLAME_VERSION_STR],
-  ["Pyflame $PACKAGE_VERSION $host_os $host_cpu"],
+  ["pyflame $PACKAGE_VERSION $host_os $host_cpu"],
   [A string containing build information.])
 
 enable_py26=no
