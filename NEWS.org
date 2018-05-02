@@ -1,5 +1,9 @@
 * NEWS (user visible changes)
 
+**  1.6.6 (2018-05-02)
+
+   - Add new -n/--no-line-numbers option (Igor Nikolaev)
+
 **  1.6.5 (2018-04-23)
 
    - No user-visible changes, version bump to fix RPM packaging
