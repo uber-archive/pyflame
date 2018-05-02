@@ -38,9 +38,13 @@ SLEEP_B_RE = re.compile(r'.*:sleep_b:.*')
 MISSING_THREADS = platform.machine() != 'x86_64'
 
 IS_DOCKER = False
-""" Returns: True if running in a Docker container, else False """
-with open('/proc/1/cgroup', 'rt') as ifh:
-    IS_DOCKER = 'docker' in ifh.read()
+try:
+    """ Returns: True if running in a Docker container, else False """
+    with open('/proc/1/cgroup', 'rt') as ifh:
+        IS_DOCKER = 'docker' in ifh.read()
+except:
+    # Ignore exception, since there's nothing we can do
+    pass
 
 @pytest.mark.skipif(
     os.environ.get('TRAVIS') != 'true',
