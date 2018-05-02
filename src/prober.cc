@@ -53,6 +53,7 @@ static const char usage_str[] =
      "  -d, --dump               Dump the current interpreter stack\n"
 #endif
      "  -h, --help               Show help\n"
+     "  -n, --no-line-numbers    Do not append line numbers to function names\n"
      "  -o, --output=PATH        Output to file path\n"
      "  -p, --pid=PID            The PID to trace\n"
      "  -r, --rate=RATE          Sample rate, as a fractional value of seconds "
@@ -61,7 +62,6 @@ static const char usage_str[] =
      "  -t, --trace              Trace a child process\n"
      "  -v, --version            Show the version\n"
      "  -x, --exclude-idle       Exclude idle time from statistics\n"
-     "  -n, --no-line-numbers    Do not append line numbers to function names\n"
      "\n"
      "Advanced Options:\n"
      "  --abi                    Force a particular Python ABI (26, 34, 36)\n"
@@ -180,7 +180,7 @@ static void PrintFramesTS(std::ostream &out,
 }
 
 int Prober::ParseOpts(int argc, char **argv) {
-  static const char short_opts[] = "dho:p:r:s:tvxn";
+  static const char short_opts[] = "dhno:p:r:s:tvx";
   static struct option long_opts[] = {
     {"abi", required_argument, 0, 'a'},
     {"dump", no_argument, 0, 'd'},
@@ -190,13 +190,13 @@ int Prober::ParseOpts(int argc, char **argv) {
 #if ENABLE_THREADS
     {"threads", no_argument, 0, 'L'},
 #endif
+    {"no-line-numbers", no_argument, 0, 'n'},
     {"output", required_argument, 0, 'o'},
     {"pid", required_argument, 0, 'p'},
     {"trace", no_argument, 0, 't'},
     {"flamechart", no_argument, 0, 'T'},
     {"version", no_argument, 0, 'v'},
     {"exclude-idle", no_argument, 0, 'x'},
-    {"no-line-numbers", no_argument, 0, 'n'},
     {0, 0, 0, 0}
   };
 
