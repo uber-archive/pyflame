@@ -24,8 +24,10 @@ import sys
 import time
 
 IDLE_RE = re.compile(r'^\(idle\) \d+$')
-FLAMEGRAPH_RE = re.compile(r'^((?:[^:]+:[^:]+:\d+)(?:;[^:]+:[^:]+:\d+)*) (\d+)$')
-FLAMEGRAPH_NONUMBER_RE = re.compile(r'^((?:[^:]+:[^:]+)(?:;[^:]+:[^:]+)*) (\d+)$')
+FLAMEGRAPH_RE = re.compile(
+    r'^((?:[^:]+:[^:]+:\d+)(?:;[^:]+:[^:]+:\d+)*) (\d+)$')
+FLAMEGRAPH_NONUMBER_RE = re.compile(
+    r'^((?:[^:]+:[^:]+)(?:;[^:]+:[^:]+)*) (\d+)$')
 TS_IDLE_RE = re.compile(r'\(idle\)')
 # Matches strings of the form
 # './tests/sleeper.py:<module>:31;./tests/sleeper.py:main:26;'
@@ -45,6 +47,7 @@ try:
 except:
     # Ignore exception, since there's nothing we can do
     pass
+
 
 @pytest.mark.skipif(
     os.environ.get('TRAVIS') != 'true',
@@ -479,9 +482,7 @@ def test_sample_extra_args():
     assert proc.returncode == 1
 
 
-@pytest.mark.skipif(
-    IS_DOCKER,
-    reason='There is not init process in Docker')
+@pytest.mark.skipif(IS_DOCKER, reason='There is not init process in Docker')
 def test_permission_error():
     # we should not be allowed to trace init
     proc = subprocess.Popen(
@@ -616,6 +617,7 @@ def test_thread_dump(threaded_dijkstra):
             threads += 1
     assert threads == 5
 
+
 def test_no_line_numbers(dijkstra):
     """Basic test for --no-line-numbers"""
     proc = subprocess.Popen(
@@ -633,4 +635,5 @@ def test_no_line_numbers(dijkstra):
     # With no line numbers included there can be duplicate lines,
     # but flamegraph.pl performs deduplication as well
     for line in lines:
-        assert_flamegraph(line, allow_idle=True, line_re=FLAMEGRAPH_NONUMBER_RE)
+        assert_flamegraph(
+            line, allow_idle=True, line_re=FLAMEGRAPH_NONUMBER_RE)
