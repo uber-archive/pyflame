@@ -484,7 +484,7 @@ def test_invalid_pid(pid):
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert err.startswith('Failed to seize PID ') or 'valid PID range' in err
+    assert err.startswith('Failed to seize PID ') or 'failed to parse' in err
     assert proc.returncode == 1
 
 
@@ -537,7 +537,7 @@ def test_version(flag):
     assert proc.returncode == 0
 
     version_re = re.compile(
-        r'^Pyflame \d+\.\d+\.\d+ (\(commit [\w]+\) )?\S+ \S+ \(ABI list: .+\)$'
+        r'^pyflame \d+\.\d+\.\d+ (\(commit [\w]+\) )?\S+ \S+ \(ABI list: .+\)$'
     )
     assert version_re.match(out.strip())
 

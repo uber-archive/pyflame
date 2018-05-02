@@ -48,15 +48,23 @@ pytest() {
   fi
 }
 
+mkvenv() {
+  if exists virtualenv-3; then
+    virtualenv-3 "$@"
+  elif exists virtualenv; then
+    virtualenv "$@"
+  else
+    echo "failed to find virtualenv command"
+    exit 1
+  fi
+}
+
 # Run tests using pip; $1 = python version
 run_pip_tests() {
   local activated
   if [ -z "${VIRTUAL_ENV}" ]; then
     rm -rf "${ENVDIR}"
-    if ! virtualenv -q -p "$1" "${ENVDIR}" &>/dev/null; then
-      echo "Error: failed to create virtualenv"
-      return 1
-    fi
+    mkvenv -q -p "$1" "${ENVDIR}" &>/dev/null
 
     # shellcheck source=/dev/null
     . "${ENVDIR}/bin/activate"
