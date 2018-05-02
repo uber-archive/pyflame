@@ -49,7 +49,10 @@ class Frame {
 };
 
 std::ostream &operator<<(std::ostream &os, const Frame &frame);
+void print_frame(std::ostream &os, const Frame &frame);
+void print_frame_without_line_number(std::ostream &os, const Frame &frame);
 
+typedef void (*print_frame_t) (std::ostream &, const Frame &);
 typedef std::vector<Frame> frames_t;
 
 struct FrameHash {

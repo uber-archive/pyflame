@@ -19,4 +19,12 @@ std::ostream &operator<<(std::ostream &os, const Frame &frame) {
   os << frame.file() << ':' << frame.name() << ':' << frame.line();
   return os;
 }
+
+void print_frame(std::ostream &os, const Frame &frame) {
+  os << frame.file() << ':' << frame.name() << ':' << frame.line();
+}
+
+void print_frame_without_line_number(std::ostream &os, const Frame &frame) {
+  os << frame.file() << ':' << frame.name();
+}
 }  // namespace pyflame

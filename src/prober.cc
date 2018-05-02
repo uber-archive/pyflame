@@ -47,24 +47,25 @@ static const char usage_str[] =
      "\n"
      "Common Options:\n"
 #ifdef ENABLE_THREADS
-     "  --threads            Enable multi-threading support\n"
-     "  -d, --dump           Dump stacks from all threads (implies --threads)\n"
+     "  --threads                Enable multi-threading support\n"
+     "  -d, --dump               Dump stacks from all threads (implies --threads)\n"
 #else
-     "  -d, --dump           Dump the current interpreter stack\n"
+     "  -d, --dump               Dump the current interpreter stack\n"
 #endif
-     "  -h, --help           Show help\n"
-     "  -o, --output=PATH    Output to file path\n"
-     "  -p, --pid=PID        The PID to trace\n"
-     "  -r, --rate=RATE      Sample rate, as a fractional value of seconds "
+     "  -h, --help               Show help\n"
+     "  -o, --output=PATH        Output to file path\n"
+     "  -p, --pid=PID            The PID to trace\n"
+     "  -r, --rate=RATE          Sample rate, as a fractional value of seconds "
      "(default 0.01)\n"
-     "  -s, --seconds=SECS   How many seconds to run for (default 1)\n"
-     "  -t, --trace          Trace a child process\n"
-     "  -v, --version        Show the version\n"
-     "  -x, --exclude-idle   Exclude idle time from statistics\n"
+     "  -s, --seconds=SECS       How many seconds to run for (default 1)\n"
+     "  -t, --trace              Trace a child process\n"
+     "  -v, --version            Show the version\n"
+     "  -x, --exclude-idle       Exclude idle time from statistics\n"
+     "  -n, --no-line-numbers    Do not append line numbers to function names\n"
      "\n"
      "Advanced Options:\n"
-     "  --abi                Force a particular Python ABI (26, 34, 36)\n"
-     "  --flamechart         Include timestamps for generating Chrome "
+     "  --abi                    Force a particular Python ABI (26, 34, 36)\n"
+     "  --flamechart             Include timestamps for generating Chrome "
      "\"flamecharts\"\n");
 
 // The ABIs supported in this Pyflame build.
@@ -110,7 +111,10 @@ typedef std::unordered_map<frames_t, size_t, FrameHash> buckets_t;
 // Prints all stack traces
 static void PrintFrames(std::ostream &out,
                         const std::vector<FrameTS> &call_stacks,
-                        size_t idle_count, size_t failed_count) {
+                        size_t idle_count, size_t failed_count, bool include_line_number) {
+  // Choose function to print frame
+  print_frame_t print_frame_ = include_line_number ? print_frame : print_frame_without_line_number;
+
   if (idle_count) {
     out << "(idle) " << idle_count << "\n";
   }
@@ -136,15 +140,20 @@ static void PrintFrames(std::ostream &out,
     auto last = kv.first.rend();
     last--;
     for (auto it = kv.first.rbegin(); it != last; ++it) {
-      out << *it << ";";
+      print_frame_(out, *it);
+      out << ";";
     }
-    out << *last << " " << kv.second << "\n";
+    print_frame_(out, *last);
+    out << " " << kv.second << "\n";
   }
 }
 
 // Prints all stack traces with timestamps
 static void PrintFramesTS(std::ostream &out,
-                          const std::vector<FrameTS> &call_stacks) {
+                          const std::vector<FrameTS> &call_stacks, bool include_line_number) {
+  // Choose function to print frame
+  print_frame_t print_frame_ = include_line_number ? print_frame : print_frame_without_line_number;
+
   for (const auto &call_stack : call_stacks) {
     out << std::chrono::duration_cast<std::chrono::microseconds>(
                call_stack.ts.time_since_epoch())
@@ -163,14 +172,15 @@ static void PrintFramesTS(std::ostream &out,
     // Print the call stack
     for (auto it = call_stack.frames.rbegin(); it != call_stack.frames.rend();
          ++it) {
-      out << *it << ";";
+      print_frame_(out, *it);
+      out << ";";
     }
     out << "\n";
   }
 }
 
 int Prober::ParseOpts(int argc, char **argv) {
-  static const char short_opts[] = "dho:p:r:s:tvx";
+  static const char short_opts[] = "dho:p:r:s:tvxn";
   static struct option long_opts[] = {
     {"abi", required_argument, 0, 'a'},
     {"dump", no_argument, 0, 'd'},
@@ -186,6 +196,7 @@ int Prober::ParseOpts(int argc, char **argv) {
     {"flamechart", no_argument, 0, 'T'},
     {"version", no_argument, 0, 'v'},
     {"exclude-idle", no_argument, 0, 'x'},
+    {"no-line-numbers", no_argument, 0, 'n'},
     {0, 0, 0, 0}
   };
 
@@ -260,6 +271,9 @@ int Prober::ParseOpts(int argc, char **argv) {
         break;
       case 'o':
         output_file_ = optarg;
+        break;
+      case 'n':
+        include_line_number_ = false;
         break;
       case '?':
         // getopt_long should already have printed an error message
@@ -431,9 +445,9 @@ int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
 finish:
   if (!call_stacks.empty() || idle_count || failed_count) {
     if (!include_ts_) {
-      PrintFrames(*out, call_stacks, idle_count, failed_count);
+      PrintFrames(*out, call_stacks, idle_count, failed_count, include_line_number_);
     } else {
-      PrintFramesTS(*out, call_stacks);
+      PrintFramesTS(*out, call_stacks, include_line_number_);
     }
   }
   return return_code;

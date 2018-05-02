@@ -37,6 +37,7 @@ class Prober {
         trace_(false),
         include_idle_(true),
         include_ts_(false),
+        include_line_number_(true),
         enable_threads_(false),
         seconds_(1),
         sample_rate_(0.01) {}
@@ -60,6 +61,7 @@ class Prober {
   bool trace_;
   bool include_idle_;
   bool include_ts_;
+  bool include_line_number_;
   bool enable_threads_;
   double seconds_;
   double sample_rate_;
