@@ -484,7 +484,7 @@ def test_invalid_pid(pid):
         stderr=subprocess.PIPE)
     out, err = communicate(proc)
     assert not out
-    assert err.startswith('Failed to seize PID ') or 'valid PID range' in err
+    assert err.startswith('Failed to seize PID ') or 'failed to parse' in err
     assert proc.returncode == 1
 
 

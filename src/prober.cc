@@ -42,7 +42,7 @@
 
 // Microseconds in a second.
 static const char usage_str[] =
-    ("Usage: pyflame [options] -p PID\n"
+    ("Usage: pyflame [options] [-p] PID\n"
      "       pyflame [options] -t command arg1 arg2...\n"
      "\n"
      "Common Options:\n"
@@ -115,7 +115,7 @@ static void PrintFrames(std::ostream &out,
     out << "(idle) " << idle_count << "\n";
   }
   if (failed_count) {
-    out << "(failed) "  << failed_count << "\n";
+    out << "(failed) " << failed_count << "\n";
   }
   // Put the call stacks into buckets
   buckets_t buckets;
@@ -155,7 +155,8 @@ static void PrintFramesTS(std::ostream &out,
       out << "(idle)\n";
       continue;
     }
-    if (call_stack.frames.size() == 1 && call_stack.frames.front().file() == "(failed)") {
+    if (call_stack.frames.size() == 1 &&
+        call_stack.frames.front().file() == "(failed)") {
       out << "(failed)\n";
       continue;
     }
@@ -480,7 +481,7 @@ int Prober::FindSymbols(PyFrob *frobber) {
 pid_t Prober::ParsePid(const char *pid_str) {
   long pid = std::strtol(pid_str, nullptr, 10);
   if (pid <= 0 || pid > std::numeric_limits<pid_t>::max()) {
-    std::cerr << "PID " << pid << " is out of valid PID range.\n";
+    std::cerr << "Error: failed to parse \"" << pid_str << "\" as a PID.\n\n";
     return -1;
   }
   return static_cast<pid_t>(pid);
