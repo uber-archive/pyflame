@@ -23,6 +23,12 @@
 
 #include "./config.h"
 
+#if defined(__arm__)
+typedef struct user_regs user_regs_struct;
+#else
+typedef struct user_regs_struct user_regs_struct;
+#endif
+
 namespace pyflame {
 
 int DoWait(pid_t pid, int options = 0);
@@ -39,10 +45,10 @@ void PtraceSeize(pid_t pid);
 void PtraceInterrupt(pid_t pid);
 
 // get regs from a process
-struct user_regs_struct PtraceGetRegs(pid_t pid);
+user_regs_struct PtraceGetRegs(pid_t pid);
 
 // set regs in a process
-void PtraceSetRegs(pid_t pid, struct user_regs_struct regs);
+void PtraceSetRegs(pid_t pid, user_regs_struct regs);
 
 // poke a long word into an address
 void PtracePoke(pid_t pid, unsigned long addr, long data);
