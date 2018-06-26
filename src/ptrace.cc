@@ -122,8 +122,8 @@ void PtraceInterrupt(pid_t pid) {
   DoWait(pid);
 }
 
-struct user_regs_struct PtraceGetRegs(pid_t pid) {
-  struct user_regs_struct regs;
+user_regs_struct PtraceGetRegs(pid_t pid) {
+  user_regs_struct regs;
   if (ptrace(PTRACE_GETREGS, pid, 0, &regs)) {
     std::ostringstream ss;
     ss << "Failed to PTRACE_GETREGS: " << strerror(errno);
@@ -132,7 +132,7 @@ struct user_regs_struct PtraceGetRegs(pid_t pid) {
   return regs;
 }
 
-void PtraceSetRegs(pid_t pid, struct user_regs_struct regs) {
+void PtraceSetRegs(pid_t pid, user_regs_struct regs) {
   if (ptrace(PTRACE_SETREGS, pid, 0, &regs)) {
     std::ostringstream ss;
     ss << "Failed to PTRACE_SETREGS: " << strerror(errno);
