@@ -166,6 +166,17 @@ PyABI ELF::WalkTable(int sym, int str, PyAddresses *addrs) {
   return abi;
 }
 
+addr_t ELF::GetBaseAddress() {
+  int32_t phnum = hdr()->e_phnum;
+  int32_t i;
+  for (i = 0; i < phnum && phdr(i)->p_type != PT_LOAD; i++) {
+  }
+  if (i == phnum) {
+    throw FatalException("Failed to find PT_LOAD entry in program headers");
+  }
+  return phdr(i)->p_vaddr;
+}
+
 PyAddresses ELF::GetAddresses(PyABI *abi) {
   PyAddresses addrs;
   PyABI detected_abi = WalkTable(dynsym_, dynstr_, &addrs);
@@ -175,6 +186,10 @@ PyAddresses ELF::GetAddresses(PyABI *abi) {
   addrs.pie = (hdr()->e_type == ET_DYN);
   if (abi != nullptr) {
     *abi = detected_abi;
+  }
+  // Handle prelinked shared objects
+  if (hdr()->e_type == ET_DYN) {
+    return addrs - GetBaseAddress();
   }
   return addrs;
 }

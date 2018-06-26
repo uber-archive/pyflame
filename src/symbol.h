@@ -28,15 +28,19 @@
 
 #if USE_ELF64
 #define ehdr_t Elf64_Ehdr
+#define phdr_t Elf64_Phdr
 #define shdr_t Elf64_Shdr
 #define dyn_t Elf64_Dyn
 #define sym_t Elf64_Sym
+#define addr_t Elf64_Addr
 #define ARCH_ELFCLASS ELFCLASS64
 #else
 #define ehdr_t Elf32_Ehdr
+#define phdr_t Elf32_Phdr
 #define shdr_t Elf32_Shdr
 #define dyn_t Elf32_Dyn
 #define sym_t Elf32_Sym
+#define addr_t Elf32_Addr
 #define ARCH_ELFCLASS ELFCLASS32
 #endif
 
@@ -67,8 +71,18 @@ struct PyAddresses {
         interp_head_hint(0),
         pie(false) {}
 
+  PyAddresses operator-(const unsigned long base) const {
+    PyAddresses res(*this);
+    res.tstate_addr = this->tstate_addr == 0 ? 0 : this->tstate_addr - base;
+    res.interp_head_addr =
+        this->interp_head_addr == 0 ? 0 : this->interp_head_addr - base;
+    res.interp_head_fn_addr =
+        this->interp_head_fn_addr == 0 ? 0 : this->interp_head_fn_addr - base;
+    return res;
+  }
+
   PyAddresses operator+(const unsigned long base) const {
-    PyAddresses res;
+    PyAddresses res(*this);
     res.tstate_addr = this->tstate_addr == 0 ? 0 : this->tstate_addr + base;
     res.interp_head_addr =
         this->interp_head_addr == 0 ? 0 : this->interp_head_addr + base;
@@ -113,6 +127,9 @@ class ELF {
   // ABI.
   PyAddresses GetAddresses(PyABI *abi);
 
+  // Extract the base load address from the Program Header table
+  addr_t GetBaseAddress();
+
  private:
   void *addr_;
   size_t length_;
@@ -120,6 +137,16 @@ class ELF {
 
   inline const ehdr_t *hdr() const {
     return reinterpret_cast<const ehdr_t *>(addr_);
+  }
+
+  inline const phdr_t *phdr(int idx) const {
+    if (idx < 0) {
+      std::ostringstream ss;
+      ss << "Illegal phdr index: " << idx;
+      throw FatalException(ss.str());
+    }
+    return reinterpret_cast<const phdr_t *>(p() + hdr()->e_phoff +
+                                            idx * hdr()->e_phentsize);
   }
 
   inline const shdr_t *shdr(int idx) const {
