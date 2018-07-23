@@ -365,7 +365,7 @@ int Prober::InitiatePtrace(char **argv) {
     try {
       PtraceSeize(pid_);
     } catch (const PtraceException &err) {
-      std::cerr << "Failed to seize PID " << pid_ << "\n";
+      std::cerr << err.what() << "\n";
       return 1;
     }
   }
