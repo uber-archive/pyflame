@@ -97,7 +97,7 @@ void PtraceAttach(pid_t pid) {
 void PtraceSeize(pid_t pid) {
   if (ptrace(PTRACE_SEIZE, pid, 0, 0)) {
     std::ostringstream ss;
-    ss << "Failed to attach to PID " << pid << ": " << strerror(errno);
+    ss << "Failed to seize PID " << pid << ": " << strerror(errno);
     throw PtraceException(ss.str());
   }
 }
