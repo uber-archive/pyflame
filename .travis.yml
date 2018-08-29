@@ -1,5 +1,5 @@
 sudo: required
-dist: trusty
+dist: xenial
 language: cpp
 compiler: gcc
 
@@ -17,7 +17,7 @@ env:
 addons:
   apt:
     sources:
-      - sourceline: 'ppa:fkrull/deadsnakes'
+      - sourceline: 'ppa:deadsnakes/ppa'
       - autotools-dev
       - libtool
       - pkg-config
