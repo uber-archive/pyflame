@@ -77,7 +77,8 @@ struct PyAddresses {
   PyAddresses operator-(const unsigned long base) const {
     PyAddresses res(*this);
     res.tstate_addr = this->tstate_addr == 0 ? 0 : this->tstate_addr - base;
-    res.tstate_get_addr = this->tstate_get_addr == 0 ? 0 : this->tstate_get_addr - base;
+    res.tstate_get_addr =
+        this->tstate_get_addr == 0 ? 0 : this->tstate_get_addr - base;
     res.interp_head_addr =
         this->interp_head_addr == 0 ? 0 : this->interp_head_addr - base;
     res.interp_head_fn_addr =
@@ -88,7 +89,8 @@ struct PyAddresses {
   PyAddresses operator+(const unsigned long base) const {
     PyAddresses res(*this);
     res.tstate_addr = this->tstate_addr == 0 ? 0 : this->tstate_addr + base;
-    res.tstate_get_addr = this->tstate_get_addr == 0 ? 0 : this->tstate_get_addr + base;
+    res.tstate_get_addr =
+        this->tstate_get_addr == 0 ? 0 : this->tstate_get_addr + base;
     res.interp_head_addr =
         this->interp_head_addr == 0 ? 0 : this->interp_head_addr + base;
     res.interp_head_fn_addr =
@@ -100,7 +102,9 @@ struct PyAddresses {
   explicit operator bool() const { return !empty(); }
 
   // Empty means the struct hasn't been initialized.
-  inline bool empty() const { return this->tstate_addr == 0 and this->tstate_get_addr == 0; }
+  inline bool empty() const {
+    return this->tstate_addr == 0 and this->tstate_get_addr == 0;
+  }
 };
 
 // Representation of an ELF file.

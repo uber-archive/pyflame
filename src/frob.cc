@@ -279,9 +279,9 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs,
 
   if (tstate == 0 && addrs.tstate_get_addr != 0) {
     // If we are Python 3.7, there will be no global reference to current thread
-    // state, and the gilstate's ThreadState will be null if during memory probing
-    // the child was not executing Python code. We need to run this function
-    // to get the current running ThreadState
+    // state, and the gilstate's ThreadState will be null if during memory
+    // probing the child was not executing Python code. We need to run this
+    // function to get the current running ThreadState
     tstate = PtraceCallFunction(pid, addrs.tstate_get_addr);
   }
 

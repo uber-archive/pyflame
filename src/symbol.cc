@@ -140,12 +140,14 @@ PyABI ELF::WalkTable(int sym, int str, PyAddresses *addrs) {
 
     if (!addrs->tstate_addr && strcmp(name, "_PyThreadState_Current") == 0) {
       addrs->tstate_addr = static_cast<unsigned long>(sym->st_value);
-    } else if (!addrs->tstate_addr && strcmp(name, "_PyThreadState_UncheckedGet") == 0) {
-      // In Python 3.7, the _PyThreadState_Current variable is held by _PyRuntime, which
-      // is defined in a private header. This function allows us to retrieve the pointer
-      // to the currently running thread. This function can't simply be duplicated
-      // because the implementation is defined using a macro to an internal header
-      // See https://github.com/python/cpython/commit/2ebc5ce42a8a9e047e790aefbf9a94811569b2b6
+    } else if (!addrs->tstate_addr &&
+               strcmp(name, "_PyThreadState_UncheckedGet") == 0) {
+      // In Python 3.7, the _PyThreadState_Current variable is held by
+      // _PyRuntime, which is defined in a private header. This function allows
+      // us to retrieve the pointer to the currently running thread. This
+      // function can't simply be duplicated because the implementation is
+      // defined using a macro to an internal header See
+      // https://github.com/python/cpython/commit/2ebc5ce42a8a9e047e790aefbf9a94811569b2b6
       // (bpo-30860)
       addrs->tstate_get_addr = static_cast<unsigned long>(sym->st_value);
     } else if (!addrs->interp_head_addr && strcmp(name, "interp_head") == 0) {
