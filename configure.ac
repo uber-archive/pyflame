@@ -111,7 +111,12 @@ PKG_CHECK_MODULES([PY36], [python-3.6], [enable_py36="yes"], [AC_MSG_WARN([Build
 AM_CONDITIONAL([ENABLE_PY36], [test x"$enable_py36" = xyes])
 AM_COND_IF([ENABLE_PY36], [AC_DEFINE([ENABLE_PY36], [1], [Python 3.6 will be enabled])])
 
-AS_IF([test x"$enable_py26" = xyes -o x"$enable_py34" = xyes -o x"$enable_py36" = xyes],
+enable_py37=no
+PKG_CHECK_MODULES([PY37], [python-3.7], [enable_py37="yes"], [AC_MSG_WARN([Building without Python 3.7 support])])
+AM_CONDITIONAL([ENABLE_PY37], [test x"$enable_py37" = xyes])
+AM_COND_IF([ENABLE_PY37], [AC_DEFINE([ENABLE_PY37], [1], [Python 3.7 will be enabled])])
+
+AS_IF([test x"$enable_py26" = xyes -o x"$enable_py34" = xyes -o x"$enable_py36" = xyes -o x"$enable_py37" = xyes],
       [AC_MSG_NOTICE([Found at least one copy of Python.h])],
       [AC_MSG_ERROR([Failed to find a supported Python.h])]
 )
@@ -127,7 +132,8 @@ echo
 echo "  with threads        = $enable_threads"
 echo "  with Python 2.6/7   = $enable_py26"
 echo "  with Python 3.4/5   = $enable_py34"
-echo "  with Python 3.6+    = $enable_py36"
+echo "  with Python 3.6     = $enable_py36"
+echo "  with Python 3.7+    = $enable_py37"
 echo
 echo "  CXX                 = $CXX"
 echo "  CXXFLAGS            = $CXXFLAGS"
