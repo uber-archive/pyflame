@@ -47,7 +47,7 @@ static const char usage_str[] =
      "\n"
      "Common Options:\n"
 #ifdef ENABLE_THREADS
-     "  --threads                Enable multi-threading support\n"
+     "  -L, --threads            Enable multi-threading support\n"
      "  -d, --dump               Dump stacks from all threads (implies "
      "--threads) and exit\n"
 #else
