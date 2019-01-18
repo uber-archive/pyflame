@@ -48,6 +48,7 @@ static const char usage_str[] =
      "Common Options:\n"
 #ifdef ENABLE_THREADS
      "  --threads                Enable multi-threading support\n"
+     "  --only=IDENT             Only trace a thread identified by IDENT (requires --threads)\n"
      "  -d, --dump               Dump stacks from all threads (implies --threads)\n"
 #else
      "  -d, --dump               Dump the current interpreter stack\n"
@@ -189,6 +190,7 @@ int Prober::ParseOpts(int argc, char **argv) {
     {"seconds", required_argument, 0, 's'},
 #if ENABLE_THREADS
     {"threads", no_argument, 0, 'L'},
+    {"only", required_argument, 0, 'i'},
 #endif
     {"no-line-numbers", no_argument, 0, 'n'},
     {"output", required_argument, 0, 'o'},
@@ -238,7 +240,10 @@ int Prober::ParseOpts(int argc, char **argv) {
         std::cout << PYFLAME_VERSION_STR << "\n\n" << usage_str;
         return 0;
         break;
-#ifdef ENABLE_THREADS
+#if ENABLE_THREADS
+      case 'i':
+        thread_id_ = std::stoul(optarg);
+        break;
       case 'L':
         enable_threads_ = true;
         break;
@@ -308,6 +313,11 @@ finish_arg_parse:
     }
     std::cerr << "WARNING: Specifying a PID to trace without -p is deprecated; "
                  "see Pyflame issue #99 for details.\n";
+  }
+  if (thread_id_ > 0 && !enable_threads_) {
+    std::cerr << "Option --only requires --threads.\n";
+    std::cerr << usage_str;
+    return 1;
   }
   interval_ = ToMicroseconds(sample_rate_);
   return -1;
@@ -416,7 +426,9 @@ int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
       }
 
       for (const auto &thread : threads) {
-        call_stacks.push_back({now, thread.frames()});
+        if (thread_id_ == 0 || thread.id() == thread_id_) {
+          call_stacks.push_back({now, thread.frames()});
+        }
       }
 
       if (check_end && (now + interval_ >= end)) {
