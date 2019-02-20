@@ -126,6 +126,12 @@ FROB_FUNCS
 }
 #endif
 
+#ifdef ENABLE_PY37
+namespace py37 {
+FROB_FUNCS
+}
+#endif
+
 // Fill the addrs_ member
 int PyFrob::set_addrs_(PyABI *abi) {
   Namespace ns(pid_);

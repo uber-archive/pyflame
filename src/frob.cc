@@ -89,6 +89,22 @@ unsigned long ByteData(unsigned long addr) {
   return addr + offsetof(PyBytesObject, ob_sval);
 }
 
+#elif PYFLAME_PY_VERSION == 37
+namespace py36 {
+std::string StringDataPython3(pid_t pid, unsigned long addr);
+
+unsigned long StringSize(unsigned long addr) {
+  return addr + offsetof(PyVarObject, ob_size);
+}
+
+std::string StringData(pid_t pid, unsigned long addr) {
+  return StringDataPython3(pid, addr);
+}
+
+unsigned long ByteData(unsigned long addr) {
+  return addr + offsetof(PyBytesObject, ob_sval);
+}
+
 #else
 static_assert(false, "uh oh, bad PYFLAME_PY_VERSION");
 #endif

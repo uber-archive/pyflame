@@ -79,6 +79,9 @@ static const int build_abis[] = {
 #ifdef ENABLE_PY36
     36,
 #endif
+#ifdef ENABLE_PY37
+    37,
+#endif
 };
 
 static_assert(sizeof(build_abis) > 0, "No Python ABIs detected!");

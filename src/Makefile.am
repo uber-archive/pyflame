@@ -34,3 +34,10 @@ libfrob36_la_CXXFLAGS = $(PY36_CFLAGS)
 noinst_LTLIBRARIES += libfrob36.la
 pyflame_LDADD += libfrob36.la
 endif
+
+if ENABLE_PY37
+libfrob37_la_SOURCES = frob37.cc
+libfrob37_la_CXXFLAGS = $(PY37_CFLAGS)
+noinst_LTLIBRARIES += libfrob37.la
+pyflame_LDADD += libfrob37.la
+endif
