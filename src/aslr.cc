@@ -28,8 +28,7 @@ size_t LocateLibPython(pid_t pid, const std::string &hint, std::string *path) {
   std::string line;
   std::string elf_path;
   while (std::getline(fp, line)) {
-    if (line.find(hint) != std::string::npos &&
-        line.find(" r-xp ") != std::string::npos) {
+    if (line.find(hint) != std::string::npos) {
       size_t pos = line.find('/');
       if (pos == std::string::npos) {
         throw FatalException("Did not find libpython absolute path");
