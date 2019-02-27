@@ -87,7 +87,7 @@ The following options are less commonly used.
     cases when profiling embedded Python builds (e.g. uWSGI), and only if
     pyflame doesn't automatically detect the correct ABI. *VERSION* should be a
     two digit integer consisting of the Python major and minor version, e.g. 27
-    for Python 2.7 or 36 for Python 3.6.
+    for Python 2.7, 36 for Python 3.6 or 37 for Python 3.7.
 
 **--flamechart**
 :   Print the timestamp for each stack. This is useful for generating "flame

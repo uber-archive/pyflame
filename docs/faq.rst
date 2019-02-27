@@ -7,7 +7,7 @@ What Python Versions Are Supported?
 Python 2 is tested with Python 2.6 and 2.7. Earlier versions of Python 2 are
 likely to work as well, but have not been tested.
 
-Python 3 is tested with Python 3.4, 3.5, and 3.6. Python 3.6 introduces a new
+Python 3 is tested with Python 3.4, 3.5, 3.6 and 3.7 Python 3.6 introduces a new
 ABI for the ``PyCodeObject`` type, so Pyflame only supports the Python 3
 versions that header files were available for when Pyflame was compiled.
 
