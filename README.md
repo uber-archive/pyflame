@@ -44,7 +44,7 @@ The `make` command will produce an executable at `src/pyflame` that you can run
 and use.
 
 Or you can use docker to build pyflame
-```base```
+```bash
 sudo docker build --tag pyflame .
 sudo docker run -it -v $(pwd):/root/pyflame pyflame /bin/bash -c "cd /root/pyflame;./autogen.sh;./configure;make"
 ```
