@@ -48,7 +48,7 @@ Or you can use docker to build pyflame
 sudo docker build --tag pyflame .
 sudo docker run -it -v $(pwd):/root/pyflame pyflame /bin/bash -c "cd /root/pyflame;./autogen.sh;./configure;make"
 ```
-This will also produce the executable at `src/pyflame`, which support py2.6/2.7/3.4/3.5/3.6/3.7
+This will also produce the executable at `src/pyflame`, which support py2.6/2.7/3.4/3.5/3.6
 
 Optionally, if you have `virtualenv` installed, you can test the executable you
 produced using `make check`.
