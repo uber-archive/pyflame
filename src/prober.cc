@@ -64,7 +64,7 @@ static const char usage_str[] =
      "  -x, --exclude-idle       Exclude idle time from statistics\n"
      "\n"
      "Advanced Options:\n"
-     "  --abi                    Force a particular Python ABI (26, 34, 36)\n"
+     "  --abi                    Force a particular Python ABI (26, 34, 36, 37)\n"
      "  --flamechart             Include timestamps for generating Chrome "
      "\"flamecharts\"\n");
 
@@ -78,6 +78,9 @@ static const int build_abis[] = {
 #endif
 #ifdef ENABLE_PY36
     36,
+#endif
+#ifdef ENABLE_PY37
+    37,
 #endif
 };
 
@@ -220,6 +223,9 @@ int Prober::ParseOpts(int argc, char **argv) {
             break;
           case 36:
             abi_ = PyABI::Py36;
+            break;
+          case 37:
+            abi_ = PyABI::Py37;
             break;
           default:
             std::cerr << "Unknown or unsupported ABI version: " << abi_version

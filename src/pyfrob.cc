@@ -14,6 +14,7 @@
 
 #include "./pyfrob.h"
 
+#include <cstddef>
 #include <fstream>
 #include <sstream>
 
@@ -24,6 +25,8 @@
 #include "./posix.h"
 #include "./ptrace.h"
 #include "./symbol.h"
+
+extern size_t PYFLAME_PYTHON37_OFFSET;
 
 #define FROB_FUNCS                                            \
   std::vector<Thread> GetThreads(pid_t pid, PyAddresses addr, \
@@ -126,11 +129,20 @@ FROB_FUNCS
 }
 #endif
 
+#ifdef ENABLE_PY37
+namespace py37 {
+FROB_FUNCS
+extern size_t tstate_offset;
+}
+#endif
+
 // Fill the addrs_ member
 int PyFrob::set_addrs_(PyABI *abi) {
   Namespace ns(pid_);
   try {
     addrs_ = Addrs(pid_, &ns, abi);
+    if (*abi >= PyABI::Py37)
+      addrs_.tstate_addr += PYFLAME_PYTHON37_OFFSET;
   } catch (const SymbolException &exc) {
     return 1;
   }
@@ -173,6 +185,11 @@ int PyFrob::DetectABI(PyABI abi) {
       get_threads_ = py36::GetThreads;
       break;
 #endif
+#ifdef ENABLE_PY37
+    case PyABI::Py37:
+      get_threads_ = py37::GetThreads;
+      break;
+#endif
     default:
       std::ostringstream os;
       os << "Target has Python ABI " << static_cast<int>(abi)
@@ -198,4 +215,5 @@ std::string PyFrob::Status() const {
 std::vector<Thread> PyFrob::GetThreads(void) const {
   return get_threads_(pid_, addrs_, enable_threads_);
 }
+
 }  // namespace pyflame

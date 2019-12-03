@@ -119,7 +119,7 @@ uWSGI), and only if pyflame doesn\[aq]t automatically detect the correct
 ABI.
 \f[I]VERSION\f[] should be a two digit integer consisting of the Python
 major and minor version, e.g.
-27 for Python 2.7 or 36 for Python 3.6.
+27 for Python 2.7, 36 for Python 3.6 or 37 for Python 3.7.
 .RS
 .RE
 .TP

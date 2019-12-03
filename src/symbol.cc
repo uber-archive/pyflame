@@ -137,31 +137,43 @@ PyABI ELF::WalkTable(int sym, int str, PyAddresses *addrs) {
         reinterpret_cast<const sym_t *>(p() + s->sh_offset + i * s->sh_entsize);
     const char *name =
         reinterpret_cast<const char *>(p() + d->sh_offset + sym->st_name);
-    if (!addrs->tstate_addr && strcmp(name, "_PyThreadState_Current") == 0) {
-      addrs->tstate_addr = static_cast<unsigned long>(sym->st_value);
-    } else if (!addrs->interp_head_addr && strcmp(name, "interp_head") == 0) {
-      addrs->interp_head_addr = static_cast<unsigned long>(sym->st_value);
-    } else if (!addrs->interp_head_addr &&
-               strcmp(name, "PyInterpreterState_Head") == 0) {
-      addrs->interp_head_fn_addr = static_cast<unsigned long>(sym->st_value);
-    } else if (!have_abi) {
+    if (!addrs->tstate_addr) {
+      if (strcmp(name, "_PyThreadState_Current") == 0) {
+        addrs->tstate_addr = static_cast<unsigned long>(sym->st_value);
+      } else if (strcmp(name, "_PyRuntime") == 0) {
+        addrs->tstate_addr = static_cast<unsigned long>(sym->st_value);
+      }
+    }
+
+    if (!addrs->interp_head_addr) {
+      if (strcmp(name, "interp_head") == 0) {
+        addrs->interp_head_addr = static_cast<unsigned long>(sym->st_value);
+      } else if (strcmp(name, "PyInterpreterState_Head") == 0) {
+        addrs->interp_head_fn_addr = static_cast<unsigned long>(sym->st_value);
+      }
+    }
+
+    if (!have_abi) {
       if (strcmp(name, "PyString_Type") == 0) {
         // If we find PyString_Type, this is some kind of Python 2.
         have_abi = true;
         abi = PyABI::Py26;
-      } else if (strcmp(name, "PyBytes_Type") == 0) {
+      } else if (strcmp(name, "PyBytes_Type") == 0 && abi < PyABI::Py34) {
         // If we find PyBytes_Type, it's Python 3. Continue looping though, in
-        // case we see a Python 3.6 symbol.
+        // case we see a Python 3.6+ symbol.
         abi = PyABI::Py34;
       } else if (strcmp(name, "_PyEval_RequestCodeExtraIndex") == 0 ||
                  strcmp(name, "_PyCode_GetExtra") == 0 ||
                  strcmp(name, "_PyCode_SetExtra") == 0) {
         // Symbols added for Python 3.6, see:
         // https://www.python.org/dev/peps/pep-0523/
-        have_abi = true;
         abi = PyABI::Py36;
+      } else if (strcmp(name, "_PyRuntime") == 0) {
+        have_abi = true;
+        abi = PyABI::Py37;
       }
     }
+
   }
   return abi;
 }
