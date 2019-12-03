@@ -53,12 +53,14 @@ enum class PyABI {
   Unknown = 0,  // Unknown Python ABI
   Py26 = 26,    // ABI for Python 2.6/2.7
   Py34 = 34,    // ABI for Python 3.4/3.5
-  Py36 = 36     // ABI for Python 3.6
+  Py36 = 36,    // ABI for Python 3.6
+  Py37 = 37,    // ABI for Python 3.7
 };
 
 // Symbols
 struct PyAddresses {
   unsigned long tstate_addr;
+  unsigned long tstate_get_addr;
   unsigned long interp_head_addr;
   unsigned long interp_head_fn_addr;
   unsigned long interp_head_hint;
@@ -66,6 +68,7 @@ struct PyAddresses {
 
   PyAddresses()
       : tstate_addr(0),
+        tstate_get_addr(0),
         interp_head_addr(0),
         interp_head_fn_addr(0),
         interp_head_hint(0),
@@ -74,6 +77,8 @@ struct PyAddresses {
   PyAddresses operator-(const unsigned long base) const {
     PyAddresses res(*this);
     res.tstate_addr = this->tstate_addr == 0 ? 0 : this->tstate_addr - base;
+    res.tstate_get_addr =
+        this->tstate_get_addr == 0 ? 0 : this->tstate_get_addr - base;
     res.interp_head_addr =
         this->interp_head_addr == 0 ? 0 : this->interp_head_addr - base;
     res.interp_head_fn_addr =
@@ -84,6 +89,8 @@ struct PyAddresses {
   PyAddresses operator+(const unsigned long base) const {
     PyAddresses res(*this);
     res.tstate_addr = this->tstate_addr == 0 ? 0 : this->tstate_addr + base;
+    res.tstate_get_addr =
+        this->tstate_get_addr == 0 ? 0 : this->tstate_get_addr + base;
     res.interp_head_addr =
         this->interp_head_addr == 0 ? 0 : this->interp_head_addr + base;
     res.interp_head_fn_addr =
@@ -95,7 +102,9 @@ struct PyAddresses {
   explicit operator bool() const { return !empty(); }
 
   // Empty means the struct hasn't been initialized.
-  inline bool empty() const { return this->tstate_addr == 0; }
+  inline bool empty() const {
+    return this->tstate_addr == 0 and this->tstate_get_addr == 0;
+  }
 };
 
 // Representation of an ELF file.

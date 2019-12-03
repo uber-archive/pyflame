@@ -89,6 +89,22 @@ unsigned long ByteData(unsigned long addr) {
   return addr + offsetof(PyBytesObject, ob_sval);
 }
 
+#elif PYFLAME_PY_VERSION == 37
+namespace py37 {
+std::string StringDataPython3(pid_t pid, unsigned long addr);
+
+unsigned long StringSize(unsigned long addr) {
+  return addr + offsetof(PyVarObject, ob_size);
+}
+
+std::string StringData(pid_t pid, unsigned long addr) {
+  return StringDataPython3(pid, addr);
+}
+
+unsigned long ByteData(unsigned long addr) {
+  return addr + offsetof(PyBytesObject, ob_sval);
+}
+
 #else
 static_assert(false, "uh oh, bad PYFLAME_PY_VERSION");
 #endif
@@ -256,7 +272,19 @@ std::vector<Thread> GetThreads(pid_t pid, PyAddresses addrs,
   // First try to get interpreter state via dereferencing
   // _PyThreadState_Current. This won't work if the main thread doesn't hold
   // the GIL (_Current will be null).
-  unsigned long tstate = PtracePeek(pid, addrs.tstate_addr);
+  unsigned long tstate = 0;
+  if (addrs.tstate_addr) {
+    tstate = PtracePeek(pid, addrs.tstate_addr);
+  }
+
+  if (tstate == 0 && addrs.tstate_get_addr != 0) {
+    // If we are Python 3.7, there will be no global reference to current thread
+    // state, and the gilstate's ThreadState will be null if during memory
+    // probing the child was not executing Python code. We need to run this
+    // function to get the current running ThreadState
+    tstate = PtraceCallFunction(pid, addrs.tstate_get_addr);
+  }
+
   unsigned long current_tstate = tstate;
   if (enable_threads) {
     if (tstate != 0) {

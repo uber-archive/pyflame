@@ -1,5 +1,5 @@
 sudo: required
-dist: trusty
+dist: xenial
 language: cpp
 compiler: gcc
 
@@ -12,11 +12,12 @@ env:
     - PYVERSION=python3.4
     - PYVERSION=python3.5
     - PYVERSION=python3.6
+    - PYVERSION=python3.7
 
 addons:
   apt:
     sources:
-      - sourceline: 'ppa:fkrull/deadsnakes'
+      - sourceline: 'ppa:deadsnakes/ppa'
       - autotools-dev
       - libtool
       - pkg-config
