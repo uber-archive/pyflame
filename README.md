@@ -2,6 +2,8 @@
 
 [![Build Status](https://api.travis-ci.org/uber/pyflame.svg?branch=master)](https://travis-ci.org/uber/pyflame) [![Docs Status](https://readthedocs.org/projects/pyflame/badge/?version=latest)](http://pyflame.readthedocs.io/en/latest/?badge=latest) [![COPR Status](https://copr.fedorainfracloud.org/coprs/eklitzke/pyflame/package/pyflame/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/eklitzke/pyflame/)
 
+(This project is deprecated and not maintained.)
+
 Pyflame is a high performance profiling tool that
 generates [flame graphs](http://www.brendangregg.com/flamegraphs.html) for
 Python. Pyflame is implemented in C++, and uses the
