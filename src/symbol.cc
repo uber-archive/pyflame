@@ -169,7 +169,7 @@ PyABI ELF::WalkTable(int sym, int str, PyAddresses *addrs) {
 addr_t ELF::GetBaseAddress() {
   int32_t phnum = hdr()->e_phnum;
   int32_t i;
-  for (i = 0; i < phnum && phdr(i)->p_type != PT_LOAD; i++) {
+  for (i = 0; i < phnum && (phdr(i)->p_type != PT_LOAD || (phdr(i)->p_flags & PF_X) == 0); i++) {
   }
   if (i == phnum) {
     throw FatalException("Failed to find PT_LOAD entry in program headers");
