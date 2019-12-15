@@ -111,7 +111,7 @@ std::vector<std::string> ELF::NeededLibs() {
   std::vector<std::string> needed;
   const shdr_t *s = shdr(dynamic_);
   const shdr_t *d = shdr(dynstr_);
-  for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
+  for (word_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
     const dyn_t *dyn =
         reinterpret_cast<const dyn_t *>(p() + s->sh_offset + i * s->sh_entsize);
     if (dyn->d_tag == DT_NEEDED) {
@@ -127,7 +127,7 @@ PyABI ELF::WalkTable(int sym, int str, PyAddresses *addrs) {
   bool have_abi = false;
   const shdr_t *s = shdr(sym);
   const shdr_t *d = shdr(str);
-  for (uint16_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
+  for (word_t i = 0; i < s->sh_size / s->sh_entsize; i++) {
     if (have_abi && addrs->tstate_addr && addrs->interp_head_addr &&
         addrs->interp_head_fn_addr) {
       break;

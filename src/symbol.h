@@ -33,6 +33,7 @@
 #define dyn_t Elf64_Dyn
 #define sym_t Elf64_Sym
 #define addr_t Elf64_Addr
+#define word_t Elf64_Word
 #define ARCH_ELFCLASS ELFCLASS64
 #else
 #define ehdr_t Elf32_Ehdr
@@ -41,6 +42,7 @@
 #define dyn_t Elf32_Dyn
 #define sym_t Elf32_Sym
 #define addr_t Elf32_Addr
+#define word_t Elf32_Word
 #define ARCH_ELFCLASS ELFCLASS32
 #endif
 
