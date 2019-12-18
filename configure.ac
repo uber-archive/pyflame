@@ -96,7 +96,8 @@ AC_DEFINE_UNQUOTED(
   [A string containing build information.])
 
 enable_py26=no
-PKG_CHECK_MODULES([PY26], [python2], [enable_py26="yes"], [AC_MSG_WARN([Building without Python 2.6/2.7 support])])
+PKG_CHECK_MODULES([PY26], [python-2.6], [enable_py26="yes"],
+                          [PKG_CHECK_MODULES([PY26], [python-2.7], [enable_py26="yes"], [AC_MSG_WARN([Building without Python 2.6/2.7 support])])])
 AM_CONDITIONAL([ENABLE_PY26], [test x"$enable_py26" = xyes])
 AM_COND_IF([ENABLE_PY26], [AC_DEFINE([ENABLE_PY26], [1], [Python 2.6/2.7 will be enabled])])
 
