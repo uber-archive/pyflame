@@ -19,6 +19,7 @@ import os
 import platform
 import pytest
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -637,3 +638,18 @@ def test_no_line_numbers(dijkstra):
     for line in lines:
         assert_flamegraph(
             line, allow_idle=True, line_re=FLAMEGRAPH_NONUMBER_RE)
+
+
+def test_sigint(dijkstra):
+    proc = subprocess.Popen(
+        [path_to_pyflame(), '-p',
+         str(dijkstra.pid), "--seconds=-1"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+    time.sleep(0.1)
+    proc.send_signal(signal.SIGINT)
+    out, err = communicate(proc)
+    assert not err
+    assert proc.returncode == 0
+    assert out

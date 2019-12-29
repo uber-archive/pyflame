@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <csignal>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -391,6 +392,14 @@ int Prober::Run(const PyFrob &frobber) {
   return dump_ ? DumpStacks(frobber, output) : ProbeLoop(frobber, output);
 }
 
+static volatile std::sig_atomic_t should_stop = 0;
+
+void SIGINT_handler(int sig) {
+  if (sig == SIGINT) {
+    should_stop = 1;
+  }
+}
+
 // Main loop to probe the Python process.
 int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
   std::vector<FrameTS> call_stacks;
@@ -398,6 +407,7 @@ int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
   size_t idle_count = 0;
   size_t failed_count = 0;
   bool check_end = seconds_ >= 0;
+  std::signal(SIGINT, SIGINT_handler);
   auto end = std::chrono::system_clock::now() + ToMicroseconds(seconds_);
   for (;;) {
     auto now = std::chrono::system_clock::now();
@@ -419,7 +429,7 @@ int Prober::ProbeLoop(const PyFrob &frobber, std::ostream *out) {
         call_stacks.push_back({now, thread.frames()});
       }
 
-      if (check_end && (now + interval_ >= end)) {
+      if (should_stop || (check_end && (now + interval_ >= end))) {
         break;
       }
       PtraceCont(pid_);
