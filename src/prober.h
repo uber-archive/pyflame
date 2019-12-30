@@ -39,6 +39,7 @@ class Prober {
         include_ts_(false),
         include_line_number_(true),
         enable_threads_(false),
+        thread_id_(0),
         seconds_(1),
         sample_rate_(0.01) {}
   Prober(const Prober &other) = delete;
@@ -63,6 +64,7 @@ class Prober {
   bool include_ts_;
   bool include_line_number_;
   bool enable_threads_;
+  unsigned long thread_id_;
   double seconds_;
   double sample_rate_;
   std::chrono::microseconds interval_;

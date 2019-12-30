@@ -22,6 +22,7 @@ import re
 import subprocess
 import sys
 import time
+import threading
 
 IDLE_RE = re.compile(r'^\(idle\) \d+$')
 FLAMEGRAPH_RE = re.compile(
@@ -637,3 +638,27 @@ def test_no_line_numbers(dijkstra):
     for line in lines:
         assert_flamegraph(
             line, allow_idle=True, line_re=FLAMEGRAPH_NONUMBER_RE)
+
+
+def test_only():
+    should_stop = False
+
+    def infinite_sleeper():
+        while not should_stop:
+            time.sleep(0.01)
+
+    thread = threading.Thread(target=infinite_sleeper)
+    thread.daemon = True
+    thread.start()
+
+    proc = subprocess.Popen(
+        [path_to_pyflame(), '-p',
+         str(os.getpid()), '--seconds=1',
+         '--threads', '--only=' + str(thread.ident)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+    out, err = communicate(proc)
+    assert not err
+    assert proc.returncode == 0
+    assert 'test_only' not in out
