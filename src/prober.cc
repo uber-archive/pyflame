@@ -47,10 +47,11 @@ static const char usage_str[] =
      "\n"
      "Common Options:\n"
 #ifdef ENABLE_THREADS
-     "  --threads                Enable multi-threading support\n"
-     "  -d, --dump               Dump stacks from all threads (implies --threads)\n"
+     "  -L, --threads            Enable multi-threading support\n"
+     "  -d, --dump               Dump stacks from all threads (implies "
+     "--threads) and exit\n"
 #else
-     "  -d, --dump               Dump the current interpreter stack\n"
+     "  -d, --dump               Dump the current interpreter stack and exit\n"
 #endif
      "  -h, --help               Show help\n"
      "  -n, --no-line-numbers    Do not append line numbers to function names\n"
